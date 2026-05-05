@@ -1,0 +1,821 @@
+[gd_scene format=3 uid="uid://cxqrjljyaiotf"]
+
+[ext_resource type="Script" uid="uid://dvoj73id0m5r7" path="res://Scripts/game/Gameplay.cs" id="1"]
+[ext_resource type="Script" uid="uid://wqnlmp4cf2ed" path="res://Scripts/game/FogLayer.cs" id="2"]
+[ext_resource type="Script" uid="uid://b23orllakuxk2" path="res://Scripts/game/BlockLayer.cs" id="3"]
+[ext_resource type="Script" uid="uid://c6bci8d0bd8so" path="res://Scripts/ui/Hud.cs" id="4"]
+[ext_resource type="Texture2D" uid="uid://uuh2nxagk2ij" path="res://Art/UI/mainUI/示意图1.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://bjt6ykcgxnlro" path="res://Art/UI/mainUI/H&MBorder2.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://dds7p2r5xpduq" path="res://Art/UI/mainUI/_HealthBar.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://ccgckxgtqou2q" path="res://Art/UI/mainUI/H&MBorder1.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://dbipcuuw8jsmw" path="res://Art/UI/mainUI/Buff.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://c8xs5yfohbhys" path="res://Art/UI/mainUI/BuffBar.png" id="11"]
+[ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="12"]
+[ext_resource type="Texture2D" uid="uid://k0qi4ou8ilg6" path="res://Art/UI/mainUI/AttributeBorder.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://3oy2s8l4t07p" path="res://Art/UI/mainUI/Skill.png" id="15"]
+[ext_resource type="Texture2D" uid="uid://dkt27qe2mb5l" path="res://Art/UI/mainUI/Skill_cover.png" id="16"]
+[ext_resource type="Texture2D" uid="uid://cn2g388d3rq" path="res://Art/UI/mainUI/SkillBar.png" id="17"]
+[ext_resource type="Texture2D" uid="uid://c2q4xn5bapdn3" path="res://Art/UI/mainUI/SkillBar_light.png" id="18"]
+[ext_resource type="Texture2D" uid="uid://caavlxvc3rjwj" path="res://Art/UI/mainUI/SkillBar2.png" id="19"]
+[ext_resource type="Texture2D" uid="uid://005qhrucoxtr" path="res://Art/UI/mainUI/PassiveSlots.png" id="20"]
+[ext_resource type="Texture2D" uid="uid://b2ac8qlcnvott" path="res://Art/UI/mainUI/Passiveskill.png" id="21"]
+[ext_resource type="Texture2D" uid="uid://duwy278vbai6f" path="res://Art/UI/mainUI/WaveBarBorder_dark.png" id="22"]
+[ext_resource type="Texture2D" uid="uid://6b1prtcv2gn3" path="res://Art/UI/mainUI/WaveBarBorder_light.png" id="23"]
+[ext_resource type="Texture2D" uid="uid://c2kho7u7dlfof" path="res://Art/UI/mainUI/WaveIndicator_dark.png" id="24"]
+[ext_resource type="Texture2D" uid="uid://boo05s0g3bwg2" path="res://Art/UI/mainUI/WaveIndicator_light.png" id="25"]
+[ext_resource type="Texture2D" uid="uid://dv7v8242ikjb2" path="res://Art/UI/mainUI/WaveBar.png" id="26"]
+[ext_resource type="Texture2D" uid="uid://b4clvt2ypw5fd" path="res://Art/UI/mainUI/map.png" id="27"]
+[ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="28"]
+[ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="29"]
+[ext_resource type="Script" uid="uid://ikw7ji2x4ptf" path="res://Scripts/game/BossWarningLayer.cs" id="30"]
+
+[node name="Gameplay" type="Node2D" unique_id=841708317]
+script = ExtResource("1")
+GameplayCameraZoomLimitClose = 0.19999999999999998
+GameplayCameraZoomLimitFar = 1.0
+GameplayCameraFitDivisor = 2500.0
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1287628607]
+zoom = Vector2(0.85, 0.85)
+
+[node name="World" type="Node2D" parent="." unique_id=727525620]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="World" unique_id=809053411]
+
+[node name="BlockRoot" type="Node2D" parent="World" unique_id=1305904022]
+script = ExtResource("3")
+
+[node name="FogRoot" type="Node2D" parent="World" unique_id=1591225670]
+script = ExtResource("2")
+
+[node name="BossWarningRoot" type="Node2D" parent="World" unique_id=883115945]
+script = ExtResource("30")
+
+[node name="EventIcons" type="Node2D" parent="World" unique_id=1086561768]
+
+[node name="Player" type="Sprite2D" parent="World" unique_id=1138604530]
+
+[node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
+
+[node name="示意图1" type="Sprite2D" parent="UICanvas" unique_id=888530062]
+visible = false
+texture = ExtResource("5")
+centered = false
+
+[node name="HUD" type="Control" parent="UICanvas" unique_id=484638374]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4")
+
+[node name="UILayoutRef" type="TextureRect" parent="UICanvas/HUD" unique_id=2014498998]
+visible = false
+modulate = Color(1, 1, 1, 0.35686275)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PlayerInfo" type="Control" parent="UICanvas/HUD" unique_id=1403547798]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 17.0
+offset_top = -244.0
+offset_right = 667.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HpRow" type="Control" parent="UICanvas/HUD/PlayerInfo" unique_id=1325919586]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 210.0
+offset_top = 110.0
+offset_right = 507.0
+offset_bottom = 146.0
+
+[node name="HpBg" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/HpRow" unique_id=782051057]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HpFill" type="TextureProgressBar" parent="UICanvas/HUD/PlayerInfo/HpRow" unique_id=217011993]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_progress = ExtResource("7")
+
+[node name="HpFrame" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/HpRow" unique_id=1300739467]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HpLabel" type="Label" parent="UICanvas/HUD/PlayerInfo/HpRow" unique_id=1020429122]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+text = "100/100"
+vertical_alignment = 1
+
+[node name="MpRow" type="Control" parent="UICanvas/HUD/PlayerInfo" unique_id=1211525576]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 210.0
+offset_top = 153.0
+offset_right = 507.0
+offset_bottom = 189.0
+
+[node name="MpBg" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/MpRow" unique_id=195244705]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EnergyFill" type="TextureProgressBar" parent="UICanvas/HUD/PlayerInfo/MpRow" unique_id=1754277264]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_progress = ExtResource("9")
+
+[node name="MpFrame" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/MpRow" unique_id=469640617]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EnergyLabel" type="Label" parent="UICanvas/HUD/PlayerInfo/MpRow" unique_id=56378683]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+text = "100/100"
+vertical_alignment = 1
+
+[node name="BuffArea" type="Control" parent="UICanvas/HUD/PlayerInfo" unique_id=1768356723]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 203.0
+offset_top = 51.0
+offset_right = 499.0
+offset_bottom = 103.0
+mouse_filter = 2
+
+[node name="Buff1" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea" unique_id=1730165580]
+modulate = Color(0.45, 0.45, 0.5, 1)
+layout_mode = 1
+offset_left = 8.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 47.0
+mouse_filter = 2
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BuffFrame1" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea" unique_id=1956294095]
+layout_mode = 1
+offset_left = 2.0
+offset_top = -3.0
+offset_right = 56.0
+offset_bottom = 49.0
+mouse_filter = 2
+texture = ExtResource("11")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Buff2" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea" unique_id=1265030168]
+modulate = Color(0.45, 0.45, 0.5, 1)
+layout_mode = 1
+offset_left = 56.0
+offset_top = 5.0
+offset_right = 98.0
+offset_bottom = 47.0
+mouse_filter = 2
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BuffFrame2" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea" unique_id=1026131471]
+layout_mode = 1
+offset_left = 50.0
+offset_top = -3.0
+offset_right = 104.0
+offset_bottom = 49.0
+mouse_filter = 2
+texture = ExtResource("11")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PortraitFrame" type="TextureRect" parent="UICanvas/HUD/PlayerInfo" unique_id=644918444]
+layout_mode = 1
+offset_left = 11.5
+offset_top = 16.5
+offset_right = 182.5
+offset_bottom = 187.5
+mouse_filter = 2
+texture = ExtResource("12")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Portrait" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/PortraitFrame" unique_id=292588471]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StrengthDeco" type="TextureRect" parent="UICanvas/HUD/PlayerInfo" unique_id=435625084]
+layout_mode = 1
+offset_left = 2.5
+offset_top = 149.0
+offset_right = 49.5
+offset_bottom = 195.0
+mouse_filter = 2
+texture = ExtResource("13")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MagicDeco" type="TextureRect" parent="UICanvas/HUD/PlayerInfo" unique_id=1773767652]
+layout_mode = 1
+offset_left = 146.5
+offset_top = 149.0
+offset_right = 193.5
+offset_bottom = 195.0
+mouse_filter = 2
+texture = ExtResource("13")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StrLabel" type="Label" parent="UICanvas/HUD/PlayerInfo" unique_id=1926306048]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 10.0
+offset_top = 159.0
+offset_right = 42.0
+offset_bottom = 187.0
+theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "6"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MagLabel" type="Label" parent="UICanvas/HUD/PlayerInfo" unique_id=379265249]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 154.0
+offset_top = 159.0
+offset_right = 186.0
+offset_bottom = 187.0
+theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "6"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ActiveSkillSlot" type="Control" parent="UICanvas/HUD" unique_id=617858476]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -371.0
+offset_top = -263.0
+offset_right = 645.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="SkillBarDecor" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot" unique_id=637586526]
+layout_mode = 1
+offset_left = 49.5
+offset_top = 163.5
+offset_right = 1032.5
+offset_bottom = 232.5
+mouse_filter = 2
+texture = ExtResource("14")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillArea" type="Control" parent="UICanvas/HUD/ActiveSkillSlot" unique_id=883436010]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -416.5
+offset_right = 416.5
+offset_bottom = 214.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SingleSkill1" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=255470598]
+layout_mode = 1
+anchors_preset = 0
+offset_left = -1.0
+offset_top = 26.0
+offset_right = 147.0
+offset_bottom = 204.0
+
+[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=299024389]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=335791861]
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1327036145]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=228421940]
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=479672324]
+layout_mode = 1
+offset_left = 50.5
+offset_top = 129.5
+offset_right = 93.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=45042642]
+layout_mode = 1
+offset_left = 53.5
+offset_top = 139.5
+offset_right = 92.5
+offset_bottom = 164.5
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "1"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1379572783]
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SingleSkill2" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=1357991279]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 146.0
+offset_top = 26.0
+offset_right = 294.0
+offset_bottom = 204.0
+
+[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1658140743]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1120770816]
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1177542026]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1982234833]
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=644374986]
+layout_mode = 1
+offset_left = 52.5
+offset_top = 129.5
+offset_right = 95.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=951635083]
+layout_mode = 1
+offset_left = 55.5
+offset_top = 139.5
+offset_right = 94.5
+offset_bottom = 164.5
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "1"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1323189572]
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PassiveSkillSlot" type="Control" parent="UICanvas/HUD" unique_id=1638433701]
+layout_mode = 1
+anchor_top = 0.43796295
+anchor_bottom = 0.43796295
+offset_left = 12.0
+offset_top = -334.0
+offset_right = 222.0
+offset_bottom = 334.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PassiveSlots" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=2145661408]
+layout_mode = 1
+offset_left = -12.5
+offset_top = 22.0
+offset_right = 164.5
+offset_bottom = 648.0
+mouse_filter = 2
+texture = ExtResource("20")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P1" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=499782453]
+layout_mode = 1
+offset_left = 8.5
+offset_top = 49.0
+offset_right = 64.5
+offset_bottom = 105.0
+mouse_filter = 2
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P2" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1175294091]
+layout_mode = 1
+offset_left = 77.5
+offset_top = 49.0
+offset_right = 133.5
+offset_bottom = 105.0
+mouse_filter = 2
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P3" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1924801458]
+layout_mode = 1
+offset_left = 8.5
+offset_top = 114.75
+offset_right = 64.5
+offset_bottom = 170.75
+mouse_filter = 2
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BossSkillArea" type="Control" parent="UICanvas/HUD" unique_id=2052952221]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 0.6212963
+anchor_right = 1.0
+anchor_bottom = 0.6212963
+offset_left = -216.0
+offset_top = -253.0
+offset_right = -9.0
+offset_bottom = 253.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BossPhaseLabel" type="Label" parent="UICanvas/HUD/BossSkillArea" unique_id=1098653837]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -3.925
+offset_bottom = 42.975
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.06, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "BOSS"
+horizontal_alignment = 1
+
+[node name="BossMeterWrap" type="Control" parent="UICanvas/HUD/BossSkillArea" unique_id=1049319285]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 13.975
+offset_top = 6.975
+offset_right = 42.975
+offset_bottom = 499.975
+mouse_filter = 2
+
+[node name="BossSkillTrack" type="TextureRect" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=371003045]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("22")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BossActionBarFill" type="TextureProgressBar" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=151522062]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_progress = ExtResource("23")
+
+[node name="BossWarnDividerMarker" type="TextureRect" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=1136957019]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = -3.0
+offset_top = 170.0
+offset_right = 27.0
+offset_bottom = 200.0
+mouse_filter = 2
+texture = ExtResource("24")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IsWarningIcon" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=712547437]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+offset_left = 3.975
+offset_top = 177.975
+offset_right = 33.975
+offset_bottom = 207.975
+mouse_filter = 2
+texture = ExtResource("25")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BossSkillIcon" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=69739708]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 37.5
+offset_top = 12.5
+offset_right = 194.5
+offset_bottom = 122.5
+mouse_filter = 2
+texture = ExtResource("26")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MistProgress" type="Control" parent="UICanvas/HUD" unique_id=1607698721]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 0.24212962
+anchor_right = 1.0
+anchor_bottom = 0.24212962
+offset_left = -228.0
+offset_top = -107.5
+offset_right = -13.0
+offset_bottom = 107.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MistBackground" type="TextureRect" parent="UICanvas/HUD/MistProgress" unique_id=1304727252]
+layout_mode = 1
+offset_left = 10.975
+offset_top = 15.975
+offset_right = 214.975
+offset_bottom = 219.975
+mouse_filter = 2
+texture = ExtResource("27")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MistRingTrack" type="TextureRect" parent="UICanvas/HUD/MistProgress" unique_id=1582367877]
+layout_mode = 1
+offset_left = 23.975
+offset_top = 28.975
+offset_right = 199.975
+offset_bottom = 204.975
+mouse_filter = 2
+texture = ExtResource("28")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MistRingFill" type="TextureProgressBar" parent="UICanvas/HUD/MistProgress" unique_id=1429143978]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 21.975
+offset_top = 26.975
+offset_right = 197.975
+offset_bottom = 202.975
+mouse_filter = 2
+value = 100.0
+texture_progress = ExtResource("29")
+
+[node name="MistPctLabel" type="Label" parent="UICanvas/HUD/MistProgress" unique_id=1127760447]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 67.975
+offset_top = 93.975
+offset_right = 147.975
+offset_bottom = 125.975
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TurnLabel" type="Label" parent="UICanvas/HUD" unique_id=52622522]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -270.0
+offset_right = 400.0
+offset_bottom = -246.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0.06, 0.02, 0.06, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "回合信息"
+horizontal_alignment = 1

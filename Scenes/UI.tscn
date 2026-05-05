@@ -1,0 +1,374 @@
+[gd_scene format=3 uid="uid://dhksf5eh2vorc"]
+
+[ext_resource type="Texture2D" uid="uid://uuh2nxagk2ij" path="res://Art/UI/mainUI/示意图1.png" id="1_612k1"]
+[ext_resource type="Texture2D" uid="uid://bjt6ykcgxnlro" path="res://Art/UI/mainUI/H&MBorder2.png" id="2_wunin"]
+[ext_resource type="Texture2D" uid="uid://dds7p2r5xpduq" path="res://Art/UI/mainUI/_HealthBar.png" id="3_j04uc"]
+[ext_resource type="Texture2D" uid="uid://ccgckxgtqou2q" path="res://Art/UI/mainUI/H&MBorder1.png" id="4_vqx31"]
+[ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="5_b1goy"]
+[ext_resource type="Texture2D" uid="uid://dbipcuuw8jsmw" path="res://Art/UI/mainUI/Buff.png" id="6_n04ve"]
+[ext_resource type="Texture2D" uid="uid://c8xs5yfohbhys" path="res://Art/UI/mainUI/BuffBar.png" id="7_wi7yl"]
+[ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="8_5q4fb"]
+[ext_resource type="Texture2D" uid="uid://k0qi4ou8ilg6" path="res://Art/UI/mainUI/AttributeBorder.png" id="9_mqm5i"]
+[ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="10_us6mg"]
+[ext_resource type="Texture2D" uid="uid://3oy2s8l4t07p" path="res://Art/UI/mainUI/Skill.png" id="11_8blbl"]
+[ext_resource type="Texture2D" uid="uid://dkt27qe2mb5l" path="res://Art/UI/mainUI/Skill_cover.png" id="12_bb0on"]
+[ext_resource type="Texture2D" uid="uid://cn2g388d3rq" path="res://Art/UI/mainUI/SkillBar.png" id="13_wijgc"]
+[ext_resource type="Texture2D" uid="uid://c2q4xn5bapdn3" path="res://Art/UI/mainUI/SkillBar_light.png" id="14_yhvps"]
+[ext_resource type="Texture2D" uid="uid://caavlxvc3rjwj" path="res://Art/UI/mainUI/SkillBar2.png" id="15_tb15e"]
+[ext_resource type="Texture2D" uid="uid://005qhrucoxtr" path="res://Art/UI/mainUI/PassiveSlots.png" id="16_qvwwb"]
+[ext_resource type="Texture2D" uid="uid://b2ac8qlcnvott" path="res://Art/UI/mainUI/Passiveskill.png" id="17_qqo6a"]
+[ext_resource type="Texture2D" uid="uid://duwy278vbai6f" path="res://Art/UI/mainUI/WaveBarBorder_dark.png" id="18_8ekee"]
+[ext_resource type="Texture2D" uid="uid://6b1prtcv2gn3" path="res://Art/UI/mainUI/WaveBarBorder_light.png" id="19_j0pu8"]
+[ext_resource type="Texture2D" uid="uid://c2kho7u7dlfof" path="res://Art/UI/mainUI/WaveIndicator_dark.png" id="20_6maro"]
+[ext_resource type="Texture2D" uid="uid://boo05s0g3bwg2" path="res://Art/UI/mainUI/WaveIndicator_light.png" id="21_45jp6"]
+[ext_resource type="Texture2D" uid="uid://dv7v8242ikjb2" path="res://Art/UI/mainUI/WaveBar.png" id="22_q6a8d"]
+[ext_resource type="Texture2D" uid="uid://b4clvt2ypw5fd" path="res://Art/UI/mainUI/map.png" id="23_6lb63"]
+[ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="24_dgrhb"]
+[ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="25_wypb4"]
+
+[node name="Ui" type="Node2D" unique_id=1178263359]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1426732541]
+modulate = Color(1, 1, 1, 0.35686275)
+texture = ExtResource("1_612k1")
+centered = false
+
+[node name="PlayerInfo" type="Control" parent="." unique_id=223699531]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 17.0
+offset_top = 840.0
+offset_right = 17.0
+offset_bottom = 840.0
+grow_vertical = 0
+
+[node name="HpRow" type="Node2D" parent="PlayerInfo" unique_id=772277618]
+position = Vector2(353, 126)
+
+[node name="Background" type="Sprite2D" parent="PlayerInfo/HpRow" unique_id=332378684]
+texture = ExtResource("2_wunin")
+
+[node name="HpFill" type="Sprite2D" parent="PlayerInfo/HpRow" unique_id=1760364025]
+texture = ExtResource("3_j04uc")
+
+[node name="Frame" type="Sprite2D" parent="PlayerInfo/HpRow" unique_id=1873622221]
+texture = ExtResource("4_vqx31")
+
+[node name="MpRow" type="Node2D" parent="PlayerInfo" unique_id=1560305722]
+position = Vector2(353, 176)
+
+[node name="Background" type="Sprite2D" parent="PlayerInfo/MpRow" unique_id=933479404]
+texture = ExtResource("4_vqx31")
+
+[node name="MpFill" type="Sprite2D" parent="PlayerInfo/MpRow" unique_id=1548954933]
+texture = ExtResource("5_b1goy")
+
+[node name="Frame" type="Sprite2D" parent="PlayerInfo/MpRow" unique_id=1218036502]
+texture = ExtResource("4_vqx31")
+
+[node name="BuffArea" type="Control" parent="PlayerInfo" unique_id=1277843368]
+anchors_preset = 0
+offset_left = 203.0
+offset_top = 51.0
+offset_right = 499.0
+offset_bottom = 103.0
+
+[node name="SingleBuff" type="Node2D" parent="PlayerInfo/BuffArea" unique_id=454522680]
+position = Vector2(29, 26)
+
+[node name="Buff" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff" unique_id=1956103888]
+texture = ExtResource("6_n04ve")
+
+[node name="Frame" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff" unique_id=179420422]
+texture = ExtResource("7_wi7yl")
+
+[node name="SingleBuff2" type="Node2D" parent="PlayerInfo/BuffArea" unique_id=1971848842]
+position = Vector2(77, 26)
+
+[node name="Buff" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff2" unique_id=1343377260]
+texture = ExtResource("6_n04ve")
+
+[node name="Frame" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff2" unique_id=1096301487]
+texture = ExtResource("7_wi7yl")
+
+[node name="PlayerHeadIcon" type="Sprite2D" parent="PlayerInfo" unique_id=1503968587]
+position = Vector2(97, 102)
+texture = ExtResource("8_5q4fb")
+
+[node name="StrengthAttribute" type="Sprite2D" parent="PlayerInfo" unique_id=1759508622]
+position = Vector2(26, 172)
+texture = ExtResource("9_mqm5i")
+
+[node name="TextEdit" type="TextEdit" parent="PlayerInfo/StrengthAttribute" unique_id=1777694062]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+text = "6"
+wrap_mode = 1
+
+[node name="MagicAttribute" type="Sprite2D" parent="PlayerInfo" unique_id=831436765]
+position = Vector2(170, 172)
+texture = ExtResource("9_mqm5i")
+
+[node name="TextEdit" type="TextEdit" parent="PlayerInfo/MagicAttribute" unique_id=1239771282]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+text = "6"
+wrap_mode = 1
+
+[node name="ActiveSkillSlot" type="Control" parent="." unique_id=1076337301]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 589.0
+offset_top = 816.0
+offset_right = 1605.0
+offset_bottom = 1067.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="SkillBarBorder" type="Sprite2D" parent="ActiveSkillSlot" unique_id=1418525861]
+position = Vector2(541, 198)
+texture = ExtResource("10_us6mg")
+
+[node name="SkillArea" type="Control" parent="ActiveSkillSlot" unique_id=153714777]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -415.0
+offset_right = 418.0
+offset_bottom = 214.0
+grow_horizontal = 2
+
+[node name="SingleSkill1" type="Control" parent="ActiveSkillSlot/SkillArea" unique_id=1952030455]
+anchors_preset = 0
+offset_left = -1.0
+offset_top = 26.0
+offset_right = 147.0
+offset_bottom = 204.0
+
+[node name="SkillIcon" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1560156936]
+position = Vector2(73, 75)
+texture = ExtResource("11_8blbl")
+
+[node name="SkillCoolDownCover" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1079958740]
+position = Vector2(74, 75)
+texture = ExtResource("12_bb0on")
+
+[node name="CoolDownTime" type="TextEdit" parent="ActiveSkillSlot/SkillArea/SingleSkill1/SkillCoolDownCover" unique_id=37600137]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -91.5
+offset_top = -90.0
+offset_right = -15.5
+offset_bottom = -17.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "12"
+
+[node name="Frame" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1800226783]
+position = Vector2(74, 75)
+texture = ExtResource("13_wijgc")
+
+[node name="SkillFrameHighLight" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=182971043]
+position = Vector2(74, 75)
+texture = ExtResource("14_yhvps")
+
+[node name="SkillNumber" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1099687585]
+position = Vector2(72, 151)
+texture = ExtResource("15_tb15e")
+
+[node name="Number" type="TextEdit" parent="ActiveSkillSlot/SkillArea/SingleSkill1/SkillNumber" unique_id=1022149273]
+offset_left = -15.0
+offset_top = -14.0
+offset_right = 15.0
+offset_bottom = 15.0
+text = "1"
+
+[node name="SingleSkill2" type="Control" parent="ActiveSkillSlot/SkillArea" unique_id=136587255]
+anchors_preset = 0
+offset_left = 146.0
+offset_top = 26.0
+offset_right = 294.0
+offset_bottom = 204.0
+
+[node name="SkillIcon" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1856335991]
+position = Vector2(73, 75)
+texture = ExtResource("11_8blbl")
+
+[node name="SkillCoolDownCover" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=807515298]
+position = Vector2(74, 75)
+texture = ExtResource("12_bb0on")
+
+[node name="CoolDownTime" type="TextEdit" parent="ActiveSkillSlot/SkillArea/SingleSkill2/SkillCoolDownCover" unique_id=984692773]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -91.5
+offset_top = -90.0
+offset_right = -15.5
+offset_bottom = -17.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "12"
+
+[node name="Frame" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1429930531]
+position = Vector2(74, 75)
+texture = ExtResource("13_wijgc")
+
+[node name="SkillFrameHighLight" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1346578944]
+position = Vector2(74, 75)
+texture = ExtResource("14_yhvps")
+
+[node name="SkillNumber" type="Sprite2D" parent="ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=77142349]
+position = Vector2(72, 151)
+texture = ExtResource("15_tb15e")
+
+[node name="Number" type="TextEdit" parent="ActiveSkillSlot/SkillArea/SingleSkill2/SkillNumber" unique_id=923290353]
+offset_left = -15.0
+offset_top = -14.0
+offset_right = 15.0
+offset_bottom = 15.0
+text = "1"
+
+[node name="PassiveSkillSlot" type="Control" parent="." unique_id=1940705842]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 139.0
+offset_right = 222.0
+offset_bottom = 807.0
+
+[node name="PassiveSlots" type="Sprite2D" parent="PassiveSkillSlot" unique_id=1634609063]
+position = Vector2(76, 335)
+texture = ExtResource("16_qvwwb")
+
+[node name="SinglePassiveSkill" type="Control" parent="PassiveSkillSlot" unique_id=1557960317]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 6.0
+offset_top = -287.0
+offset_right = 67.0
+offset_bottom = -226.0
+grow_vertical = 2
+
+[node name="Passiveskill" type="Sprite2D" parent="PassiveSkillSlot/SinglePassiveSkill" unique_id=1608711142]
+position = Vector2(30, 30)
+texture = ExtResource("17_qqo6a")
+
+[node name="SinglePassiveSkill2" type="Control" parent="PassiveSkillSlot" unique_id=228511925]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 75.0
+offset_top = -287.0
+offset_right = 136.0
+offset_bottom = -226.0
+grow_vertical = 2
+
+[node name="Passiveskill" type="Sprite2D" parent="PassiveSkillSlot/SinglePassiveSkill2" unique_id=1172095490]
+position = Vector2(30, 30)
+texture = ExtResource("17_qqo6a")
+
+[node name="SinglePassiveSkill3" type="Control" parent="PassiveSkillSlot" unique_id=583905454]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 6.0
+offset_top = -223.0
+offset_right = 67.0
+offset_bottom = -162.0
+grow_vertical = 2
+
+[node name="Passiveskill" type="Sprite2D" parent="PassiveSkillSlot/SinglePassiveSkill3" unique_id=92958267]
+position = Vector2(30, 30)
+texture = ExtResource("17_qqo6a")
+
+[node name="BossSkillArea" type="Control" parent="." unique_id=1397389161]
+layout_mode = 3
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 1704.0
+offset_top = 418.0
+offset_right = 1911.0
+offset_bottom = 924.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="BossActionBarButton" type="Sprite2D" parent="BossSkillArea" unique_id=2089431095]
+position = Vector2(27, 253.5)
+texture = ExtResource("18_8ekee")
+
+[node name="BossActionBarFill" type="Sprite2D" parent="BossSkillArea" unique_id=856144114]
+position = Vector2(27, 252.5)
+texture = ExtResource("19_j0pu8")
+
+[node name="WarningPosButton" type="Sprite2D" parent="BossSkillArea" unique_id=1124207086]
+position = Vector2(18, 194.5)
+texture = ExtResource("20_6maro")
+
+[node name="IsWarningIcon" type="Sprite2D" parent="BossSkillArea" unique_id=1096824931]
+position = Vector2(18, 195.5)
+texture = ExtResource("21_45jp6")
+
+[node name="BossSkill" type="Sprite2D" parent="BossSkillArea" unique_id=426150513]
+position = Vector2(116, 67)
+texture = ExtResource("22_q6a8d")
+
+[node name="MistProgress" type="Control" parent="." unique_id=1608658710]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = 1692.0
+offset_top = 154.0
+offset_right = 1907.0
+offset_bottom = 369.0
+grow_horizontal = 0
+
+[node name="MistBackground" type="Sprite2D" parent="MistProgress" unique_id=1366355312]
+position = Vector2(109, 108)
+texture = ExtResource("23_6lb63")
+
+[node name="MistBarButton" type="Sprite2D" parent="MistProgress" unique_id=1934854260]
+position = Vector2(109, 107)
+texture = ExtResource("24_dgrhb")
+
+[node name="MistBarFill" type="Sprite2D" parent="MistProgress" unique_id=1262317805]
+position = Vector2(109, 106)
+texture = ExtResource("25_wypb4")
+
+[node name="TextEdit" type="TextEdit" parent="MistProgress/MistBarFill" unique_id=130632937]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -145.0
+offset_top = -130.5
+offset_right = -31.0
+offset_bottom = -41.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "50%"

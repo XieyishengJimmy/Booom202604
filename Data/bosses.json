@@ -1,0 +1,31 @@
+﻿{
+  "version": 3,
+  "bosses": [
+    {
+      "id": 1001,
+      "name": "哥布林",
+      "charge_meter": 5,
+      "warn_meter": 2,
+      "gain_per_turn": 1,
+      "skill_target": 1,
+      "skill_area": 0,
+      "skill_effect": 0,
+      "skill_detail": "在规定范围内生成迷雾",
+      "skill_description": "在规定范围内生成迷雾",
+      "ai_description": "AI：中心锁定玩家所在格。"
+    },
+    {
+      "id": 1002,
+      "name": "独角仙",
+      "charge_meter": 7,
+      "warn_meter": 1,
+      "gain_per_turn": 1,
+      "skill_target": 2,
+      "skill_area": 0,
+      "skill_effect": 0,
+      "skill_detail": "",
+      "skill_description": "BOSS 技能枚举：定位 2 · 范围 0 · 效果 —",
+      "ai_description": "AI：范围仅需包含玩家所在格即可。"
+    }
+  ]
+}

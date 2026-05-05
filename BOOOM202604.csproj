@@ -1,7 +1,16 @@
 <Project Sdk="Godot.NET.Sdk/4.6.2">
   <PropertyGroup>
+    <!-- 避免 MSBuild/SDK 生成的 AssemblyInfo.cs 与其它流程重复写入相同 [assembly:]，导致 CS0579 -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <Nullable>enable</Nullable>
     <TargetFramework>net8.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net9.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 控制台导表工具独立工程；勿打入游戏程序集 -->
+    <Compile Remove="Tools\**\*.cs" />
+  </ItemGroup>
 </Project>

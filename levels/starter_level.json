@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "level_name": "示例关卡",
+  "player_start": { "x": 0, "y": 0 },
+  "boss": {
+	"boss_id": 1001
+  },
+  "cells": [
+	{ "x": 0, "y": 0, "present": true, "fog": false, "block": false },
+	{ "x": 1, "y": 0, "present": true, "fog": true, "block": false },
+	{ "x": 2, "y": 0, "present": true, "fog": true, "block": false },
+	{ "x": -1, "y": 1, "present": true, "fog": true, "block": false },
+	{ "x": 0, "y": 1, "present": true, "fog": true, "block": false },
+	{ "x": 1, "y": 1, "present": true, "fog": true, "block": false },
+	{ "x": -1, "y": 0, "present": true, "fog": true, "block": false },
+	{ "x": 2, "y": 1, "present": true, "fog": true, "block": false }
+  ],
+  "events": [
+	{
+	  "type": "monster_str",
+	  "x": 2,
+	  "y": 0,
+	  "value": 2,
+	  "monster_id": 1,
+	  "icon": "res://Art/Icon/monster.png",
+	  "name": "蛮力鼠",
+	  "description": "穴居杂兵靠蛮力扑咬。"
+	},
+	{ "type": "treasure", "x": -1, "y": 1, "value": 0 },
+	{ "type": "altar", "x": 1, "y": 1, "value": 0, "altar_used": false },
+	{ "type": "grass", "x": 0, "y": 1, "value": 0 },
+	{ "type": "corpse", "x": 1, "y": 0, "value": 0 },
+	{ "type": "ruins", "x": 2, "y": 1, "value": 0 }
+  ]
+}

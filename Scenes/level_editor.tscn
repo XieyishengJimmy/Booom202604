@@ -1,0 +1,205 @@
+[gd_scene load_steps=5 format=3 uid="uid://level_editor_scene"]
+
+[ext_resource type="Script" path="res://Scripts/editor/LevelEditor.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/game/FogLayer.cs" id="2"]
+[ext_resource type="Script" path="res://Scripts/game/BlockLayer.cs" id="3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sidebar"]
+bg_color = Color(0.101961, 0.121569, 0.141176, 0.85)
+
+[node name="LevelEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="HBox" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+split_offsets = PackedInt32Array(1380)
+
+[node name="ViewportContainer" type="SubViewportContainer" parent="HBox"]
+layout_mode = 2
+clip_contents = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="HBox/ViewportContainer"]
+handle_input_locally = true
+size = Vector2i(960, 600)
+render_target_update_mode = 4
+
+[node name="Camera2D" type="Camera2D" parent="HBox/ViewportContainer/Viewport"]
+enabled = true
+
+[node name="World" type="Node2D" parent="HBox/ViewportContainer/Viewport"]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="HBox/ViewportContainer/Viewport/World"]
+
+[node name="BlockRoot" type="Node2D" parent="HBox/ViewportContainer/Viewport/World"]
+script = ExtResource("3")
+
+[node name="FogRoot" type="Node2D" parent="HBox/ViewportContainer/Viewport/World"]
+script = ExtResource("2")
+
+[node name="EventIcons" type="Node2D" parent="HBox/ViewportContainer/Viewport/World"]
+
+[node name="PlayerGhost" type="Sprite2D" parent="HBox/ViewportContainer/Viewport/World"]
+centered = true
+
+[node name="Sidebar" type="Panel" parent="HBox"]
+layout_mode = 2
+clip_contents = true
+custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_sidebar")
+
+[node name="SidebarScroll" type="ScrollContainer" parent="HBox/Sidebar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 16.0
+offset_right = -10.0
+offset_bottom = -16.0
+follow_focus = true
+
+[node name="VBox" type="VBoxContainer" parent="HBox/Sidebar/SidebarScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "关卡编辑器"
+
+[node name="LevelNameLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "关卡名（保存必填）"
+
+[node name="LevelNameEdit" type="LineEdit" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+placeholder_text = "例如：第一课"
+
+[node name="LevelListLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "已有关卡（选择后自动载入）"
+
+[node name="LevelFilesOpt" type="OptionButton" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+
+[node name="FileBtnRowNew" type="HBoxContainer" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NewLevelBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowNew"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "新建关卡"
+
+[node name="SaveAsBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowNew"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "另存为"
+
+[node name="FileBtnRowSave" type="HBoxContainer" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SaveBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowSave"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "保存"
+
+[node name="ReloadBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowSave"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "重新读取"
+
+[node name="ModeOpt" type="OptionButton" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+
+[node name="ModeHint" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+custom_minimum_size = Vector2(0, 56)
+
+[node name="CamHelp" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.698039, 0.784314, 0.635294, 1)
+text = "地图：滚轮缩放；按住中键拖拽平移。「铺设地砖」模式下对已有格右键可整块移除。"
+
+[node name="SectionMonsters" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 2
+text = "怪物单位（点选亮起 → 地图上左键放置；地图右键取消选择）"
+
+[node name="MonsterScroll" type="ScrollContainer" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 280)
+
+[node name="MonsterPickGrid" type="FlowContainer" parent="HBox/Sidebar/SidebarScroll/VBox/MonsterScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 12
+
+[node name="SectionObjects" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 2
+text = "场景物件（含障碍；选中后地图左键放置，地图右键取消选择）"
+
+[node name="OtherScroll" type="ScrollContainer" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 220)
+
+[node name="OtherPickGrid" type="FlowContainer" parent="HBox/Sidebar/SidebarScroll/VBox/OtherScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 12
+
+[node name="PlacementHint" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+theme_override_colors/font_color = Color(0.729412, 0.839216, 1, 1)
+
+[node name="BossIdLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "关卡 BOSS（excel/bosses.xlsx → Data/bosses.json）"
+
+[node name="BossIdOpt" type="OptionButton" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+
+[node name="PlayBtnRow" type="HBoxContainer" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PlayBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "试玩（先保存）"
+
+[node name="HomeBtn" type="Button" parent="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "回主菜单"
+
+[connection signal="item_selected" from="HBox/Sidebar/SidebarScroll/VBox/LevelFilesOpt" to="." method="_on_level_files_selected"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowNew/NewLevelBtn" to="." method="_on_new_level_pressed"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowNew/SaveAsBtn" to="." method="_on_save_as_pressed"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowSave/SaveBtn" to="." method="_on_save_pressed"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowSave/ReloadBtn" to="." method="_on_reload_pressed"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow/PlayBtn" to="." method="_on_playtest_pressed"]
+[connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow/HomeBtn" to="." method="_on_back_menu_pressed"]
