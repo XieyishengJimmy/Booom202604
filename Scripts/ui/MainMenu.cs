@@ -67,6 +67,13 @@ public partial class MainMenu : Control
 			return;
 		}
 
+		if (RunState.Instance == null)
+		{
+			GD.PrintErr("[MainMenu] RunState autoload 缺失：请在 project.godot 的 [autoload] 中注册 RunState。");
+			PopupBrief("无法开始", "全局单例 RunState 未加载。请在编辑器 项目设置 → AutoLoad 添加 Script autoload：res://Scripts/autoload/RunState.cs，命名为 RunState。");
+			return;
+		}
+
 		RunState.Instance.PendingLevelPath = path;
 		GetTree().ChangeSceneToFile("res://Scenes/gameplay.tscn");
 	}

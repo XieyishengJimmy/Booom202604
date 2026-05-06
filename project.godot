@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="BOOOM202604"
-run/main_scene="uid://b50uigiv70755"
-config/features=PackedStringArray("4.6", "Forward Plus")
+run/main_scene="res://Scenes/main_menu.tscn"
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://Art/icon.svg"
+
+[autoload]
+
+RunState="*res://Scripts/autoload/RunState.cs"
 
 [display]
 
