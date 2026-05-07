@@ -1,0 +1,56 @@
+[
+  {
+    "ID": "int",
+    "name": "string",
+    "address": "string",
+    "describe": "string"
+  },
+  {
+    "ID": 1,
+    "name": "破晓",
+    "address": "res://Art/Icon/askill1.png",
+    "describe": "驱散指定圆形（7格）范围内的所有迷雾"
+  },
+  {
+    "ID": 2,
+    "name": "晨光射线",
+    "address": "res://Art/Icon/askill2.png",
+    "describe": "选择1个方向，驱散该方向直线5格迷雾"
+  },
+  {
+    "ID": 3,
+    "name": "自然恩赐",
+    "address": "res://Art/Icon/askill3.png",
+    "describe": "在随机明亮位置，生成草地/尸体/废墟各一个"
+  },
+  {
+    "ID": 4,
+    "name": "战前誓师",
+    "address": "res://Art/Icon/askill4.png",
+    "describe": "下次战斗前提升3点力量"
+  },
+  {
+    "ID": 5,
+    "name": "冥想预演",
+    "address": "res://Art/Icon/askill5.png",
+    "describe": "下次战斗前提升3点魔法"
+  },
+  {
+    "ID": 6,
+    "name": "疾风步",
+    "address": "res://Art/Icon/askill6.png",
+    "describe": "下2次基础行动变为快速行动"
+  },
+  {
+    "ID": 7,
+    "name": "空间折跃",
+    "address": "res://Art/Icon/askill7.png",
+    "describe": "传送至指定位置"
+  },
+  {
+    "ID": 8,
+    "name": "颠倒乾坤",
+    "address": "res://Art/Icon/askill8.png",
+    "describe": "选择1个怪物，将他的战斗属性倒转"
+  }
+]
