@@ -98,6 +98,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillChoose" type="Control" parent="UICanvas/HUD" unique_id=1691691944]
+visible = false
 z_index = 1
 anchors_preset = 0
 offset_right = 1927.0
@@ -270,7 +271,6 @@ icon = ExtResource("14_lv0na")
 
 [node name="SureSelect" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Sure" unique_id=505067777]
 visible = false
-z_index = 1
 layout_mode = 0
 offset_left = 4.0
 offset_top = 4.0
@@ -1105,5 +1105,5 @@ offset_bottom = 1080.0
 texture = ExtResource("39_fm0py")
 metadata/_edit_lock_ = true
 
-[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed"]
+[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="_on_sure_button_down"]
 [connection signal="button_up" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed_close"]
