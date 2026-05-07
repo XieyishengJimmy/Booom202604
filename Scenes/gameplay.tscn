@@ -7,14 +7,23 @@
 [ext_resource type="Texture2D" uid="uid://uuh2nxagk2ij" path="res://Art/UI/mainUI/示意图1.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://bjt6ykcgxnlro" path="res://Art/UI/mainUI/H&MBorder2.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://dds7p2r5xpduq" path="res://Art/UI/mainUI/_HealthBar.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://b542o5hgix1bv" path="res://Art/UI/skillAcquire/Background.png" id="7_e3r7a"]
 [ext_resource type="Texture2D" uid="uid://ccgckxgtqou2q" path="res://Art/UI/mainUI/H&MBorder1.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://d0q7pgchdj7c5" path="res://Art/UI/skillAcquire/Card_Normal.png" id="8_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://443b7wu7q42j" path="res://Art/UI/skillAcquire/SkillIcon.png" id="9_solsi"]
 [ext_resource type="Texture2D" uid="uid://dbipcuuw8jsmw" path="res://Art/UI/mainUI/Buff.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://cbr0goakx7b1b" path="res://Art/UI/skillAcquire/Card_Glow.png" id="10_xrja5"]
 [ext_resource type="Texture2D" uid="uid://c8xs5yfohbhys" path="res://Art/UI/mainUI/BuffBar.png" id="11"]
+[ext_resource type="Texture2D" uid="uid://bd73swdiehk8w" path="res://Art/UI/skillAcquire/Card_Selected.png" id="11_cnqtm"]
 [ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="12"]
+[ext_resource type="Texture2D" uid="uid://n6h8haytxwtx" path="res://Art/UI/skillAcquire/SkipButton_Normal.png" id="12_v8xiy"]
 [ext_resource type="Texture2D" uid="uid://k0qi4ou8ilg6" path="res://Art/UI/mainUI/AttributeBorder.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://dljvslyyio6wo" path="res://Art/UI/skillAcquire/RefreshButton_Normal.png" id="13_27sjm"]
 [ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://c24nfvq8qwlxl" path="res://Art/UI/skillAcquire/Button_Normal.png" id="14_lv0na"]
 [ext_resource type="Texture2D" uid="uid://3oy2s8l4t07p" path="res://Art/UI/mainUI/Skill.png" id="15"]
+[ext_resource type="Texture2D" uid="uid://xxuiocmxubva" path="res://Art/UI/skillAcquire/Button_Selected.png" id="15_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://dkt27qe2mb5l" path="res://Art/UI/mainUI/Skill_cover.png" id="16"]
 [ext_resource type="Texture2D" uid="uid://cn2g388d3rq" path="res://Art/UI/mainUI/SkillBar.png" id="17"]
 [ext_resource type="Texture2D" uid="uid://c2q4xn5bapdn3" path="res://Art/UI/mainUI/SkillBar_light.png" id="18"]
@@ -30,6 +39,7 @@
 [ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="28"]
 [ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="29"]
 [ext_resource type="Script" uid="uid://ikw7ji2x4ptf" path="res://Scripts/game/BossWarningLayer.cs" id="30"]
+[ext_resource type="Texture2D" uid="uid://gwbuxuxjp03c" path="res://Art/UI/skillAcquire/获得.png" id="39_fm0py"]
 
 [node name="Gameplay" type="Node2D" unique_id=841708317]
 script = ExtResource("1")
@@ -75,7 +85,6 @@ mouse_filter = 2
 script = ExtResource("4")
 
 [node name="UILayoutRef" type="TextureRect" parent="UICanvas/HUD" unique_id=2014498998]
-visible = false
 modulate = Color(1, 1, 1, 0.35686275)
 layout_mode = 1
 anchors_preset = 15
@@ -88,6 +97,188 @@ texture = ExtResource("5")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="SkillChoose" type="Control" parent="UICanvas/HUD" unique_id=1691691944]
+visible = false
+z_index = 1
+anchors_preset = 0
+offset_right = 1927.0
+offset_bottom = 1070.0
+
+[node name="SkillChooseBlock" type="TextureRect" parent="UICanvas/HUD/SkillChoose" unique_id=871539526]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+texture = ExtResource("7_e3r7a")
+
+[node name="Card1" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=853233708]
+anchors_preset = 0
+offset_left = 384.0
+offset_top = 213.0
+offset_right = 738.0
+offset_bottom = 796.0
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=1751646409]
+layout_mode = 0
+offset_left = 19.0
+offset_top = 15.0
+offset_right = 346.0
+offset_bottom = 565.0
+icon = ExtResource("8_yl3i8")
+
+[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card1/Button" unique_id=71953779]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 78.0
+offset_right = 247.0
+offset_bottom = 245.0
+texture = ExtResource("9_solsi")
+
+[node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=2029072183]
+layout_mode = 0
+offset_left = -24.0
+offset_top = -30.0
+offset_right = 391.0
+offset_bottom = 608.0
+mouse_filter = 2
+texture = ExtResource("10_xrja5")
+metadata/_edit_lock_ = true
+
+[node name="CardSelect" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=1187614572]
+visible = false
+layout_mode = 0
+offset_left = -24.0
+offset_top = -30.0
+offset_right = 395.0
+offset_bottom = 612.0
+mouse_filter = 2
+texture = ExtResource("11_cnqtm")
+metadata/_edit_lock_ = true
+
+[node name="Card2" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=1369564049]
+anchors_preset = 0
+offset_left = 793.0
+offset_top = 221.0
+offset_right = 1124.0
+offset_bottom = 795.0
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=115738405]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 8.0
+offset_right = 332.0
+offset_bottom = 558.0
+icon = ExtResource("8_yl3i8")
+
+[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card2/Button" unique_id=1394606542]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 77.0
+offset_right = 246.0
+offset_bottom = 244.0
+texture = ExtResource("9_solsi")
+
+[node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=865906563]
+layout_mode = 0
+offset_left = -39.0
+offset_top = -37.0
+offset_right = 376.0
+offset_bottom = 601.0
+mouse_filter = 2
+texture = ExtResource("10_xrja5")
+metadata/_edit_lock_ = true
+
+[node name="CardSelect" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=1493568616]
+visible = false
+layout_mode = 0
+offset_left = -39.0
+offset_top = -37.0
+offset_right = 376.0
+offset_bottom = 601.0
+mouse_filter = 2
+texture = ExtResource("11_cnqtm")
+metadata/_edit_lock_ = true
+
+[node name="Card3" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=351088451]
+anchors_preset = 0
+offset_left = 1180.0
+offset_top = 231.0
+offset_right = 1526.0
+offset_bottom = 791.0
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1343117860]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 1.0
+offset_right = 339.0
+offset_bottom = 551.0
+icon = ExtResource("8_yl3i8")
+
+[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card3/Button" unique_id=1916770639]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 74.0
+offset_right = 246.0
+offset_bottom = 241.0
+texture = ExtResource("9_solsi")
+
+[node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1875640268]
+layout_mode = 0
+offset_left = -33.0
+offset_top = -46.0
+offset_right = 382.0
+offset_bottom = 592.0
+mouse_filter = 2
+texture = ExtResource("10_xrja5")
+metadata/_edit_lock_ = true
+
+[node name="CardSelect" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1698624631]
+visible = false
+layout_mode = 0
+offset_left = -33.0
+offset_top = -46.0
+offset_right = 382.0
+offset_bottom = 592.0
+mouse_filter = 2
+texture = ExtResource("11_cnqtm")
+metadata/_edit_lock_ = true
+
+[node name="Skip" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=718415223]
+layout_mode = 0
+offset_left = 1610.0
+offset_top = 228.0
+offset_right = 1703.0
+offset_bottom = 318.0
+icon = ExtResource("12_v8xiy")
+
+[node name="Refresh" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=1776393458]
+layout_mode = 0
+offset_left = 1611.0
+offset_top = 356.0
+offset_right = 1704.0
+offset_bottom = 446.0
+icon = ExtResource("13_27sjm")
+
+[node name="Sure" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=1753302701]
+layout_mode = 0
+offset_left = 1610.0
+offset_top = 805.0
+offset_right = 1924.0
+offset_bottom = 904.0
+icon = ExtResource("14_lv0na")
+
+[node name="SureSelect" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Sure" unique_id=505067777]
+visible = false
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 310.0
+offset_bottom = 95.0
+mouse_filter = 2
+texture = ExtResource("15_yl3i8")
+
 [node name="PlayerInfo" type="Control" parent="UICanvas/HUD" unique_id=1403547798]
 layout_mode = 1
 anchors_preset = 2
@@ -96,8 +287,7 @@ anchor_bottom = 1.0
 offset_left = 17.0
 offset_top = -244.0
 offset_right = 667.0
-grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 mouse_filter = 2
 
 [node name="HpRow" type="Control" parent="UICanvas/HUD/PlayerInfo" unique_id=1325919586]
@@ -367,6 +557,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ActiveSkillSlot" type="Control" parent="UICanvas/HUD" unique_id=617858476]
+z_index = -1
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -604,6 +795,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P1" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=499782453]
+visible = false
 layout_mode = 1
 offset_left = 10.0
 offset_top = 50.0
@@ -615,6 +807,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P2" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1175294091]
+visible = false
 layout_mode = 1
 offset_left = 80.0
 offset_top = 50.0
@@ -626,6 +819,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P3" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1924801458]
+visible = false
 layout_mode = 1
 offset_left = 10.0
 offset_top = 120.0
@@ -637,6 +831,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P4" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=101587332]
+visible = false
 layout_mode = 0
 offset_left = 80.0
 offset_top = 120.0
@@ -648,6 +843,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P5" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1101442976]
+visible = false
 layout_mode = 0
 offset_left = 10.0
 offset_top = 190.0
@@ -659,6 +855,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P6" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=490813016]
+visible = false
 layout_mode = 0
 offset_left = 80.0
 offset_top = 190.0
@@ -670,6 +867,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P7" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=181816332]
+visible = false
 layout_mode = 0
 offset_left = 10.0
 offset_top = 260.0
@@ -681,6 +879,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P8" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1448094097]
+visible = false
 layout_mode = 0
 offset_left = 80.0
 offset_top = 260.0
@@ -692,6 +891,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="P9" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1156147592]
+visible = false
 layout_mode = 0
 offset_left = 10.0
 offset_top = 330.0
@@ -897,3 +1097,13 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text = "回合信息"
 horizontal_alignment = 1
+
+[node name="test" type="TextureRect" parent="." unique_id=1022189283]
+visible = false
+offset_right = 1920.0
+offset_bottom = 1080.0
+texture = ExtResource("39_fm0py")
+metadata/_edit_lock_ = true
+
+[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="_on_sure_button_down"]
+[connection signal="button_up" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed_close"]

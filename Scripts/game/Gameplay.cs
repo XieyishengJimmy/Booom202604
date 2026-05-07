@@ -95,6 +95,13 @@ public partial class Gameplay : Node2D
 		}
 	}
 
+	List<int> skillList = new List<int>();
+	List<int> askillList = new List<int>();
+	List<int> pskillList = new List<int>();
+
+	public Godot.Collections.Array aarray = Json.ParseString(FileAccess.GetFileAsString("res://skill/activeskill.json")).AsGodotArray();
+	public Godot.Collections.Array parray = Json.ParseString(FileAccess.GetFileAsString("res://skill/passiveskill.json")).AsGodotArray();
+
 	public override void _Ready()
 	{
 		RunState.Instance.PrepareLevelStart();
@@ -130,6 +137,21 @@ public partial class Gameplay : Node2D
 		Godot.Collections.Dictionary lvl = LevelIo.LoadFromFile(path);
 		if (lvl.Count == 0)
 			lvl = LevelIo.LoadFromFile(DefaultLevel);
+
+
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			int pskillid = pskilldict["ID"].AsInt32();
+			skillList.Add(pskillid);
+		}
+
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			int askillid = askilldict["ID"].AsInt32();
+			skillList.Add(askillid);
+		}
 
 		ApplyLevel(lvl);
 		SnapPlayer();
@@ -525,7 +547,7 @@ public partial class Gameplay : Node2D
 		}
 
 		if (@event is InputEventMouseMotion mm && (Input.IsMouseButtonPressed(MouseButton.Middle)
-		                                        || Input.IsMouseButtonPressed(MouseButton.Right)))
+												|| Input.IsMouseButtonPressed(MouseButton.Right)))
 		{
 			_camera!.Position -= mm.Relative / _camera.Zoom;
 			return true;
@@ -943,12 +965,11 @@ public partial class Gameplay : Node2D
 			case "treasure":
 
 
-
-				RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 5, RunState.Instance.PlayerEnergyMax);
-
 				EraseEvent(cell);
-
-				await ToastAsync("宝箱", "占位奖励：能量 +5（技能三选一未实现）。");
+				GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = true;
+				//随机
+				//另一边选择+确定
+				//另一边存入数组
 
 				break;
 
@@ -1087,7 +1108,34 @@ public partial class Gameplay : Node2D
 
 	}
 
+	public async Task UseSkillAsync(int skillId)
+	{
+		if (skillId > 100)
+		{
+			skillList.Remove(skillId);
+			pskillList.Add(skillId);
+			var pname = "P" + pskillList.Count;
+			GetNode<CanvasItem>("UICanvas/HUD/PassiveSkillSlot/" + pname).Visible = true;
+			foreach (var item in parray)
+			{
+				var pskilldict = item.AsGodotDictionary();
+				int id = pskilldict["ID"].AsInt32();
 
+				if (id == skillId)
+				{
+					string targetAddress = pskilldict["address"].AsString();
+					GetNode<TextureRect>("UICanvas/HUD/PassiveSkillSlot/" + pname).Texture = GD.Load<Texture2D>(targetAddress);
+					break;
+				}
+			}
+
+		}
+		else
+		{
+			//还没做
+		}
+
+	}
 
 
 
@@ -1360,7 +1408,7 @@ public partial class Gameplay : Node2D
 		await ToastAsync(_bossName, tip);
 
 		if (_bossUsesTableSkill && BossSkillParsing.TryParseFogMonsterSkill(_bossSkillDetail, _bossSkillText,
-			    _bossTableId, out BossSkillParsing.FogMonsterSpec fm))
+				_bossTableId, out BossSkillParsing.FogMonsterSpec fm))
 		{
 			var lockedKeys = new List<string>(_bossLockedCellKeys);
 
@@ -1809,8 +1857,18 @@ public partial class Gameplay : Node2D
 
 	}
 
-
-
+	public void sure_button_pressed()
+	{
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = true;
+	}
+		
+	
+	public void sure_button_pressed_close()
+	{
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = false;
+	}
+		
 
 
 
