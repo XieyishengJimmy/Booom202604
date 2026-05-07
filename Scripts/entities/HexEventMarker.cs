@@ -16,12 +16,21 @@ public partial class HexEventMarker : Node2D
 		Ruins,
 	}
 
-	static readonly Texture2D TexMonster = GD.Load<Texture2D>("res://Art/Icon/monster.png")!;
-	static readonly Texture2D TexTreasure = GD.Load<Texture2D>("res://Art/Icon/treasure.png")!;
-	static readonly Texture2D TexAltar = GD.Load<Texture2D>("res://Art/Icon/altar.png")!;
-	static readonly Texture2D TexGrass = GD.Load<Texture2D>("res://Art/Icon/grass.png")!;
-	static readonly Texture2D TexCorpse = GD.Load<Texture2D>("res://Art/Icon/corpse.png")!;
-	static readonly Texture2D TexRuins = GD.Load<Texture2D>("res://Art/Icon/ruins.png")!;
+	public const string IconAltarUseful = "res://Art/Icon/Altar_Useful.png";
+	public const string IconAltarUsed = "res://Art/Icon/Altar_Uesless.png";
+
+	/// <summary>场景里事件 Sprite2D 的缩放（相对贴图源尺寸）。编辑器与 Gameplay 共用。</summary>
+	public const float EventIconSpriteScale = 0.765f;
+
+	static Texture2D? LoadIcon(string resPath) =>
+		ResourceLoader.Exists(resPath) ? GD.Load<Texture2D>(resPath) : null;
+
+	static readonly Texture2D? TexMonster = LoadIcon("res://Art/Icon/monster.png");
+	static readonly Texture2D? TexTreasure = LoadIcon("res://Art/Icon/TreasureChest.png");
+	static readonly Texture2D? TexAltar = LoadIcon(IconAltarUseful);
+	static readonly Texture2D? TexGrass = LoadIcon("res://Art/Icon/GrassPatch1.png");
+	static readonly Texture2D? TexCorpse = LoadIcon("res://Art/Icon/Grave.png");
+	static readonly Texture2D? TexRuins = LoadIcon("res://Art/Icon/AbandonedShrine.png");
 
 	public static Texture2D? TextureFor(Kind kind)
 	{
@@ -37,19 +46,36 @@ public partial class HexEventMarker : Node2D
 		};
 	}
 
+	static bool EventDictBool(Godot.Collections.Dictionary ev, string key)
+	{
+		if (!ev.TryGetValue(key, out Variant v))
+			return false;
+		return v switch
+		{
+			{ VariantType: Variant.Type.Bool } => v.AsBool(),
+			{ VariantType: Variant.Type.Int } => v.AsInt32() != 0,
+			{ VariantType: Variant.Type.Float } => !Mathf.IsZeroApprox(v.AsSingle()),
+			_ => false,
+		};
+	}
+
 	/// <summary>Loads per-event tile icon when <c>icon</c> path is stored in level JSON.</summary>
 	public static Texture2D? TextureForEventDict(Godot.Collections.Dictionary ev)
 	{
+		string ty = "";
+		if (ev.TryGetValue("type", out Variant tVar) && tVar.VariantType == Variant.Type.String)
+			ty = tVar.AsString();
+
+		// 祭坛：已使用后固定为「耗尽」贴图；编辑/未使用则尊重关卡里的 icon（默认可用）。
+		if (ty == "altar" && EventDictBool(ev, "altar_used"))
+			return LoadIcon(IconAltarUsed) ?? TexAltar;
+
 		if (ev.TryGetValue("icon", out Variant pathVar) && pathVar.VariantType == Variant.Type.String)
 		{
 			string p = pathVar.AsString();
 			if (!string.IsNullOrEmpty(p) && ResourceLoader.Exists(p))
 				return GD.Load<Texture2D>(p);
 		}
-
-		string ty = "";
-		if (ev.TryGetValue("type", out Variant tVar) && tVar.VariantType == Variant.Type.String)
-			ty = tVar.AsString();
 
 		return TextureFor(StringToKind(ty));
 	}
@@ -146,7 +172,7 @@ public partial class HexEventMarker : Node2D
 		_sprite.Texture = tex;
 		if (tex != null)
 		{
-			_sprite.Scale = new Vector2(0.35f, 0.35f);
+			_sprite.Scale = new Vector2(EventIconSpriteScale, EventIconSpriteScale);
 			_sprite.Position = new Vector2(0f, -tex.GetHeight() * 0.12f);
 		}
 	}

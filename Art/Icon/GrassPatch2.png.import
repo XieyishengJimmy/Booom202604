@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dcd6amyntkrcq"
-path="res://.godot/imported/altar.png-ded31bb04b7ffb696f510209465b9fc9.ctex"
+uid="uid://dut57dcs2fmnf"
+path="res://.godot/imported/GrassPatch2.png-a3df29bd59ec3267fa6b6d3cc64ef685.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Art/Icon/altar.png"
-dest_files=["res://.godot/imported/altar.png-ded31bb04b7ffb696f510209465b9fc9.ctex"]
+source_file="res://Art/Icon/GrassPatch2.png"
+dest_files=["res://.godot/imported/GrassPatch2.png-a3df29bd59ec3267fa6b6d3cc64ef685.ctex"]
 
 [params]
 

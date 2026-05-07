@@ -449,7 +449,7 @@
 		{
 			"description": "穴居杂兵靠蛮力扑咬。",
 			"icon": "res://Art/Icon/monster.png",
-			"monster_id": 1,
+			"monster_id": 2001,
 			"name": "蛮力鼠",
 			"type": "monster_str",
 			"value": 2,
@@ -459,7 +459,7 @@
 		{
 			"description": "穴居杂兵靠蛮力扑咬。",
 			"icon": "res://Art/Icon/monster.png",
-			"monster_id": 1,
+			"monster_id": 2001,
 			"name": "蛮力鼠",
 			"type": "monster_str",
 			"value": 2,
@@ -469,7 +469,7 @@
 		{
 			"description": "穴居杂兵靠蛮力扑咬。",
 			"icon": "res://Art/Icon/monster.png",
-			"monster_id": 1,
+			"monster_id": 2001,
 			"name": "蛮力鼠",
 			"type": "monster_str",
 			"value": 2,
@@ -479,7 +479,7 @@
 		{
 			"description": "穴居杂兵靠蛮力扑咬。",
 			"icon": "res://Art/Icon/monster.png",
-			"monster_id": 1,
+			"monster_id": 2001,
 			"name": "蛮力鼠",
 			"type": "monster_str",
 			"value": 2,
@@ -489,7 +489,7 @@
 		{
 			"description": "无声徘徊的残影偏精神干扰。",
 			"icon": "res://Art/Icon/corpse.png",
-			"monster_id": 3,
+			"monster_id": 2001,
 			"name": "残响",
 			"type": "monster_mag",
 			"value": 4,

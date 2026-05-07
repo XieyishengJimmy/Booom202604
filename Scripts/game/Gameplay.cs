@@ -68,6 +68,7 @@ public partial class Gameplay : Node2D
 	int _bossSkillArea;
 	int _bossSkillEffect;
 	string _bossSkillDetail = "";
+	int _bossTableId;
 
 	readonly HashSet<string> _bossLockedCellKeys = [];
 
@@ -122,9 +123,6 @@ public partial class Gameplay : Node2D
 			_playerSprite.Scale = new Vector2(0.42f, 0.42f);
 		}
 
-		_terrain!.TileSet = TerrainTilesetFactory.CreateHexTileset();
-		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
-
 		string path = RunState.Instance.PendingLevelPath;
 		if (string.IsNullOrWhiteSpace(path))
 			path = LevelJsonPath;
@@ -171,7 +169,10 @@ public partial class Gameplay : Node2D
 
 	void ApplyLevel(Godot.Collections.Dictionary d)
 	{
-		_terrain!.Clear();
+		int terrainVar = TerrainTilesetFactory.ResolveTerrainVariantFromLevel(d);
+		_terrain!.TileSet = TerrainTilesetFactory.CreateHexTileset(terrainVar);
+		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+		_terrain.Clear();
 		_valid.Clear();
 		_fogState.Clear();
 		_blockState.Clear();
@@ -190,6 +191,7 @@ public partial class Gameplay : Node2D
 		_bossSkillArea = 0;
 		_bossSkillEffect = 0;
 		_bossSkillDetail = "";
+		_bossTableId = 0;
 		_bossLockedCellKeys.Clear();
 		_bossWarn?.ClearAll();
 
@@ -265,6 +267,7 @@ public partial class Gameplay : Node2D
 				_bossSkillEffect = br.SkillEffect;
 				_bossSkillDetail = string.IsNullOrWhiteSpace(br.SkillDetail) ? "" : br.SkillDetail;
 				_bossUsesTableSkill = true;
+				_bossTableId = bossId;
 				if (BossTable.MeterTotal(br) < 1)
 				{
 					_bossWarnMax = 50f;
@@ -277,6 +280,7 @@ public partial class Gameplay : Node2D
 			if (!fromTable && b.ContainsKey("meter_max"))
 			{
 				_bossUsesTableSkill = false;
+				_bossTableId = 0;
 				_bossSkillTarget = 0;
 				_bossSkillArea = 0;
 				_bossSkillEffect = 0;
@@ -293,6 +297,7 @@ public partial class Gameplay : Node2D
 			else if (!fromTable)
 			{
 				_bossUsesTableSkill = false;
+				_bossTableId = 0;
 				_bossSkillTarget = 0;
 				_bossSkillArea = 0;
 				_bossSkillEffect = 0;
@@ -344,7 +349,7 @@ public partial class Gameplay : Node2D
 			if (spr.Texture != null)
 			{
 
-				spr.Scale = new Vector2(0.34f, 0.34f);
+				spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
 
 				spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
 
@@ -1003,6 +1008,7 @@ public partial class Gameplay : Node2D
 				ev["altar_used"] = true;
 
 				_events[ck] = ev;
+				RefreshBossEventIcon(ck);
 
 				break;
 
@@ -1263,17 +1269,128 @@ public partial class Gameplay : Node2D
 		}
 	}
 
+	static Godot.Collections.Dictionary BuildMonsterEncounterDict(MonsterTable.Row row) =>
+		new()
+		{
+			["monster_id"] = row.Id,
+			["type"] = row.IsMagic ? "monster_mag" : "monster_str",
+			["value"] = row.Power,
+			["icon"] = row.IconPath,
+			["name"] = row.Name,
+			["description"] = row.Description,
+		};
+
+	void SpawnSingleEventIcon(Node2D iconsRoot, string cellKey, Godot.Collections.Dictionary ev)
+	{
+		Vector2I cell = HexGridUtil.ParseKey(cellKey);
+
+		var spr = new Sprite2D();
+		spr.Texture = HexEventMarker.TextureForEventDict(ev);
+		if (spr.Texture != null)
+		{
+			spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
+			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
+		}
+
+		spr.Name = $"Ev_{cell.X}_{cell.Y}";
+		spr.SetMeta(CellKeyMeta, cellKey);
+		spr.Position = _terrain!.MapToLocal(cell);
+		iconsRoot.AddChild(spr);
+	}
+
+	static List<string> ShuffledTakePrefix(IReadOnlyList<string> source, int take)
+	{
+		var copy = new List<string>(source);
+		for (int i = copy.Count - 1; i > 0; i--)
+		{
+			int j = (int)(GD.Randi() % (i + 1));
+			(copy[i], copy[j]) = (copy[j], copy[i]);
+		}
+
+		int keep = Mathf.Min(Mathf.Max(0, take), copy.Count);
+		return copy.GetRange(0, keep);
+	}
+
+	/// <summary>在已通过本次技能套上迷雾的空格（无其它事件）上随机放置战斗怪；不占玩家格。</summary>
+	void SpawnRandomBossAddsInFogCells(IReadOnlyList<string> cellsWhereBossJustFogged, int count)
+	{
+		if (count <= 0 || MonsterTable.All.Count == 0)
+			return;
+
+		string pk = HexGridUtil.CellKey(_playerCell);
+		var candidates = new List<string>();
+		foreach (string ck in cellsWhereBossJustFogged)
+		{
+			if (ck == pk)
+				continue;
+			if (!_valid.ContainsKey(ck))
+				continue;
+			if (!(_fogState.ContainsKey(ck) && _fogState[ck].AsBool()))
+				continue;
+			if (_events.ContainsKey(ck))
+				continue;
+			candidates.Add(ck);
+		}
+
+		List<string> pick = ShuffledTakePrefix(candidates, count);
+		Node2D iconsRoot = GetNode<Node2D>("World/EventIcons");
+
+		foreach (string ck in pick)
+		{
+			MonsterTable.Row? row = MonsterTable.PickBossSummonMonsterRow();
+			if (row == null)
+				break;
+			Godot.Collections.Dictionary ev = BuildMonsterEncounterDict(row);
+			MonsterTable.EnrichMonsterEvent(ev);
+			_events[ck] = ev;
+			SpawnSingleEventIcon(iconsRoot, ck, ev);
+		}
+	}
+
 	async Task ExecuteBossTableSkillAsync()
 	{
 		if (_terrain == null || _fog == null)
 			return;
 		if (_bossLockedCellKeys.Count == 0)
 			CommitBossSkillPreviewLock();
-		int fx = ResolveBossEffectKind();
+
 		string tip = string.IsNullOrWhiteSpace(_bossSkillText)
 			? "BOSS 释放了技能。"
 			: _bossSkillText;
 		await ToastAsync(_bossName, tip);
+
+		if (_bossUsesTableSkill && BossSkillParsing.TryParseFogMonsterSkill(_bossSkillDetail, _bossSkillText,
+			    _bossTableId, out BossSkillParsing.FogMonsterSpec fm))
+		{
+			var lockedKeys = new List<string>(_bossLockedCellKeys);
+
+			List<string> fogTargets = fm.FogRandomSubsetFromLocked is int fk && fk > 0
+				? ShuffledTakePrefix(lockedKeys, fk)
+				: lockedKeys;
+
+			foreach (string ck in fogTargets)
+			{
+				if (!_valid.ContainsKey(ck))
+					continue;
+				Vector2I c = HexGridUtil.ParseKey(ck);
+				_fogState[ck] = true;
+				_fog.SetCell(c, true);
+			}
+
+			_fogGoalTotal = Mathf.Max(_fogGoalTotal, CountTrue(_fogState));
+			SpawnRandomBossAddsInFogCells(fogTargets, fm.MonsterSpawnCount);
+
+			RefreshEventIconsFogVisibility();
+
+			_bossLockedCellKeys.Clear();
+			_bossWarn?.ClearAll();
+			_bossMeter = 0f;
+			await MaybeFogDamageAsync();
+			return;
+		}
+
+		int fx = ResolveBossEffectKind();
+
 		foreach (string ck in _bossLockedCellKeys)
 		{
 			if (!_valid.ContainsKey(ck))
@@ -1293,6 +1410,7 @@ public partial class Gameplay : Node2D
 							RefreshBossEventIcon(ck);
 						}
 					}
+
 					break;
 				case 3:
 					if (_events.ContainsKey(ck))
@@ -1308,6 +1426,7 @@ public partial class Gameplay : Node2D
 						_events[ck] = ev;
 						RefreshBossEventIcon(ck);
 					}
+
 					break;
 				default:
 					_fogState[ck] = true;

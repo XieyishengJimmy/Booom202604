@@ -1,37 +1,53 @@
 ﻿{
-  "version": 2,
+  "version": 3,
   "monsters": [
     {
-      "id": 1,
-      "name": "蛮力鼠",
+      "id": 2001,
+      "name": "力量2",
       "description": "穴居杂兵靠蛮力扑咬。",
       "kind": "力量",
       "power": 2,
       "icon": "res://Art/Icon/monster.png"
     },
     {
-      "id": 2,
-      "name": "巨骸",
+      "id": 2002,
+      "name": "魔法2",
       "description": "废墟里晃动的巨大骨架力量惊人。",
       "kind": "力量",
-      "power": 6,
+      "power": 2,
       "icon": "res://Art/Icon/ruins.png"
     },
     {
-      "id": 3,
-      "name": "残响",
-      "description": "无声徘徊的残影偏精神干扰。",
-      "kind": "魔力",
-      "power": 4,
-      "icon": "res://Art/Icon/corpse.png"
+      "id": 3001,
+      "name": "力量3",
+      "description": "AAAA",
+      "kind": "力量",
+      "power": 3,
+      "icon": "res://Art/Icon/ruins.png"
     },
     {
-      "id": 4,
-      "name": "魔晶孢",
-      "description": "结晶孢子用魔力构型攻击。",
-      "kind": "魔力",
-      "power": 5,
-      "icon": "res://Art/Icon/treasure.png"
+      "id": 3002,
+      "name": "魔法3",
+      "description": "BBBB",
+      "kind": "力量",
+      "power": 3,
+      "icon": "res://Art/Icon/ruins.png"
+    },
+    {
+      "id": 4001,
+      "name": "力量4",
+      "description": "CCCC",
+      "kind": "力量",
+      "power": 4,
+      "icon": "res://Art/Icon/ruins.png"
+    },
+    {
+      "id": 4002,
+      "name": "魔法4",
+      "description": "DDDD",
+      "kind": "力量",
+      "power": 4,
+      "icon": "res://Art/Icon/ruins.png"
     }
   ]
 }

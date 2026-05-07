@@ -16,15 +16,18 @@ public partial class LevelEditor : Control
 		EraseEvent,
 	}
 
-	static readonly (string Zh, string Type, string Tex)[] OtherEvents =
+	/// <summary>PickId：列表里唯一；GameType：写入关卡 JSON 的 type（玩法逻辑）。</summary>
+	static readonly (string PickId, string GameType, string Tex, string Zh)[] OtherEvents =
 	[
-		("障碍", "place_block", "res://Art/Icon/ruins.png"),
-		("清楚物件", "clear_block", "res://Art/Icon/grass.png"),
-		("宝箱", "treasure", "res://Art/Icon/treasure.png"),
-		("祭坛", "altar", "res://Art/Icon/altar.png"),
-		("草丛", "grass", "res://Art/Icon/grass.png"),
-		("残骸", "corpse", "res://Art/Icon/corpse.png"),
-		("遗迹", "ruins", "res://Art/Icon/ruins.png"),
+		("place_block", "place_block", "res://Art/Icon/AbandonedChurch.png", "障碍"),
+		("clear_block", "clear_block", "res://Art/Icon/GrassPatch1.png", "清除物件"),
+		("treasure", "treasure", "res://Art/Icon/TreasureChest.png", "宝箱"),
+		("altar", "altar", "res://Art/Icon/Altar_Useful.png", "祭坛"),
+		("grass_patch1", "grass", "res://Art/Icon/GrassPatch1.png", "草丛 · 草甸一"),
+		("grass_patch2", "grass", "res://Art/Icon/GrassPatch2.png", "草丛 · 草甸二"),
+		("corpse", "corpse", "res://Art/Icon/Grave.png", "残骸"),
+		("ruins_shrine", "ruins", "res://Art/Icon/AbandonedShrine.png", "遗迹 · 神殿遗迹"),
+		("ruins_church", "ruins", "res://Art/Icon/AbandonedChurch.png", "遗迹 · 教堂残骸"),
 	];
 
 	EditorMode _mode = EditorMode.AddTerrain;
@@ -50,6 +53,10 @@ public partial class LevelEditor : Control
 	OptionButton? _modeOpt;
 	LineEdit? _levelNameEdit;
 	OptionButton? _levelFilesOpt;
+
+	OptionButton? _terrainStyleOpt;
+	bool _suppressTerrainStyle;
+	int _terrainVariant = 1;
 
 	/// <summary>res:// 关卡文件；空表示「新建未落盘」草稿。</summary>
 	string _currentLevelPath = "";
@@ -169,6 +176,7 @@ public partial class LevelEditor : Control
 		_fogLayer = GetNode<FogLayer>("HBox/ViewportContainer/Viewport/World/FogRoot");
 		_blockLayer = GetNode<BlockLayer>("HBox/ViewportContainer/Viewport/World/BlockRoot");
 		_ghost = GetNode<Sprite2D>("HBox/ViewportContainer/Viewport/World/PlayerGhost");
+		_terrainStyleOpt = GetNodeOrNull<OptionButton>($"{SidebarVBox}/TerrainStyleOpt");
 
 		if (_monsterGrid != null && _otherGrid != null)
 		{
@@ -182,8 +190,8 @@ public partial class LevelEditor : Control
 
 		RebuildBossIdOptions();
 
-		_terrain.TileSet = TerrainTilesetFactory.CreateHexTileset();
-		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+		BuildTerrainStyleDropdown();
+		ApplyTerrainVariantToTerrain();
 
 		Texture2D? ptex = GD.Load<Texture2D>("res://Art/Role/player.png");
 		if (_ghost != null && ptex != null)
@@ -337,6 +345,67 @@ public partial class LevelEditor : Control
 			StyleOptionDropdown(_bossIdOpt, px);
 		if (_levelFilesOpt != null)
 			StyleOptionDropdown(_levelFilesOpt, px);
+		if (_terrainStyleOpt != null)
+			StyleOptionDropdown(_terrainStyleOpt, px);
+	}
+
+	void BuildTerrainStyleDropdown()
+	{
+		if (_terrainStyleOpt == null)
+			return;
+
+		_suppressTerrainStyle = true;
+		_terrainStyleOpt.Clear();
+		string[] paths = TerrainTilesetFactory.MapTexturePaths;
+		for (int i = 0; i < paths.Length; i++)
+		{
+			int v = i + 1;
+			_terrainStyleOpt.AddItem($"地砖样式 {v} · Art/Map/{v}.png");
+			_terrainStyleOpt.SetItemMetadata(i, v);
+		}
+
+		int idx = Mathf.Clamp(_terrainVariant - 1, 0, paths.Length - 1);
+		_terrainStyleOpt.Select(idx);
+		_suppressTerrainStyle = false;
+	}
+
+	void SyncTerrainStyleDropdown()
+	{
+		if (_terrainStyleOpt == null || _terrainStyleOpt.ItemCount == 0)
+			return;
+
+		_suppressTerrainStyle = true;
+		int idx = Mathf.Clamp(_terrainVariant - 1, 0, _terrainStyleOpt.ItemCount - 1);
+		_terrainStyleOpt.Select(idx);
+		_suppressTerrainStyle = false;
+	}
+
+	void ApplyTerrainVariantToTerrain()
+	{
+		if (_terrain == null)
+			return;
+
+		_terrainVariant = TerrainTilesetFactory.ClampTerrainVariant(_terrainVariant);
+		_terrain.TileSet = TerrainTilesetFactory.CreateHexTileset(_terrainVariant);
+		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+	}
+
+	public void _on_terrain_style_selected(long index)
+	{
+		if (_suppressTerrainStyle)
+			return;
+
+		int v = (int)index + 1;
+		if (_terrainStyleOpt != null)
+		{
+			Variant meta = _terrainStyleOpt.GetItemMetadata((int)index);
+			if (meta.VariantType == Variant.Type.Int)
+				v = meta.AsInt32();
+		}
+
+		_terrainVariant = TerrainTilesetFactory.ClampTerrainVariant(v);
+		ApplyTerrainVariantToTerrain();
+		RefreshVisuals();
 	}
 
 	void OnWrapResizedLayout()
@@ -547,10 +616,9 @@ public partial class LevelEditor : Control
 			};
 			if (ResourceLoader.Exists(o.Tex))
 				tb.TextureNormal = GD.Load<Texture2D>(o.Tex);
-			string type = o.Type;
 			string zh = o.Zh;
-			string typeCaptured = type;
-			tb.Toggled += pressed => ApplyOtherPickToggled(typeCaptured, pressed);
+			string pickCaptured = o.PickId;
+			tb.Toggled += pressed => ApplyOtherPickToggled(pickCaptured, pressed);
 
 			vb.AddChild(tb);
 			var zhLabel = new Label
@@ -600,8 +668,8 @@ public partial class LevelEditor : Control
 			{
 				MonsterTable.Row r = catalog[_pickMonsterIdx];
 				string duel = r.IsMagic ? "魔法" : "力量";
-				_placementHint.Text =
-					$"将放置：「{r.Name}」（{duel}）· {r.Power} 战力 — 地图上右键可取消选中";
+			_placementHint.Text =
+				$"将放置：「{r.Name}」（{duel}）· {r.Power} 战力 — 同一格再点相同怪物可移除；地图上右键可取消选中";
 			}
 			else
 				_placementHint.Text = "怪物表与界面不同步；请重启编辑器或重新导表。";
@@ -609,18 +677,18 @@ public partial class LevelEditor : Control
 		else if (!string.IsNullOrEmpty(_pickOther))
 			_placementHint.Text = _pickOther == "clear_block"
 				? "将对格内执行：移除障碍与本格怪物/场景事件（保留地砖）；左键地砖施放。"
-				: $"将放置：{OtherZh(_pickOther)} — 地图上右键可取消选中";
+				: $"将放置：{OtherZh(_pickOther)} — 同一格再点相同所选可移除事件；地图上右键可取消选中";
 		else
 			_placementHint.Text =
 				"空白处左键铺设地砖；有地砖且无选中时右键可整块移除。请先点亮怪物或场景物件再在格子上写入。";
 	}
 
-	static string OtherZh(string internalType)
+	static string OtherZh(string pickId)
 	{
 		foreach (var o in OtherEvents)
-			if (o.Type == internalType)
+			if (o.PickId == pickId)
 				return o.Zh;
-		return internalType;
+		return pickId;
 	}
 
 	void _seedUiModes()
@@ -651,7 +719,7 @@ public partial class LevelEditor : Control
 	static string ModeTooltip(EditorMode mode) => mode switch
 	{
 		EditorMode.AddTerrain =>
-			"左键空白处铺设地砖（新格默认有迷雾）；已选怪物/物件时，在有地砖的格子上左键放置。右键：若已选中内容则清空选择；否则删除整块地砖（含迷雾、障碍与事件）。",
+			"左键空白处铺设地砖（新格默认有迷雾）；已选怪物/物件时，在有地砖的格子上左键放置；若在已有事件的格子上再叠放「相同」所选事件，则会清除该事件。右键：若已选中内容则清空选择；否则删除整块地砖（含迷雾、障碍与事件）。",
 		EditorMode.ToggleFog =>
 			"只对已有地砖生效：迷雾「开」= 未驱散；「关」= 地图上可见。可与游戏中的吸收机制区分。左键切换。",
 		EditorMode.SetPlayerStart => "点选一格设为玩家起始格（半透明幽灵预览）。",
@@ -844,7 +912,7 @@ public partial class LevelEditor : Control
 			{
 				string ty = "";
 				if (j < OtherEvents.Length)
-					ty = OtherEvents[j].Type;
+					ty = OtherEvents[j].PickId;
 
 				Color tint = ty != "" && _pickOther == ty ? new Color(1f, 1f, 0.78f, 1f) : Colors.White;
 				if (child is CanvasItem ci)
@@ -897,6 +965,16 @@ public partial class LevelEditor : Control
 				_blk[ck] = false;
 
 			MonsterTable.Row t = catalog[_pickMonsterIdx];
+			if (_ev.TryGetValue(ck, out Variant existedVar))
+			{
+				Godot.Collections.Dictionary existed = existedVar.AsGodotDictionary();
+				if (MonsterPickMatchesExistingEvent(existed, t))
+				{
+					_ev.Remove(ck);
+					return;
+				}
+			}
+
 			_ev[ck] = new Godot.Collections.Dictionary
 			{
 				["monster_id"] = t.Id,
@@ -914,7 +992,17 @@ public partial class LevelEditor : Control
 			if (hadBlock)
 				_blk[ck] = false;
 
-			_ev[ck] = BuildOtherDict(_pickOther);
+			if (_ev.TryGetValue(ck, out Variant exOtherVar))
+			{
+				Godot.Collections.Dictionary existed = exOtherVar.AsGodotDictionary();
+				if (OtherPickMatchesExistingEvent(existed, _pickOther))
+				{
+					_ev.Remove(ck);
+					return;
+				}
+			}
+
+			_ev[ck] = BuildOtherDictFromPick(_pickOther);
 		}
 	}
 
@@ -983,11 +1071,46 @@ public partial class LevelEditor : Control
 	}
 
 
-	static Godot.Collections.Dictionary BuildOtherDict(string t) => t switch
+	static Godot.Collections.Dictionary BuildOtherDictFromPick(string pickId)
 	{
-		"altar" => new Godot.Collections.Dictionary { ["type"] = "altar", ["altar_used"] = false },
-		_ => new Godot.Collections.Dictionary { ["type"] = t },
-	};
+		foreach (var o in OtherEvents)
+		{
+			if (o.PickId != pickId)
+				continue;
+
+			var d = new Godot.Collections.Dictionary
+			{
+				["type"] = o.GameType,
+				["icon"] = o.Tex,
+			};
+
+			if (o.GameType == "altar")
+				d["altar_used"] = false;
+
+			return d;
+		}
+
+		return new Godot.Collections.Dictionary { ["type"] = pickId };
+	}
+
+	static bool MonsterPickMatchesExistingEvent(Godot.Collections.Dictionary ev, MonsterTable.Row t)
+	{
+		string mt = DictStr(ev, "type", "");
+		if (mt != "monster_str" && mt != "monster_mag")
+			return false;
+		string want = t.IsMagic ? "monster_mag" : "monster_str";
+		return mt == want && GetInt(ev, "monster_id") == t.Id;
+	}
+
+	/// <summary>与所选「物件」条目一致：比 type + icon（涵盖草丛/遗迹变种与祭坛图标）。</summary>
+	static bool OtherPickMatchesExistingEvent(Godot.Collections.Dictionary ev, string pickId)
+	{
+		Godot.Collections.Dictionary want = BuildOtherDictFromPick(pickId);
+		string wt = DictStr(want, "type", "");
+		if (string.IsNullOrEmpty(wt) || wt != DictStr(ev, "type", ""))
+			return false;
+		return DictStr(want, "icon", "") == DictStr(ev, "icon", "");
+	}
 
 	void RefreshVisuals()
 	{
@@ -1005,12 +1128,16 @@ public partial class LevelEditor : Control
 			string ck = vk.AsString();
 			Godot.Collections.Dictionary ev = _ev[vk].AsGodotDictionary();
 
+			var evForIcon = (Godot.Collections.Dictionary)ev.Duplicate();
+			if (DictStr(evForIcon, "type", "") == "altar")
+				evForIcon["altar_used"] = false;
+
 			var spr = new Sprite2D();
-			spr.Texture = HexEventMarker.TextureForEventDict(ev);
+			spr.Texture = HexEventMarker.TextureForEventDict(evForIcon);
 
 			if (spr.Texture != null)
 			{
-				spr.Scale = new Vector2(0.34f, 0.34f);
+				spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
 				spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
 			}
 
@@ -1063,6 +1190,7 @@ public partial class LevelEditor : Control
 			["level_name"] = LevelNameTrimmed(),
 			["player_start"] = new Godot.Collections.Dictionary { ["x"] = _player.X, ["y"] = _player.Y },
 			["boss"] = new Godot.Collections.Dictionary { ["boss_id"] = SelectedBossId() },
+			[TerrainTilesetFactory.TerrainVariantDictKey] = _terrainVariant,
 			["cells"] = cellsArr,
 			["events"] = evArr,
 		};
@@ -1111,11 +1239,14 @@ public partial class LevelEditor : Control
 
 	public void Reload(Godot.Collections.Dictionary d)
 	{
+		_terrainVariant = TerrainTilesetFactory.ResolveTerrainVariantFromLevel(d);
 		_cells.Clear();
 		_fog.Clear();
 		_blk.Clear();
 		_ev.Clear();
 		_terrain!.Clear();
+		_terrain.TileSet = TerrainTilesetFactory.CreateHexTileset(_terrainVariant);
+		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
 
 		if (d.ContainsKey("cells") && d["cells"].VariantType == Variant.Type.Array)
 		{
@@ -1172,6 +1303,7 @@ public partial class LevelEditor : Control
 		}
 
 		RefreshVisuals();
+		SyncTerrainStyleDropdown();
 		_editorPendingRefit = true;
 	}
 
@@ -1328,6 +1460,7 @@ public partial class LevelEditor : Control
 			["level_name"] = "",
 			["player_start"] = new Godot.Collections.Dictionary { ["x"] = 0, ["y"] = 0 },
 			["boss"] = new Godot.Collections.Dictionary { ["boss_id"] = defaultBossId },
+			[TerrainTilesetFactory.TerrainVariantDictKey] = 1,
 			["cells"] = cellsArr,
 			["events"] = new Godot.Collections.Array(),
 		};

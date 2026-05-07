@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://1hyp7mn582ap"
-path="res://.godot/imported/treasure.png-b7d3381f2a2f8df036f62ea090ec7851.ctex"
+uid="uid://cww3eukff0d7d"
+path="res://.godot/imported/AbandonedShrine.png-cfacb090ac964339af295236d732b304.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Art/Icon/treasure.png"
-dest_files=["res://.godot/imported/treasure.png-b7d3381f2a2f8df036f62ea090ec7851.ctex"]
+source_file="res://Art/Icon/AbandonedShrine.png"
+dest_files=["res://.godot/imported/AbandonedShrine.png-cfacb090ac964339af295236d732b304.ctex"]
 
 [params]
 

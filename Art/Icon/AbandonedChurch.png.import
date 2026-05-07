@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsjevedx87ntb"
-path="res://.godot/imported/corpse.png-4006e7f0caf8cfc5803b799ed52f3c5d.ctex"
+uid="uid://c6gl20apankbk"
+path="res://.godot/imported/AbandonedChurch.png-6c61fbb98dd3ff15ab82288f72273b80.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Art/Icon/corpse.png"
-dest_files=["res://.godot/imported/corpse.png-4006e7f0caf8cfc5803b799ed52f3c5d.ctex"]
+source_file="res://Art/Icon/AbandonedChurch.png"
+dest_files=["res://.godot/imported/AbandonedChurch.png-6c61fbb98dd3ff15ab82288f72273b80.ctex"]
 
 [params]
 

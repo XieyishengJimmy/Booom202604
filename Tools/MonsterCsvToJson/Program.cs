@@ -173,6 +173,7 @@ static int RunMonsters(string rootDir)
 
 	const int hr = 1;
 	Dictionary<string, int> cmap = ReadHeaderColumnMap(ws.Row(hr));
+	AddFirstLineHeaderAliases(cmap);
 	string[] req = ["ID", "怪物名", "怪物描述", "怪物属性", "怪物战斗力", "怪物图片路径"];
 	foreach (string r in req)
 	{
@@ -186,6 +187,9 @@ static int RunMonsters(string rootDir)
 	int lastRow = ws.LastRowUsed()!.RowNumber();
 	var arr = new JsonArray();
 	var idsUsed = new HashSet<int>();
+	const string PoolColumn = "怪物ID配置";
+	bool hasSpawnPoolColumn = cmap.ContainsKey(PoolColumn);
+	var summonPoolIds = new HashSet<int>();
 	for (int r = hr + 1; r <= lastRow; r++)
 	{
 		if (!TryParsePositiveId(ws, r, cmap, "ID", out int idNum))
@@ -205,6 +209,9 @@ static int RunMonsters(string rootDir)
 			power = 1;
 		string icon = GetCellTrim(ws, r, cmap, "怪物图片路径");
 
+		if (hasSpawnPoolColumn)
+			ParseMonsterIdPoolTokens(GetCellTrim(ws, r, cmap, PoolColumn), summonPoolIds);
+
 		var o = new JsonObject
 		{
 			["id"] = idNum,
@@ -219,16 +226,26 @@ static int RunMonsters(string rootDir)
 
 	var doc = new JsonObject
 	{
-		["version"] = 2,
+		["version"] = 3,
 		["monsters"] = arr,
 	};
+	if (summonPoolIds.Count > 0)
+	{
+		var poolArr = new JsonArray();
+		foreach (int sid in summonPoolIds.OrderBy(x => x))
+			poolArr.Add(sid);
+		doc["boss_summon_monster_ids"] = poolArr;
+	}
 	var opt = new System.Text.Json.JsonSerializerOptions
 	{
 		WriteIndented = true,
 		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 	};
 	File.WriteAllText(jsonPath, doc.ToJsonString(opt), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-	Console.WriteLine($"已导出 {arr.Count} 条怪物 → {jsonPath}");
+	Console.WriteLine(
+		summonPoolIds.Count > 0
+			? $"已导出 {arr.Count} 条怪物，BOSS刷怪池 {summonPoolIds.Count} 个 ID → {jsonPath}"
+			: $"已导出 {arr.Count} 条怪物 → {jsonPath}");
 	return 0;
 }
 
@@ -333,6 +350,20 @@ static int RunBosses(string rootDir)
 	return 0;
 }
 
+/// <summary>Excel「怪物ID配置」：逗号/分号/顿号分隔的正整数。</summary>
+static void ParseMonsterIdPoolTokens(string raw, HashSet<int> into)
+{
+	if (string.IsNullOrWhiteSpace(raw))
+		return;
+	char[] separators = [',', ';', '，', '、'];
+	foreach (string token in raw.Split(separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+	{
+		if (!int.TryParse(token.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int id) || id <= 0)
+			continue;
+		into.Add(id);
+	}
+}
+
 static string MonsterKindToJsonToken(string raw)
 {
 	string z = raw.Trim();
@@ -380,7 +411,7 @@ static List<string> ParseCsvRecord(string line)
 
 static void XlsxWriteMonsterRowFromCsvFields(IXLWorksheet ws, int rowIdx, List<string> cols)
 {
-	for (int c = 0; c < cols.Count && c < 6; c++)
+	for (int c = 0; c < cols.Count; c++)
 		ws.Cell(rowIdx, c + 1).SetValue(cols[c]?.Trim() ?? "");
 }
 
@@ -454,10 +485,15 @@ static int EnsureStarterXlsx(string rootDir, bool forceOverwrite)
 		ws.Cell(1, 4).Value = "怪物属性";
 		ws.Cell(1, 5).Value = "怪物战斗力";
 		ws.Cell(1, 6).Value = "怪物图片路径";
-		XlsxWriteMonsterRowFromCsvFields(ws, 2, ["1", "蛮力鼠", "穴居杂兵靠蛮力扑咬。", "力量", "2", "res://Art/Icon/monster.png"]);
-		XlsxWriteMonsterRowFromCsvFields(ws, 3, ["2", "巨骸", "废墟里晃动的巨大骨架力量惊人。", "力量", "6", "res://Art/Icon/ruins.png"]);
-		XlsxWriteMonsterRowFromCsvFields(ws, 4, ["3", "残响", "无声徘徊的残影偏精神干扰。", "魔力", "4", "res://Art/Icon/corpse.png"]);
-		XlsxWriteMonsterRowFromCsvFields(ws, 5, ["4", "魔晶孢", "结晶孢子用魔力构型攻击。", "魔力", "5", "res://Art/Icon/treasure.png"]);
+		ws.Cell(1, 7).Value = "怪物ID配置";
+		XlsxWriteMonsterRowFromCsvFields(ws, 2,
+			["1", "蛮力鼠", "穴居杂兵靠蛮力扑咬。", "力量", "2", "res://Art/Icon/monster.png", "1,2,3,4"]);
+		XlsxWriteMonsterRowFromCsvFields(ws, 3,
+			["2", "巨骸", "废墟里晃动的巨大骨架力量惊人。", "力量", "6", "res://Art/Icon/ruins.png", ""]);
+		XlsxWriteMonsterRowFromCsvFields(ws, 4,
+			["3", "残响", "无声徘徊的残影偏精神干扰。", "魔力", "4", "res://Art/Icon/corpse.png", ""]);
+		XlsxWriteMonsterRowFromCsvFields(ws, 5,
+			["4", "魔晶孢", "结晶孢子用魔力构型攻击。", "魔力", "5", "res://Art/Icon/treasure.png", ""]);
 		wb.SaveAs(mx);
 		Console.WriteLine(forceOverwrite ? $"已覆盖怪物表模板：{mx}" : $"已生成模板：{mx}");
 	}

@@ -19,14 +19,28 @@ public static class MonsterTable
 	}
 
 	static readonly Dictionary<int, Row> ById = new();
+	static readonly List<int> BossSummonMonsterIds = [];
+	static readonly List<Row> BossSummonCandidateRows = [];
 	static readonly List<Row> Order = [];
 
 	public static IReadOnlyList<Row> All => Order;
+
+	/// <summary>BOSS 刷新的战斗怪仅从该池中随机（来自 monsters.json · boss_summon_monster_ids）。空则等价于<code>All</code>。</summary>
+	public static IReadOnlyList<Row> BossSummonCandidates =>
+		BossSummonCandidateRows.Count > 0 ? BossSummonCandidateRows : Order;
+
+	public static Row? PickBossSummonMonsterRow()
+	{
+		IReadOnlyList<Row> src = BossSummonCandidates;
+		return src.Count == 0 ? null : src[System.Random.Shared.Next(src.Count)];
+	}
 
 	public static void Reload(string jsonPath)
 	{
 		ById.Clear();
 		Order.Clear();
+		BossSummonMonsterIds.Clear();
+		BossSummonCandidateRows.Clear();
 
 		if (!Godot.FileAccess.FileExists(jsonPath))
 		{
@@ -87,7 +101,30 @@ public static class MonsterTable
 			Order.Add(row);
 		}
 
-		GD.Print($"MonsterTable: 已加载 {Order.Count} 条怪物。");
+		if (root.TryGetValue("boss_summon_monster_ids", out Variant poolVar) &&
+		    poolVar.VariantType == Variant.Type.Array)
+		{
+			foreach (Variant it in poolVar.AsGodotArray())
+			{
+				int nid = LooseIntFromVariant(it);
+				if (nid <= 0 || BossSummonMonsterIds.Contains(nid))
+					continue;
+				BossSummonMonsterIds.Add(nid);
+			}
+
+			foreach (int pid in BossSummonMonsterIds)
+			{
+				if (TryGet(pid, out Row? pr) && pr != null)
+					BossSummonCandidateRows.Add(pr);
+				else
+					GD.PushWarning($"MonsterTable: boss_summon_monster_ids 中 ID「{pid}」不存在于 monsters 列表，已忽略。");
+			}
+
+			if (BossSummonMonsterIds.Count > 0 && BossSummonCandidateRows.Count == 0)
+				GD.PushWarning("MonsterTable: boss_summon_monster_ids 均未解析到合法怪物行，BOSS 刷怪退化为 monsters 全员随机。");
+		}
+
+		GD.Print($"MonsterTable: 已加载 {Order.Count} 条怪物；BOSS刷怪池 {BossSummonMonsterIds.Count} 个引用 ID → 可选 {BossSummonCandidateRows.Count} 行。");
 	}
 
 	static string GetStr(Godot.Collections.Dictionary d, string key) =>
@@ -95,6 +132,17 @@ public static class MonsterTable
 
 	static int GetInt(Godot.Collections.Dictionary d, string key, int def) =>
 		d.TryGetValue(key, out Variant v) ? v.AsInt32() : def;
+
+	static int LooseIntFromVariant(Variant v) =>
+		v.VariantType switch
+		{
+			Variant.Type.Int => v.AsInt32(),
+			Variant.Type.Float => (int)v.AsDouble(),
+			Variant.Type.String when int.TryParse(v.AsString().Trim(), System.Globalization.NumberStyles.Integer,
+				System.Globalization.CultureInfo.InvariantCulture, out int p) =>
+				p,
+			_ => 0,
+		};
 
 	static bool ParseKind(string raw)
 	{

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dvep0kg3agbp1"
-path="res://.godot/imported/monster.png-3f2a1208a14bc5dfc02e75766af79983.ctex"
+uid="uid://dmbybpsdd37kq"
+path="res://.godot/imported/WinFlag.png-d6e2fb0141aa776c9972ee8b4f87c29c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Art/Icon/monster.png"
-dest_files=["res://.godot/imported/monster.png-3f2a1208a14bc5dfc02e75766af79983.ctex"]
+source_file="res://Art/UI/victory/WinFlag.png"
+dest_files=["res://.godot/imported/WinFlag.png-d6e2fb0141aa776c9972ee8b4f87c29c.ctex"]
 
 [params]
 

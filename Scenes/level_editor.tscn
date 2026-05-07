@@ -138,6 +138,13 @@ autowrap_mode = 2
 theme_override_colors/font_color = Color(0.698039, 0.784314, 0.635294, 1)
 text = "地图：滚轮缩放；按住中键拖拽平移。「铺设地砖」模式下对已有格右键可整块移除。"
 
+[node name="TerrainStyleLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "地砖贴图样式（res://Art/Map 1.png～5.png）"
+
+[node name="TerrainStyleOpt" type="OptionButton" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+
 [node name="SectionMonsters" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -203,3 +210,4 @@ text = "回主菜单"
 [connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/FileBtnRowSave/ReloadBtn" to="." method="_on_reload_pressed"]
 [connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow/PlayBtn" to="." method="_on_playtest_pressed"]
 [connection signal="pressed" from="HBox/Sidebar/SidebarScroll/VBox/PlayBtnRow/HomeBtn" to="." method="_on_back_menu_pressed"]
+[connection signal="item_selected" from="HBox/Sidebar/SidebarScroll/VBox/TerrainStyleOpt" to="." method="_on_terrain_style_selected"]
