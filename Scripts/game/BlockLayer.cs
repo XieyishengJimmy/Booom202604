@@ -5,8 +5,20 @@ namespace Booom202604;
 
 public partial class BlockLayer : Node2D
 {
+	const string ObstacleIconPath = "res://Art/Icon/Obstacle.png";
+
 	TileMapLayer? _terrain;
 	readonly Dictionary<string, Sprite2D> _sprites = [];
+	static Texture2D? _obstacleTex;
+
+	static Texture2D? ObstacleTexture()
+	{
+		if (_obstacleTex != null)
+			return _obstacleTex;
+		if (ResourceLoader.Exists(ObstacleIconPath))
+			_obstacleTex = GD.Load<Texture2D>(ObstacleIconPath);
+		return _obstacleTex;
+	}
 
 	public void Setup(TileMapLayer terrainLayer)
 	{
@@ -36,16 +48,21 @@ public partial class BlockLayer : Node2D
 		if (_sprites.ContainsKey(ck))
 			return;
 
-		var img = Image.CreateEmpty(32, 32, false, Image.Format.Rgba8);
-		img.Fill(new Color(0.82f, 0.18f, 0.22f, 0.35f));
-		var tex = ImageTexture.CreateFromImage(img);
+		Texture2D? tex = ObstacleTexture();
+		if (tex == null)
+		{
+			var img = Image.CreateEmpty(32, 32, false, Image.Format.Rgba8);
+			img.Fill(new Color(0.82f, 0.18f, 0.22f, 0.35f));
+			tex = ImageTexture.CreateFromImage(img);
+		}
 
+		float sc = HexEventMarker.EventIconSpriteScale;
 		var s = new Sprite2D
 		{
 			Texture = tex,
 			Centered = true,
 			Position = _terrain.MapToLocal(cell),
-			Scale = new Vector2(1.1f, 1.1f),
+			Scale = new Vector2(sc, sc),
 		};
 
 		AddChild(s);

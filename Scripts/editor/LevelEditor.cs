@@ -19,7 +19,7 @@ public partial class LevelEditor : Control
 	/// <summary>PickId：列表里唯一；GameType：写入关卡 JSON 的 type（玩法逻辑）。</summary>
 	static readonly (string PickId, string GameType, string Tex, string Zh)[] OtherEvents =
 	[
-		("place_block", "place_block", "res://Art/Icon/AbandonedChurch.png", "障碍"),
+		("place_block", "place_block", "res://Art/Icon/Obstacle.png", "障碍"),
 		("clear_block", "clear_block", "res://Art/Icon/GrassPatch1.png", "清除物件"),
 		("treasure", "treasure", "res://Art/Icon/TreasureChest.png", "宝箱"),
 		("altar", "altar", "res://Art/Icon/Altar_Useful.png", "祭坛"),
@@ -675,9 +675,16 @@ public partial class LevelEditor : Control
 				_placementHint.Text = "怪物表与界面不同步；请重启编辑器或重新导表。";
 		}
 		else if (!string.IsNullOrEmpty(_pickOther))
-			_placementHint.Text = _pickOther == "clear_block"
-				? "将对格内执行：移除障碍与本格怪物/场景事件（保留地砖）；左键地砖施放。"
-				: $"将放置：{OtherZh(_pickOther)} — 同一格再点相同所选可移除事件；地图上右键可取消选中";
+		{
+			if (_pickOther == "clear_block")
+				_placementHint.Text = "将对格内执行：移除障碍与本格怪物/场景事件（保留地砖）；左键地砖施放。";
+			else if (_pickOther == "place_block")
+				_placementHint.Text =
+					"将放置障碍 — 同一格再点一次可移除障碍；地图上右键可取消选中";
+			else
+				_placementHint.Text =
+					$"将放置：{OtherZh(_pickOther)} — 同一格再点相同所选可移除事件；地图上右键可取消选中";
+		}
 		else
 			_placementHint.Text =
 				"空白处左键铺设地砖；有地砖且无选中时右键可整块移除。请先点亮怪物或场景物件再在格子上写入。";
@@ -719,7 +726,7 @@ public partial class LevelEditor : Control
 	static string ModeTooltip(EditorMode mode) => mode switch
 	{
 		EditorMode.AddTerrain =>
-			"左键空白处铺设地砖（新格默认有迷雾）；已选怪物/物件时，在有地砖的格子上左键放置；若在已有事件的格子上再叠放「相同」所选事件，则会清除该事件。右键：若已选中内容则清空选择；否则删除整块地砖（含迷雾、障碍与事件）。",
+			"左键空白处铺设地砖（新格默认有迷雾）；已选怪物/物件时，在有地砖的格子上左键放置；若在已有事件的格子上再叠放「相同」所选事件，则会清除该事件；已选「障碍」时对已有障碍的格子再点则移除障碍。右键：若已选中内容则清空选择；否则删除整块地砖（含迷雾、障碍与事件）。",
 		EditorMode.ToggleFog =>
 			"只对已有地砖生效：迷雾「开」= 未驱散；「关」= 地图上可见。可与游戏中的吸收机制区分。左键切换。",
 		EditorMode.SetPlayerStart => "点选一格设为玩家起始格（半透明幽灵预览）。",
@@ -952,6 +959,12 @@ public partial class LevelEditor : Control
 		{
 			if (_ev.ContainsKey(ck))
 				_ev.Remove(ck);
+
+			if (_blk.ContainsKey(ck) && _blk[ck].AsBool())
+			{
+				_blk[ck] = false;
+				return;
+			}
 
 			_blk[ck] = true;
 			return;
