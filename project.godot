@@ -28,6 +28,10 @@ window/size/viewport_height=1080
 
 project/assembly_name="BOOOM202604"
 
+[gui]
+
+theme/custom_font="uid://cqu3dgmkpbafk"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

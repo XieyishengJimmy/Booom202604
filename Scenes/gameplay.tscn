@@ -155,6 +155,28 @@ mouse_filter = 2
 texture = ExtResource("11_cnqtm")
 metadata/_edit_lock_ = true
 
+[node name="SkillName" type="Label" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=807660710]
+layout_mode = 0
+offset_left = 95.0
+offset_top = 316.0
+offset_right = 272.0
+offset_bottom = 358.0
+theme_override_colors/font_color = Color(0.49803922, 0.47058824, 0.42352942, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=658229955]
+clip_contents = true
+layout_mode = 0
+offset_left = 55.0
+offset_top = 374.0
+offset_right = 313.0
+offset_bottom = 506.0
+theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 2
+
 [node name="Card2" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=1369564049]
 anchors_preset = 0
 offset_left = 793.0
@@ -199,6 +221,28 @@ offset_bottom = 601.0
 mouse_filter = 2
 texture = ExtResource("11_cnqtm")
 metadata/_edit_lock_ = true
+
+[node name="SkillName" type="Label" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=873065328]
+layout_mode = 0
+offset_left = 78.0
+offset_top = 306.0
+offset_right = 255.0
+offset_bottom = 348.0
+theme_override_colors/font_color = Color(0.49803922, 0.47058824, 0.42352942, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=2091471989]
+clip_contents = true
+layout_mode = 0
+offset_left = 40.0
+offset_top = 366.0
+offset_right = 298.0
+offset_bottom = 498.0
+theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 2
 
 [node name="Card3" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=351088451]
 anchors_preset = 0
@@ -245,6 +289,28 @@ mouse_filter = 2
 texture = ExtResource("11_cnqtm")
 metadata/_edit_lock_ = true
 
+[node name="SkillName" type="Label" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1018558658]
+layout_mode = 0
+offset_left = 86.0
+offset_top = 296.0
+offset_right = 263.0
+offset_bottom = 338.0
+theme_override_colors/font_color = Color(0.49803922, 0.47058824, 0.42352942, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1461195713]
+clip_contents = true
+layout_mode = 0
+offset_left = 47.0
+offset_top = 356.0
+offset_right = 305.0
+offset_bottom = 488.0
+theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 2
+
 [node name="Skip" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=718415223]
 layout_mode = 0
 offset_left = 1610.0
@@ -253,6 +319,17 @@ offset_right = 1703.0
 offset_bottom = 318.0
 icon = ExtResource("12_v8xiy")
 
+[node name="Label" type="Label" parent="UICanvas/HUD/SkillChoose/Skip" unique_id=243945987]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 88.0
+offset_right = 81.0
+offset_bottom = 125.0
+theme_override_colors/font_color = Color(0.43137255, 0.11372549, 0.11372549, 1)
+theme_override_constants/outline_size = 0
+theme_override_font_sizes/font_size = 25
+text = "跳过"
+
 [node name="Refresh" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=1776393458]
 layout_mode = 0
 offset_left = 1611.0
@@ -260,6 +337,16 @@ offset_top = 356.0
 offset_right = 1704.0
 offset_bottom = 446.0
 icon = ExtResource("13_27sjm")
+
+[node name="Label" type="Label" parent="UICanvas/HUD/SkillChoose/Refresh" unique_id=2047689685]
+layout_mode = 0
+offset_left = 21.0
+offset_top = 86.0
+offset_right = 81.0
+offset_bottom = 123.0
+theme_override_colors/font_color = Color(0.29803923, 0.2784314, 0.2509804, 1)
+theme_override_font_sizes/font_size = 25
+text = "刷新"
 
 [node name="Sure" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=1753302701]
 layout_mode = 0
@@ -279,6 +366,17 @@ offset_bottom = 95.0
 mouse_filter = 2
 texture = ExtResource("15_yl3i8")
 
+[node name="Label" type="Label" parent="UICanvas/HUD/SkillChoose/Sure" unique_id=1065674330]
+layout_mode = 0
+offset_left = 39.0
+offset_top = 11.0
+offset_right = 135.0
+offset_bottom = 79.0
+theme_override_colors/font_color = Color(0.5176471, 0.4862745, 0.43529412, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 46
+text = "确定"
+
 [node name="PlayerInfo" type="Control" parent="UICanvas/HUD" unique_id=1403547798]
 layout_mode = 1
 anchors_preset = 2
@@ -289,6 +387,7 @@ offset_top = -244.0
 offset_right = 667.0
 grow_vertical = 0
 mouse_filter = 2
+metadata/_edit_lock_ = true
 
 [node name="HpRow" type="Control" parent="UICanvas/HUD/PlayerInfo" unique_id=1325919586]
 layout_mode = 1
@@ -571,6 +670,7 @@ offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
+metadata/_edit_lock_ = true
 
 [node name="SkillBarDecor" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot" unique_id=637586526]
 layout_mode = 1
@@ -592,8 +692,8 @@ offset_left = -416.5
 offset_right = 416.5
 offset_bottom = 214.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
+metadata/_edit_lock_ = true
 
 [node name="SingleSkill1" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=255470598]
 layout_mode = 1
@@ -1105,5 +1205,8 @@ offset_bottom = 1080.0
 texture = ExtResource("39_fm0py")
 metadata/_edit_lock_ = true
 
+[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Card1/Button" to="." method="click_card1"]
+[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Card2/Button" to="." method="click_card2"]
+[connection signal="button_down" from="UICanvas/HUD/SkillChoose/Card3/Button" to="." method="click_card3"]
 [connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed"]
 [connection signal="button_up" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed_close"]

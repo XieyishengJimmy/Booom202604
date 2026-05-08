@@ -1,11 +1,5 @@
 [
   {
-    "ID": "int",
-    "name": "string",
-    "address": "string",
-    "describe": "string"
-  },
-  {
     "ID": 101,
     "name": "草上飞行",
     "address": "res://Art/Icon/pskill101.png",

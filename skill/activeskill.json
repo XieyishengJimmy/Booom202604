@@ -1,11 +1,5 @@
 [
   {
-    "ID": "int",
-    "name": "string",
-    "address": "string",
-    "describe": "string"
-  },
-  {
     "ID": 1,
     "name": "破晓",
     "address": "res://Art/Icon/askill1.png",

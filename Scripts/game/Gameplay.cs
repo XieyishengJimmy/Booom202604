@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
+using System.Linq;
 
 namespace Booom202604;
 
@@ -194,7 +195,7 @@ public partial class Gameplay : Node2D
 	void ReleaseMonsterNeighborFogLocks(string monsterAnchorCk)
 	{
 		if (!_monsterNeighborFogLocksByAnchor.TryGetValue(monsterAnchorCk,
-			    out HashSet<string>? nkSet))
+				out HashSet<string>? nkSet))
 			return;
 
 		_monsterNeighborFogLocksByAnchor.Remove(monsterAnchorCk);
@@ -281,6 +282,14 @@ public partial class Gameplay : Node2D
 
 	public Godot.Collections.Array aarray = Json.ParseString(FileAccess.GetFileAsString("res://skill/activeskill.json")).AsGodotArray();
 	public Godot.Collections.Array parray = Json.ParseString(FileAccess.GetFileAsString("res://skill/passiveskill.json")).AsGodotArray();
+
+	public List<int> cardnum = [];
+	public int cardchoose = 0;
+
+	public bool grassskill = false;
+	public int grasscount = 0;
+	public bool corpseHp = false;
+	public int corpseCount = 0;
 
 	public override void _Ready()
 	{
@@ -372,6 +381,7 @@ public partial class Gameplay : Node2D
 		float sc = TerrainTilesetFactory.PlayerSpriteScaleMatchingTerrainPixels(_terrain.TileSet);
 		_playerSprite.Scale = new Vector2(sc, sc);
 	}
+
 
 	void ApplyLevel(Godot.Collections.Dictionary d)
 	{
@@ -1031,8 +1041,6 @@ public partial class Gameplay : Node2D
 		}
 
 
-
-
 		Vector2I origin = _playerCell;
 
 		await ApproachCellWithWalkAsync(origin, dst);
@@ -1096,6 +1104,7 @@ public partial class Gameplay : Node2D
 			if (!_valid.ContainsKey(nk) || !_fogState.ContainsKey(nk))
 				continue;
 
+
 			if (!_fogState[nk].AsBool())
 				continue;
 
@@ -1117,8 +1126,6 @@ public partial class Gameplay : Node2D
 		RefreshEventIconsFogVisibility();
 
 	}
-
-
 
 	void LoadPlayerTexturesForWorldSprite()
 	{
@@ -1262,8 +1269,6 @@ public partial class Gameplay : Node2D
 	}
 
 
-
-
 	async Task TryInteractAsync(Vector2I cell)
 
 
@@ -1316,10 +1321,43 @@ public partial class Gameplay : Node2D
 
 				EraseEvent(cell);
 				GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = true;
-				//随机
-				//另一边选择+确定
-				//另一边存入数组
-
+				var result = card_random(skillList);
+				cardnum = result;
+				for (int i = 0; i < 3; i++)
+				{
+					if (i >= result.Count)
+					{
+						break;
+					}
+					else if (result[i] > 100)
+					{
+						foreach (var item in parray)
+						{
+							var pskilldict = item.AsGodotDictionary();
+							if (pskilldict["ID"].AsInt32() == result[i])
+							{
+								GetNode<TextureRect>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Button/SkillIcon").Texture = GD.Load<Texture2D>(pskilldict["address"].ToString());
+								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillName").Text = pskilldict["name"].ToString();
+								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe").Text = pskilldict["describe"].ToString();
+								break;
+							}
+						}
+					}
+					else
+					{
+						foreach (var item in aarray)
+						{
+							var askilldict = item.AsGodotDictionary();
+							if (askilldict["ID"].AsInt32() == result[i])
+							{
+								GetNode<TextureRect>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Button/SkillIcon").Texture = GD.Load<Texture2D>(askilldict["address"].ToString());
+								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillName").Text = askilldict["name"].ToString();
+								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe").Text = askilldict["describe"].ToString();
+								break;
+							}
+						}
+					}
+				}
 				break;
 
 
@@ -1367,7 +1405,10 @@ public partial class Gameplay : Node2D
 
 					default:
 
-
+						if(RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+						{
+							SpawnGrassInRandomFog();
+						}
 
 						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
 
@@ -1386,25 +1427,106 @@ public partial class Gameplay : Node2D
 			case "grass":
 				if (GD.Randf() < 0.5f)
 				{
+					if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+					{
+						SpawnGrassInRandomFog();
+					}
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 					await ToastAsync("草丛", "生命值 +1。");
 				}
 				else
 					await ToastAsync("草丛", "无事发生（50%占位）。");
 
+				if (pskillList.Contains(101))
+				{
+					grassskill = true;
+				}
+
+				if (pskillList.Contains(104))
+				{
+					grasscount++;
+				}
+
+				if (pskillList.Contains(105))
+				{
+					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 2, RunState.Instance.PlayerEnergyMax);
+				}
+
 				EraseEvent(cell);
 				break;
 
 
 			case "corpse":
+				if (pskillList.Contains(204))
+				{
+					corpseCount++;
+					if(corpseCount >= 5)
+					{
+						Hud hud1 = _hudUi!;
+						int pick1 = await hud1.ModalThreeChoiceAsync("祭坛效果", "+1 力量", "+1 魔法", "+2 HP（不超上限）");
+
+
+						switch (pick1)
+
+
+						{
+
+
+							case 0:
+
+
+
+
+
+								RunState.Instance.PlayerStr += 1;
+
+
+
+								break;
+
+							case 1:
+
+								RunState.Instance.PlayerMagic += 1;
+
+								break;
+
+
+
+							default:
+
+								if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+								{
+									SpawnGrassInRandomFog();
+								}
+
+								RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
+
+								break;
+
+						}
+					}
+				}
+
 				if (GD.Randf() < 0.5f)
 				{
+					if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+					{
+						SpawnGrassInRandomFog();
+					}
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
+					if (pskillList.Contains(201))
+					{
+						RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 1, RunState.Instance.PlayerEnergyMax);
+					}
 					await ToastAsync("尸体", "+1 生命（50%）。");
 				}
 				else
 				{
 					RunState.Instance.PlayerHp -= 1;
+					if (pskillList.Contains(202))
+					{
+						corpseHp = true;
+					}
 					await ToastAsync("尸体", "-1 生命（50%）。");
 				}
 
@@ -1422,6 +1544,10 @@ public partial class Gameplay : Node2D
 						break;
 
 					case 1:
+						if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+						{
+							SpawnGrassInRandomFog();
+						}
 						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 						await ToastAsync("废墟", "占位：生命 +1。");
 						break;
@@ -1463,7 +1589,7 @@ public partial class Gameplay : Node2D
 		{
 			skillList.Remove(skillId);
 			pskillList.Add(skillId);
-			var pname = "P" + pskillList.Count;
+			var pname = "P" + (pskillList.Count);
 			GetNode<CanvasItem>("UICanvas/HUD/PassiveSkillSlot/" + pname).Visible = true;
 			foreach (var item in parray)
 			{
@@ -1519,7 +1645,26 @@ public partial class Gameplay : Node2D
 		if (attr >= mv)
 		{
 			await ToastAsync($"{foe} · 战胜", $"{extra}{label}检定：你的 {attr} ≥ 战力 {mv}。");
+			if(corpseHp == true)
+			{
+				if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+				{
+					SpawnGrassInRandomFog();
+				}
+
+				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
+				corpseHp = false;
+			}
 			EraseEvent(cell);
+			if(pskillList.Contains(203))
+			{
+				var corpseEvent = new Godot.Collections.Dictionary
+				{
+					{ "type", "corpse" }
+				};
+				_events[HexGridUtil.CellKey(cell)] = corpseEvent;
+				SpawnSingleEventIcon(cell, corpseEvent);
+			}
 			await EnergyAbsorbAsync();
 			return;
 		}
@@ -1534,9 +1679,6 @@ public partial class Gameplay : Node2D
 		await PlayerFightLossKnockbackAsync(lossReturnCell);
 
 	}
-
-
-
 
 
 
@@ -1579,6 +1721,20 @@ public partial class Gameplay : Node2D
 
 	{
 
+		if (grassskill)
+		{
+			_spentBasic = false;
+		}
+		grassskill = false;
+
+		if (grasscount >= 3)
+		{
+			_spentBasic = false;
+		}
+		else if (grasscount == 2)
+		{
+			grasscount++;
+		}
 
 		if (!_spentBasic)
 
@@ -2203,38 +2359,154 @@ public partial class Gameplay : Node2D
 
 	}
 
+	List<int> card_random(List<int> cards)
+	{
+		var shuffled = cards.OrderBy(x => GD.Randf()).ToList();
+		List<int> result = shuffled.Take(3).ToList();
+		//result[0] = 101; //测试00000000000000000000000000000000000000000000000
+		return result;
+	}
+
 	public void sure_button_pressed()
 	{
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = true;
 	}
-		
-	
-	public void sure_button_pressed_close()
+
+
+	public async void sure_button_pressed_close()
 	{
+		if (cardnum.Count < cardchoose)
+		{
+			return;
+		}
+		if (cardnum[cardchoose - 1] > 100)
+		{
+			await UseSkillAsync(cardnum[cardchoose - 1]);
+		}
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = false;
 	}
-		
 
-
-
-
-
-
-
-}
-
-internal static class PlayerSpriteAnchorLayout
-{
-	/// <summary>纵向锚点在贴图自上而下的比例（约 0.8）；锚点至底约占约 <c>1 - FromTopFraction</c>（约 0.2）。</summary>
-	internal const float FromTopFraction = 0.83f;
-
-	internal static float WorldOffsetYAnchorBelowCenter(Texture2D? tex, float scaleAbsY)
+	public void click_card1()
 	{
-		if (tex == null || scaleAbsY <= 0f)
-			return 0f;
+		cardchoose = 1;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardSelect").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardSelect").Visible = false;
 
-		float h = tex.GetHeight();
-		return -(FromTopFraction - 0.5f) * h * scaleAbsY;
+	}
+
+	public void click_card2()
+	{
+		cardchoose = 2;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardGlow").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardSelect").Visible = false;
+
+	}
+
+	public void click_card3()
+	{
+		cardchoose = 3;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardGlow").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardSelect").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardGlow").Visible = true;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = false;
+
+	}
+
+	public void SpawnGrassInRandomFog()
+	{
+		// 1. 收集所有有迷雾的格子
+		List<Vector2I> fogCells = new List<Vector2I>();
+
+		foreach (Variant key in _fogState.Keys)
+		{
+			if (_fogState[key].AsBool())  // 有迷雾
+			{
+				Vector2I cell = HexGridUtil.ParseKey(key.AsString());
+				fogCells.Add(cell);
+			}
+		}
+
+		// 2. 如果没有迷雾格子，就不生成
+		if (fogCells.Count == 0)
+			return;
+
+		// 3. 随机选择一个迷雾格子
+		int randomIndex = (int)(GD.Randi() % (uint)fogCells.Count);
+		Vector2I targetCell = fogCells[randomIndex];
+
+		// 4. 生成草丛
+		AddGrassAt(targetCell);
+	}
+
+	public void AddGrassAt(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+
+		// 检查格子是否有效
+		if (!_valid.ContainsKey(ck)) return;
+
+		// 如果已经有事件，不覆盖
+		if (_events.ContainsKey(ck)) return;
+
+		// 创建草丛事件数据
+		Godot.Collections.Dictionary grassEvent = new Godot.Collections.Dictionary
+	{
+		{ "type", "grass" }
+	};
+
+		// 添加到事件字典
+		_events[ck] = grassEvent;
+
+		// 生成图标
+		SpawnSingleEventIcon(cell, grassEvent);
+	}
+
+	public void SpawnSingleEventIcon(Vector2I cell, Godot.Collections.Dictionary eventData)
+	{
+		var icons = GetNode<Node2D>("World/EventIcons");
+
+		var spr = new Sprite2D();
+		spr.Texture = HexEventMarker.TextureForEventDict(eventData);
+
+		if (spr.Texture != null)
+		{
+			spr.Scale = new Vector2(0.34f, 0.34f);
+			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
+		}
+
+		string ck = HexGridUtil.CellKey(cell);
+		spr.Name = $"Ev_{cell.X}_{cell.Y}";
+		spr.SetMeta(CellKeyMeta, ck);
+		spr.Position = _terrain!.MapToLocal(cell);
+
+		// 如果格子有迷雾，图标应该隐藏
+		spr.Visible = !CellHasFog(ck);
+
+		icons.AddChild(spr);
 	}
 }
+	internal static class PlayerSpriteAnchorLayout
+	{
+		/// <summary>纵向锚点在贴图自上而下的比例（约 0.8）；锚点至底约占约 <c>1 - FromTopFraction</c>（约 0.2）。</summary>
+		internal const float FromTopFraction = 0.83f;
+
+		internal static float WorldOffsetYAnchorBelowCenter(Texture2D? tex, float scaleAbsY)
+		{
+			if (tex == null || scaleAbsY <= 0f)
+				return 0f;
+
+			float h = tex.GetHeight();
+			return -(FromTopFraction - 0.5f) * h * scaleAbsY;
+		}
+	}
