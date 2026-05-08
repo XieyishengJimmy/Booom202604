@@ -36,4 +36,34 @@ public static class HexGridUtil
 
 		return o;
 	}
+
+	/// <summary>
+	/// 若为从 <paramref name="from"/> 到相邻格 <paramref name="to"/> 的一步，返回所使用的六角邻接方向。
+	/// </summary>
+	public static bool TryGetNeighborStepDirection(TileMapLayer layer, Vector2I from, Vector2I to,
+		out TileSet.CellNeighbor direction)
+	{
+		direction = default;
+
+		TileSet.CellNeighbor[] order =
+		[
+			TileSet.CellNeighbor.RightSide,
+			TileSet.CellNeighbor.LeftSide,
+			TileSet.CellNeighbor.TopRightSide,
+			TileSet.CellNeighbor.TopLeftSide,
+			TileSet.CellNeighbor.BottomRightSide,
+			TileSet.CellNeighbor.BottomLeftSide,
+		];
+
+		foreach (TileSet.CellNeighbor d in order)
+		{
+			if (IsSameCell(layer.GetNeighborCell(from, d), to))
+			{
+				direction = d;
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

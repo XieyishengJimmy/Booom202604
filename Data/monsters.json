@@ -7,7 +7,7 @@
       "description": "穴居杂兵靠蛮力扑咬。",
       "kind": "力量",
       "power": 2,
-      "icon": "res://Art/Icon/monster.png"
+      "icon": "res://Art/monsterIcon/2001.png"
     },
     {
       "id": 2002,
@@ -15,7 +15,7 @@
       "description": "废墟里晃动的巨大骨架力量惊人。",
       "kind": "力量",
       "power": 2,
-      "icon": "res://Art/Icon/ruins.png"
+      "icon": "res://Art/monsterIcon/2002.png"
     },
     {
       "id": 3001,
@@ -23,7 +23,7 @@
       "description": "AAAA",
       "kind": "力量",
       "power": 3,
-      "icon": "res://Art/Icon/ruins.png"
+      "icon": "res://Art/monsterIcon/3001.png"
     },
     {
       "id": 3002,
@@ -31,7 +31,7 @@
       "description": "BBBB",
       "kind": "力量",
       "power": 3,
-      "icon": "res://Art/Icon/ruins.png"
+      "icon": "res://Art/monsterIcon/3002.png"
     },
     {
       "id": 4001,
@@ -39,7 +39,7 @@
       "description": "CCCC",
       "kind": "力量",
       "power": 4,
-      "icon": "res://Art/Icon/ruins.png"
+      "icon": "res://Art/monsterIcon/4001.png"
     },
     {
       "id": 4002,
@@ -47,7 +47,7 @@
       "description": "DDDD",
       "kind": "力量",
       "power": 4,
-      "icon": "res://Art/Icon/ruins.png"
+      "icon": "res://Art/monsterIcon/4002.png"
     }
   ]
 }

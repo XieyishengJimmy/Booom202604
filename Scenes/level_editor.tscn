@@ -22,6 +22,7 @@ anchor_bottom = 1.0
 split_offsets = PackedInt32Array(1380)
 
 [node name="ViewportContainer" type="SubViewportContainer" parent="HBox"]
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
 clip_contents = true
 size_flags_horizontal = 3
@@ -155,8 +156,9 @@ text = "怪物单位（点选亮起 → 地图上左键放置；地图右键取�
 layout_mode = 2
 custom_minimum_size = Vector2(0, 280)
 
-[node name="MonsterPickGrid" type="FlowContainer" parent="HBox/Sidebar/SidebarScroll/VBox/MonsterScroll"]
+[node name="MonsterPickGrid" type="GridContainer" parent="HBox/Sidebar/SidebarScroll/VBox/MonsterScroll"]
 layout_mode = 2
+columns = 8
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 12
@@ -171,8 +173,9 @@ text = "场景物件（含障碍；选中后地图左键放置，地图右键取
 layout_mode = 2
 custom_minimum_size = Vector2(0, 220)
 
-[node name="OtherPickGrid" type="FlowContainer" parent="HBox/Sidebar/SidebarScroll/VBox/OtherScroll"]
+[node name="OtherPickGrid" type="GridContainer" parent="HBox/Sidebar/SidebarScroll/VBox/OtherScroll"]
 layout_mode = 2
+columns = 8
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 12

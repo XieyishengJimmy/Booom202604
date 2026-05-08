@@ -66,12 +66,16 @@ public partial class LevelEditor : Control
 	Sprite2D? _ghost;
 	Label? _modeHint;
 	Label? _placementHint;
-	FlowContainer? _monsterGrid;
-	FlowContainer? _otherGrid;
+	GridContainer? _monsterGrid;
+	GridContainer? _otherGrid;
 	ScrollContainer? _monsterScroll;
 	ScrollContainer? _sidebarScroll;
 
 	bool _editorPendingRefit;
+	/// <summary>拖拽分割条时 Resize 风暴会积压海量 CallDeferred；合并为每帧至多一次视口刷新。</summary>
+	bool _viewportLayoutRefreshDeferred;
+	/// <summary>分割条拖动中不更新子视口分辨率（避免与侧栏布局循环喂彼此）。</summary>
+	bool _splitDragActive;
 	double _exportedJsonPoll;
 	DateTime _lastMonsterJsonUtc;
 	DateTime _lastBossJsonUtc;
@@ -106,6 +110,18 @@ public partial class LevelEditor : Control
 			return DateTime.MinValue;
 		try { return File.GetLastWriteTimeUtc(abs); }
 		catch { return DateTime.MinValue; }
+	}
+
+	/// <summary>与战斗中玩家 idle 同源（Gameplay <c>PlayerIdleTextureCandidates</c>）。</summary>
+	static Texture2D? EditorLoadPlayerIdleTexture()
+	{
+		foreach (string p in new[] { "res://Art/Player/idle.png", "res://Art/Player/idel.png" })
+		{
+			if (ResourceLoader.Exists(p))
+				return GD.Load<Texture2D>(p);
+		}
+
+		return null;
 	}
 
 	static void BumpSubtreeFontSizes(Control root, float mult)
@@ -152,19 +168,20 @@ public partial class LevelEditor : Control
 		_bossIdOpt = GetNode<OptionButton>($"{SidebarVBox}/BossIdOpt");
 		_modeHint = GetNodeOrNull<Label>($"{SidebarVBox}/ModeHint");
 		_placementHint = GetNodeOrNull<Label>($"{SidebarVBox}/PlacementHint");
-		_monsterGrid = GetNodeOrNull<FlowContainer>($"{SidebarVBox}/MonsterScroll/MonsterPickGrid");
-		_otherGrid = GetNodeOrNull<FlowContainer>($"{SidebarVBox}/OtherScroll/OtherPickGrid");
+		_monsterGrid = GetNodeOrNull<GridContainer>($"{SidebarVBox}/MonsterScroll/MonsterPickGrid");
+		_otherGrid = GetNodeOrNull<GridContainer>($"{SidebarVBox}/OtherScroll/OtherPickGrid");
 		_monsterScroll = GetNodeOrNull<ScrollContainer>($"{SidebarVBox}/MonsterScroll");
 		if (_monsterScroll != null)
 		{
-			_monsterScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled;
+			// 8 列网格最宽可能超过侧栏，需要横向滚动以避免裁切。
+			_monsterScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Auto;
 			_monsterScroll.VerticalScrollMode = ScrollContainer.ScrollMode.Auto;
 		}
 
 		ScrollContainer? otherScroll = GetNodeOrNull<ScrollContainer>($"{SidebarVBox}/OtherScroll");
 		if (otherScroll != null)
 		{
-			otherScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled;
+			otherScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Auto;
 			otherScroll.VerticalScrollMode = ScrollContainer.ScrollMode.Auto;
 		}
 
@@ -193,11 +210,13 @@ public partial class LevelEditor : Control
 		BuildTerrainStyleDropdown();
 		ApplyTerrainVariantToTerrain();
 
-		Texture2D? ptex = GD.Load<Texture2D>("res://Art/Role/player.png");
-		if (_ghost != null && ptex != null)
+		Texture2D? idleGhost = EditorLoadPlayerIdleTexture();
+		if (_ghost != null)
 		{
-			_ghost.Texture = ptex;
-			_ghost.Scale = new Vector2(0.42f, 0.42f);
+			Texture2D? useGhost = idleGhost ?? GD.Load<Texture2D>("res://Art/Role/player.png");
+			if (useGhost != null)
+				_ghost.Texture = useGhost;
+			RefreshEditorPlayerGhostScale();
 		}
 
 		int bossIdPick = PickDefaultBossIdForBlank();
@@ -214,7 +233,9 @@ public partial class LevelEditor : Control
 		}
 
 
-		GetNode<HSplitContainer>("HBox").DragEnded += OnEditorSplitDragEnded;
+		var editorSplit = GetNode<HSplitContainer>("HBox");
+		editorSplit.DragStarted += OnEditorSplitDragStarted;
+		editorSplit.DragEnded += OnEditorSplitDragEnded;
 
 		RebuildLevelFileDropdown();
 
@@ -329,7 +350,18 @@ public partial class LevelEditor : Control
 		split.SplitOffsets = new[] { off };
 	}
 
-	void OnEditorSplitDragEnded() => ClampEditorSplit();
+	void OnEditorSplitDragStarted()
+	{
+		_splitDragActive = true;
+		_viewportLayoutRefreshDeferred = false;
+	}
+
+	void OnEditorSplitDragEnded()
+	{
+		_splitDragActive = false;
+		ClampEditorSplit();
+		EditorRefreshViewportResolutionAndCamera(true);
+	}
 
 	void ClampEditorSplit() =>
 		GetNodeOrNull<HSplitContainer>("HBox")?.ClampSplitOffset(0);
@@ -388,6 +420,15 @@ public partial class LevelEditor : Control
 		_terrainVariant = TerrainTilesetFactory.ClampTerrainVariant(_terrainVariant);
 		_terrain.TileSet = TerrainTilesetFactory.CreateHexTileset(_terrainVariant);
 		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+		RefreshEditorPlayerGhostScale();
+	}
+
+	void RefreshEditorPlayerGhostScale()
+	{
+		if (_ghost == null || _terrain?.TileSet == null)
+			return;
+		float sc = TerrainTilesetFactory.PlayerSpriteScaleMatchingTerrainPixels(_terrain.TileSet);
+		_ghost.Scale = new Vector2(sc, sc);
 	}
 
 	public void _on_terrain_style_selected(long index)
@@ -408,8 +449,23 @@ public partial class LevelEditor : Control
 		RefreshVisuals();
 	}
 
-	void OnWrapResizedLayout()
+	void OnWrapResizedLayout() => RequestEditorViewportLayoutRefresh();
+
+	void RequestEditorViewportLayoutRefresh()
 	{
+		if (_splitDragActive)
+			return;
+		if (_viewportLayoutRefreshDeferred)
+			return;
+		_viewportLayoutRefreshDeferred = true;
+		Callable.From(FlushEditorViewportLayoutRefresh).CallDeferred();
+	}
+
+	void FlushEditorViewportLayoutRefresh()
+	{
+		_viewportLayoutRefreshDeferred = false;
+		if (_splitDragActive)
+			return;
 		EditorRefreshViewportResolutionAndCamera(false);
 	}
 
@@ -418,8 +474,8 @@ public partial class LevelEditor : Control
 		base._Notification(what);
 		if (what != NotificationResized)
 			return;
-		ClampEditorSplit();
-		Callable.From(() => EditorRefreshViewportResolutionAndCamera(false)).CallDeferred();
+		// 不在此处 ClampSplit：会与拖动中的 SplitContainer 排序互相触发；松手由 DragEnded 再 Clamp。
+		RequestEditorViewportLayoutRefresh();
 	}
 
 	void EditorRefreshViewportResolutionAndCamera(bool forceFit)
@@ -431,9 +487,10 @@ public partial class LevelEditor : Control
 		if (sz.X < 4f || sz.Y < 4f)
 			return;
 
+		const int MaxAxis = 8192;
 		Vector2I next = new(
-			Mathf.Max(8, Mathf.CeilToInt(sz.X)),
-			Mathf.Max(8, Mathf.CeilToInt(sz.Y)));
+			Mathf.Clamp(Mathf.Max(8, Mathf.CeilToInt(sz.X)), 8, MaxAxis),
+			Mathf.Clamp(Mathf.Max(8, Mathf.CeilToInt(sz.Y)), 8, MaxAxis));
 
 		bool changed = _vp.Size != next;
 		if (changed)
@@ -591,7 +648,7 @@ public partial class LevelEditor : Control
 
 	void BuildOtherPicker()
 	{
-		FlowContainer row = _otherGrid!;
+		GridContainer row = _otherGrid!;
 		foreach (Node child in row.GetChildren())
 			child.QueueFree();
 
@@ -1164,7 +1221,11 @@ public partial class LevelEditor : Control
 		{
 			_ghost.Position = _terrain!.MapToLocal(_player);
 			if (_ghost.Texture != null)
-				_ghost.Position += new Vector2(0f, -_ghost.Texture.GetHeight() * 0.06f);
+			{
+				float sy = Mathf.Abs(_ghost.Scale.Y);
+				_ghost.Position += new Vector2(0f,
+					PlayerSpriteAnchorLayout.WorldOffsetYAnchorBelowCenter(_ghost.Texture, sy));
+			}
 		}
 	}
 
@@ -1260,6 +1321,7 @@ public partial class LevelEditor : Control
 		_terrain!.Clear();
 		_terrain.TileSet = TerrainTilesetFactory.CreateHexTileset(_terrainVariant);
 		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+		RefreshEditorPlayerGhostScale();
 
 		if (d.ContainsKey("cells") && d["cells"].VariantType == Variant.Type.Array)
 		{

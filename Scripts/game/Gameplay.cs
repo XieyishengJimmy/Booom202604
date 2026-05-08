@@ -37,6 +37,25 @@ public partial class Gameplay : Node2D
 	BlockLayer? _blocks;
 	Sprite2D? _playerSprite;
 	Hud? _hudUi;
+
+	const float PlayerMoveTweenSeconds = 0.5f;
+	const float PlayerFightKnockbackSeconds = 0.3f;
+	const float PlayerWalkFramesPerSecond = 10f;
+	static readonly string[] PlayerIdleTextureCandidates =
+	[
+		"res://Art/Player/idle.png",
+		"res://Art/Player/idel.png",
+	];
+	static readonly string[] PlayerWalkFramePaths =
+	[
+		"res://Art/Player/walk1.png",
+		"res://Art/Player/walk2.png",
+		"res://Art/Player/walk3.png",
+		"res://Art/Player/walk4.png",
+	];
+
+	Texture2D? _playerIdleTex;
+	readonly Texture2D?[] _playerWalkFrames = new Texture2D?[4];
 	Camera2D? _camera;
 
 	readonly Godot.Collections.Dictionary _valid = [];
@@ -74,6 +93,12 @@ public partial class Gameplay : Node2D
 
 	int _fogGoalTotal = 1;
 
+	/// <summary>怪物公布后邻居一圈迷雾：不能被「移动顺带吸收」「迷雾缠身」驱散； refcount 为多怪共享格。</summary>
+	readonly Dictionary<string, int> _fogNeighborAbsorptionLockRef = [];
+
+	/// <summary>每只已亮相怪物格子 key → 曾为其加锁的邻居迷雾格。</summary>
+	readonly Dictionary<string, HashSet<string>> _monsterNeighborFogLocksByAnchor = [];
+
 	static readonly StringName CellKeyMeta = new("cell_key");
 
 	bool CellHasFog(string ck) =>
@@ -93,6 +118,161 @@ public partial class Gameplay : Node2D
 			if (ch is CanvasItem cv)
 				cv.Visible = !CellHasFog(ck);
 		}
+	}
+
+	static bool MonsterEventType(string t) =>
+		t == "monster_str" || t == "monster_mag";
+
+	bool TryMonsterEventAtKey(string ck, out Godot.Collections.Dictionary ev)
+	{
+		ev = default!;
+		if (!_events.TryGetValue(ck, out Variant vv))
+			return false;
+
+		ev = vv.AsGodotDictionary();
+		return MonsterEventType(GetString(ev, "type"));
+	}
+
+	bool FogNeighborAbsorptionLocked(string ck) =>
+		_fogNeighborAbsorptionLockRef.TryGetValue(ck, out int r) && r > 0;
+
+	void NotifyMonsterFogRevealedIfNeeded(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!TryMonsterEventAtKey(ck, out _))
+			return;
+
+		OnMonsterNeighborsFogLocksForReveal(cell);
+	}
+
+	void OnMonsterNeighborsFogLocksForReveal(Vector2I monsterCell)
+	{
+		if (_terrain == null || _fog == null)
+			return;
+
+		string anchor = HexGridUtil.CellKey(monsterCell);
+
+		// 仅在怪物格已被揭示（无迷雾）时才产生锁定；被 BOSS 迷雾重新盖住时走 OnMonsterCellBecameFogCovered 释放。
+		if (CellHasFog(anchor))
+			return;
+
+		if (_monsterNeighborFogLocksByAnchor.ContainsKey(anchor))
+			return;
+
+		HashSet<string> touched = [];
+
+		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, monsterCell))
+		{
+			string nk = HexGridUtil.CellKey(n);
+
+			if (!_valid.ContainsKey(nk) || !CellHasFog(nk))
+				continue;
+
+			touched.Add(nk);
+			if (_fogNeighborAbsorptionLockRef.TryGetValue(nk, out int c))
+				_fogNeighborAbsorptionLockRef[nk] = c + 1;
+			else
+				_fogNeighborAbsorptionLockRef[nk] = 1;
+
+			_fog.SetAbsorptionLockedVisual(n, true);
+		}
+
+		if (touched.Count > 0)
+			_monsterNeighborFogLocksByAnchor[anchor] = touched;
+	}
+
+	/// <summary>任意来源将迷雾重新盖在<strong>怪物格</strong>上时撤销其邻圈吸收锁。</summary>
+	void OnMonsterCellBecameFogCovered(Vector2I monsterCell)
+	{
+		string ck = HexGridUtil.CellKey(monsterCell);
+		if (!TryMonsterEventAtKey(ck, out _))
+			return;
+
+		ReleaseMonsterNeighborFogLocks(ck);
+	}
+
+	void ReleaseMonsterNeighborFogLocks(string monsterAnchorCk)
+	{
+		if (!_monsterNeighborFogLocksByAnchor.TryGetValue(monsterAnchorCk,
+			    out HashSet<string>? nkSet))
+			return;
+
+		_monsterNeighborFogLocksByAnchor.Remove(monsterAnchorCk);
+
+		if (_terrain == null || _fog == null)
+			return;
+
+		foreach (string nk in nkSet)
+		{
+			if (!_fogNeighborAbsorptionLockRef.TryGetValue(nk, out int r))
+				continue;
+
+			r--;
+			if (r <= 0)
+			{
+				_fogNeighborAbsorptionLockRef.Remove(nk);
+				if (_valid.ContainsKey(nk))
+					_fog.SetAbsorptionLockedVisual(HexGridUtil.ParseKey(nk), false);
+			}
+			else
+				_fogNeighborAbsorptionLockRef[nk] = r;
+		}
+	}
+
+	void StripAllMonsterNeighborAssociationsForFogKey(string nk)
+	{
+		_fogNeighborAbsorptionLockRef.Remove(nk);
+		var anchors = new List<string>();
+		foreach (string anchor in _monsterNeighborFogLocksByAnchor.Keys)
+			anchors.Add(anchor);
+
+		foreach (string anchor in anchors)
+		{
+			if (!_monsterNeighborFogLocksByAnchor.TryGetValue(anchor, out HashSet<string>? hs))
+				continue;
+
+			if (hs.Remove(nk) && hs.Count == 0)
+				_monsterNeighborFogLocksByAnchor.Remove(anchor);
+		}
+	}
+
+	void SyncMonsterNeighborFogLocksFromRevealedMonsters()
+	{
+		foreach (Variant vk in _events.Keys)
+		{
+			string ck = vk.AsString();
+			if (!TryMonsterEventAtKey(ck, out _))
+				continue;
+
+			if (CellHasFog(ck))
+				continue;
+
+			OnMonsterNeighborsFogLocksForReveal(HexGridUtil.ParseKey(ck));
+		}
+	}
+
+	/// <summary>仅技能等显式驱散：绕过吸收锁，清除该格迷雾并从所有怪物邻居锁名单中剔除该格。</summary>
+	public void DispelFogBySkill(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck))
+			return;
+
+		if (!(_fogState.ContainsKey(ck) && _fogState[ck].AsBool()))
+			return;
+
+		StripAllMonsterNeighborAssociationsForFogKey(ck);
+
+		if (_terrain != null)
+			_fog!.SetAbsorptionLockedVisual(cell, false);
+
+		_fogState[ck] = false;
+		_fog!.SetCell(cell, false);
+		NotifyMonsterFogRevealedIfNeeded(cell);
+
+		RefreshEventIconsFogVisibility();
+		RunState.Instance.ClampHp();
+		RefreshHud();
 	}
 
 	List<int> skillList = new List<int>();
@@ -123,12 +303,7 @@ public partial class Gameplay : Node2D
 		_bossWarn = GetNodeOrNull<BossWarningLayer>("World/BossWarningRoot");
 		_blocks = GetNode<BlockLayer>("World/BlockRoot");
 
-		Texture2D? ptex = GD.Load<Texture2D>("res://Art/Role/player.png");
-		if (_playerSprite != null && ptex != null)
-		{
-			_playerSprite.Texture = ptex;
-			_playerSprite.Scale = new Vector2(0.42f, 0.42f);
-		}
+		LoadPlayerTexturesForWorldSprite();
 
 		string path = RunState.Instance.PendingLevelPath;
 		if (string.IsNullOrWhiteSpace(path))
@@ -189,11 +364,21 @@ public partial class Gameplay : Node2D
 		};
 	}
 
+	void ApplyPlayerWorldSpriteScaleFromTerrain()
+	{
+		if (_playerSprite == null || _terrain?.TileSet == null)
+			return;
+
+		float sc = TerrainTilesetFactory.PlayerSpriteScaleMatchingTerrainPixels(_terrain.TileSet);
+		_playerSprite.Scale = new Vector2(sc, sc);
+	}
+
 	void ApplyLevel(Godot.Collections.Dictionary d)
 	{
 		int terrainVar = TerrainTilesetFactory.ResolveTerrainVariantFromLevel(d);
 		_terrain!.TileSet = TerrainTilesetFactory.CreateHexTileset(terrainVar);
 		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
+		ApplyPlayerWorldSpriteScaleFromTerrain();
 		_terrain.Clear();
 		_valid.Clear();
 		_fogState.Clear();
@@ -216,6 +401,8 @@ public partial class Gameplay : Node2D
 		_bossTableId = 0;
 		_bossLockedCellKeys.Clear();
 		_bossWarn?.ClearAll();
+		_fogNeighborAbsorptionLockRef.Clear();
+		_monsterNeighborFogLocksByAnchor.Clear();
 
 		if (!d.ContainsKey("cells"))
 			return;
@@ -268,6 +455,8 @@ public partial class Gameplay : Node2D
 		SpawnEventIcons();
 
 		RefreshEventIconsFogVisibility();
+
+		SyncMonsterNeighborFogLocksFromRevealedMonsters();
 
 		_fogGoalTotal = Mathf.Max(CountTrue(_fogState), 1);
 
@@ -844,8 +1033,14 @@ public partial class Gameplay : Node2D
 
 
 
+		Vector2I origin = _playerCell;
+
+		await ApproachCellWithWalkAsync(origin, dst);
+
 		_playerCell = dst;
 
+
+		SetPlayerIdleVisual();
 
 
 		SnapPlayer();
@@ -901,16 +1096,17 @@ public partial class Gameplay : Node2D
 			if (!_valid.ContainsKey(nk) || !_fogState.ContainsKey(nk))
 				continue;
 
-
 			if (!_fogState[nk].AsBool())
 				continue;
 
-
+			if (FogNeighborAbsorptionLocked(nk))
+				continue;
 
 			_fogState[nk] = false;
 
 			_fog!.SetCell(n, false);
 			gained++;
+			NotifyMonsterFogRevealedIfNeeded(n);
 		}
 
 		RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + gained, RunState.Instance.PlayerEnergyMax);
@@ -920,6 +1116,149 @@ public partial class Gameplay : Node2D
 
 		RefreshEventIconsFogVisibility();
 
+	}
+
+
+
+	void LoadPlayerTexturesForWorldSprite()
+	{
+		_playerIdleTex = null;
+		foreach (string p in PlayerIdleTextureCandidates)
+		{
+			if (ResourceLoader.Exists(p))
+			{
+				_playerIdleTex = GD.Load<Texture2D>(p);
+				break;
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			string path = PlayerWalkFramePaths[i];
+			_playerWalkFrames[i] = ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+		}
+
+		if (_playerSprite != null)
+		{
+			ApplyPlayerWorldSpriteScaleFromTerrain();
+			_playerSprite.FlipH = false;
+			SetPlayerIdleVisual();
+		}
+	}
+
+	void SetPlayerIdleVisual()
+	{
+		if (_playerSprite == null)
+			return;
+
+		_playerSprite.Texture = _playerIdleTex ?? _playerWalkFrames[0];
+	}
+
+	void SetPlayerWalkVisualFrame(int frameIndex)
+	{
+		if (_playerSprite == null)
+			return;
+
+		int i = ((frameIndex % 4) + 4) % 4;
+		_playerSprite.Texture = _playerWalkFrames[i] ?? _playerIdleTex;
+	}
+
+	float PlayerSpriteAnchorOffsetYWorld() =>
+		PlayerSpriteAnchorLayout.WorldOffsetYAnchorBelowCenter(
+			_playerSprite?.Texture ?? _playerIdleTex ?? _playerWalkFrames[0],
+			Mathf.Abs(_playerSprite?.Scale.Y ?? 1f));
+
+	Vector2 PlayerWorldPositionForCell(Vector2I cell) =>
+		_terrain!.MapToLocal(cell) + new Vector2(0f, PlayerSpriteAnchorOffsetYWorld());
+
+	/// <summary>素材默认面朝「六角左边」三向；向右三向则用 FlipH。</summary>
+	static bool HexStepMatchesSpriteDefaultLeftFacing(TileSet.CellNeighbor dir) =>
+		dir is TileSet.CellNeighbor.LeftSide or TileSet.CellNeighbor.TopLeftSide
+			or TileSet.CellNeighbor.BottomLeftSide;
+
+	void ApplyPlayerFacingForAdjacentStep(Vector2I fromCell, Vector2I toCell)
+	{
+		if (_playerSprite == null || _terrain == null)
+			return;
+
+		if (!HexGridUtil.TryGetNeighborStepDirection(_terrain, fromCell, toCell, out TileSet.CellNeighbor dir))
+			return;
+
+		_playerSprite.FlipH = !HexStepMatchesSpriteDefaultLeftFacing(dir);
+	}
+
+	async Task ApproachCellWithWalkAsync(Vector2I fromCell, Vector2I toCell)
+	{
+		if (_playerSprite == null || _terrain == null)
+			return;
+
+		if (HexGridUtil.IsSameCell(fromCell, toCell))
+			return;
+
+		ApplyPlayerFacingForAdjacentStep(fromCell, toCell);
+
+		Vector2 baseFrom = _terrain.MapToLocal(fromCell);
+		Vector2 baseTo = _terrain.MapToLocal(toCell);
+
+		float elapsed = 0f;
+		const float step = 1f / 60f;
+		double walkAccum = 0d;
+		int walkIx = 0;
+		double walkFrameDt = 1.0 / PlayerWalkFramesPerSecond;
+
+		while (elapsed < PlayerMoveTweenSeconds)
+		{
+			await ToSignal(GetTree().CreateTimer(step), SceneTreeTimer.SignalName.Timeout);
+			elapsed += step;
+			float u = Mathf.Clamp(elapsed / PlayerMoveTweenSeconds, 0f, 1f);
+
+			walkAccum += step;
+			while (walkAccum >= walkFrameDt)
+			{
+				walkAccum -= walkFrameDt;
+				SetPlayerWalkVisualFrame(walkIx++);
+			}
+
+			Vector2 basePos = baseFrom.Lerp(baseTo, u);
+			_playerSprite.Position = basePos + new Vector2(0f, PlayerSpriteAnchorOffsetYWorld());
+		}
+
+		SetPlayerIdleVisual();
+		_playerSprite.Position = baseTo + new Vector2(0f, PlayerSpriteAnchorOffsetYWorld());
+	}
+
+	async Task PlayerFightLossKnockbackAsync(Vector2I returnCell)
+	{
+		if (_playerSprite == null || _terrain == null)
+		{
+			_playerCell = returnCell;
+			return;
+		}
+
+		// 受击动画素材待补：占位为短暂变色。
+		Color saved = _playerSprite.Modulate;
+		_playerSprite.Modulate = new Color(1f, 0.42f, 0.42f, 1f);
+
+		ApplyPlayerFacingForAdjacentStep(_playerCell, returnCell);
+
+		Vector2 from = PlayerWorldPositionForCell(_playerCell);
+		Vector2 to = PlayerWorldPositionForCell(returnCell);
+
+		float elapsed = 0f;
+		const float step = 1f / 60f;
+
+		while (elapsed < PlayerFightKnockbackSeconds)
+		{
+			await ToSignal(GetTree().CreateTimer(step), SceneTreeTimer.SignalName.Timeout);
+			elapsed += step;
+			float u = Mathf.Clamp(elapsed / PlayerFightKnockbackSeconds, 0f, 1f);
+			_playerSprite.Position = from.Lerp(to, u);
+		}
+
+		_playerSprite.Modulate = saved;
+		_playerCell = returnCell;
+		SetPlayerIdleVisual();
+		SnapPlayer();
 	}
 
 
@@ -940,13 +1279,23 @@ public partial class Gameplay : Node2D
 
 		string t = GetString(ev, "type");
 
+		Vector2I approachOrigin = _playerCell;
+
+		if (t != "altar")
+		{
+			await ApproachCellWithWalkAsync(approachOrigin, cell);
+			_playerCell = cell;
+			SetPlayerIdleVisual();
+			SnapPlayer();
+		}
+
 		switch (t)
 		{
 
 			case "monster_str":
 			case "monster_mag":
 
-				await ResolveFightAsync(cell, ev, t == "monster_mag");
+				await ResolveFightAsync(cell, ev, t == "monster_mag", approachOrigin);
 
 				RunState.Instance.ClampHp();
 
@@ -1155,7 +1504,8 @@ public partial class Gameplay : Node2D
 
 
 
-	async Task ResolveFightAsync(Vector2I cell, Godot.Collections.Dictionary ev, bool useMagic)
+	async Task ResolveFightAsync(Vector2I cell, Godot.Collections.Dictionary ev, bool useMagic,
+		Vector2I lossReturnCell)
 	{
 		int mv = GetInt(ev, "value", 1);
 		int attr = useMagic ? RunState.Instance.PlayerMagic : RunState.Instance.PlayerStr;
@@ -1170,7 +1520,7 @@ public partial class Gameplay : Node2D
 		{
 			await ToastAsync($"{foe} · 战胜", $"{extra}{label}检定：你的 {attr} ≥ 战力 {mv}。");
 			EraseEvent(cell);
-			await EnterCellAfterWinAsync(cell);
+			await EnergyAbsorbAsync();
 			return;
 		}
 
@@ -1181,24 +1531,14 @@ public partial class Gameplay : Node2D
 
 		EraseEvent(cell);
 
-	}
-
-
-
-
-
-	async Task EnterCellAfterWinAsync(Vector2I cell)
-
-
-	{
-
-		_playerCell = cell;
-
-		SnapPlayer();
-
-		await EnergyAbsorbAsync();
+		await PlayerFightLossKnockbackAsync(lossReturnCell);
 
 	}
+
+
+
+
+
 
 
 
@@ -1210,6 +1550,9 @@ public partial class Gameplay : Node2D
 	{
 
 		string ck = HexGridUtil.CellKey(cell);
+
+		if (TryMonsterEventAtKey(ck, out _))
+			ReleaseMonsterNeighborFogLocks(ck);
 
 		_events.Remove(ck);
 
@@ -1423,6 +1766,7 @@ public partial class Gameplay : Node2D
 				Vector2I c = HexGridUtil.ParseKey(ck);
 				_fogState[ck] = true;
 				_fog.SetCell(c, true);
+				OnMonsterCellBecameFogCovered(c);
 			}
 
 			_fogGoalTotal = Mathf.Max(_fogGoalTotal, CountTrue(_fogState));
@@ -1479,6 +1823,7 @@ public partial class Gameplay : Node2D
 				default:
 					_fogState[ck] = true;
 					_fog.SetCell(c, true);
+					OnMonsterCellBecameFogCovered(c);
 					break;
 			}
 		}
@@ -1518,6 +1863,7 @@ public partial class Gameplay : Node2D
 			string pk = HexGridUtil.CellKey(_playerCell);
 			_fogState[pk] = true;
 			_fog!.SetCell(_playerCell, true);
+			OnMonsterCellBecameFogCovered(_playerCell);
 			RefreshEventIconsFogVisibility();
 			await MaybeFogDamageAsync();
 		}
@@ -1544,6 +1890,10 @@ public partial class Gameplay : Node2D
 
 			return;
 
+		if (FogNeighborAbsorptionLocked(ck))
+
+
+			return;
 
 
 
@@ -1554,6 +1904,9 @@ public partial class Gameplay : Node2D
 
 
 		_fog!.SetCell(HexGridUtil.ParseKey(ck), false);
+
+
+		NotifyMonsterFogRevealedIfNeeded(_playerCell);
 
 
 		RefreshEventIconsFogVisibility();
@@ -1840,16 +2193,9 @@ public partial class Gameplay : Node2D
 
 			return;
 
+		SetPlayerIdleVisual();
 
-
-
-		_playerSprite.Position = _terrain.MapToLocal(_playerCell);
-
-
-		if (_playerSprite.Texture != null)
-
-
-			_playerSprite.Position += new Vector2(0f, -_playerSprite.Texture.GetHeight() * 0.06f);
+		_playerSprite.Position = PlayerWorldPositionForCell(_playerCell);
 
 
 
@@ -1876,4 +2222,19 @@ public partial class Gameplay : Node2D
 
 
 
+}
+
+internal static class PlayerSpriteAnchorLayout
+{
+	/// <summary>纵向锚点在贴图自上而下的比例（约 0.8）；锚点至底约占约 <c>1 - FromTopFraction</c>（约 0.2）。</summary>
+	internal const float FromTopFraction = 0.83f;
+
+	internal static float WorldOffsetYAnchorBelowCenter(Texture2D? tex, float scaleAbsY)
+	{
+		if (tex == null || scaleAbsY <= 0f)
+			return 0f;
+
+		float h = tex.GetHeight();
+		return -(FromTopFraction - 0.5f) * h * scaleAbsY;
+	}
 }

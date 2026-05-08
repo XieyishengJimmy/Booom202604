@@ -94,4 +94,42 @@ public static class TerrainTilesetFactory
 
 		return ts;
 	}
+
+	/// <summary>
+	/// 主地块图集首张纹理的尺寸（本项目为单 atlas 整块图）。
+	/// </summary>
+	public static bool TryGetPrimaryAtlasTexturePixelSize(TileSet tileSet, out Vector2I sizePx)
+	{
+		sizePx = Vector2I.Zero;
+
+		for (int i = 0; i < tileSet.GetSourceCount(); i++)
+		{
+			int sid = tileSet.GetSourceId(i);
+			TileSetSource raw = tileSet.GetSource(sid);
+			if (raw is TileSetAtlasSource atlas && atlas.Texture != null)
+			{
+				sizePx = new Vector2I(atlas.Texture.GetWidth(), atlas.Texture.GetHeight());
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// 玩家世界 Sprite2D 缩放：与六角格绘制使用同一「纹素像素 → 棋盘格坐标」倍数，
+	/// 使 480×480 站立图相对 600×600 地砖图在实际尺寸上保留 480:600。
+	/// </summary>
+	public static float PlayerSpriteScaleMatchingTerrainPixels(TileSet? tileSet, float fallbackLegacy = 0.63f)
+	{
+		if (tileSet == null || !TryGetPrimaryAtlasTexturePixelSize(tileSet, out Vector2I texPx))
+			return fallbackLegacy;
+
+		int texH = texPx.Y;
+		if (texH <= 0)
+			return fallbackLegacy;
+
+		float tileH = tileSet.TileSize.Y;
+		return tileH / texH;
+	}
 }

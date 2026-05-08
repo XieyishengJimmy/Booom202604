@@ -3,7 +3,18 @@ using Godot;
 
 namespace Booom202604;
 
-/// <summary>根据 BOSS 表枚举计算「本次预警锁定」的格子集合；在预警进入时调用一次。</summary>
+/// <summary>
+/// 根据 BOSS 表枚举计算「本次预警锁定」的格子集合；在预警进入时调用一次。
+/// <para>
+/// 「技能范围」不是图上的 BFS 层数绕圈：在与玩家对齐的六角格地图中，任选一条<strong>六角轴向射线</strong>，
+/// <strong>连续的 L 格</strong>在同一直线上。<c>BOSS技能范围定义</c>列是离散标号（例如<strong>标号 5 ⇒ 直线 3 格</strong>），
+/// 具体 <c>L</c> 见 <c>LineLengthCellsFromSkillAreaCode</c>。
+/// </para>
+/// <para>
+/// <c>skill_target == 3</c>（全图随机落中心）的旧「巫妖」式技能仍沿用<strong>六角圆盘半径 = skill_area 数值</strong>，
+/// 以便锁住足够多格子供文案中的「随机 N 格子」取样。
+/// </para>
+/// </summary>
 public static class BossSkillPlanner
 {
 	static readonly TileSet.CellNeighbor[] NeighborOrder =
@@ -16,29 +27,67 @@ public static class BossSkillPlanner
 		TileSet.CellNeighbor.BottomRightSide,
 	];
 
-	/// <param name="debugCenterSet">BOSS 在进入预警时为本次技能选定的中心格（便于日志）。</param>
+	/// <param name="debugCenterSet">BOSS 在本次技能中取定的「轴向直线」的起点格（线段第一格）；全图随机中心目标则为本次随机中心。</param>
 	public static HashSet<string> ResolveLockedCellKeys(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
 		Vector2I playerCell, int skillTarget, int skillArea, out Vector2I debugCenterSet)
 	{
 		var keys = new HashSet<string>();
 		debugCenterSet = default;
+
 		if (terrain == null)
 			return keys;
 
-		Vector2I center = skillTarget switch
-		{
-			3 => PickRandomCenterAnywhere(validCells),
-			2 => PickRandomCenterCoveringPlayer(terrain, validCells, playerCell, skillArea),
-			_ => playerCell,
-		};
+		HashSet<Vector2I> shapeCells = ResolveShapeCellsLocal(terrain, validCells, playerCell, skillTarget, skillArea,
+			out debugCenterSet);
 
-		debugCenterSet = center;
-
-		foreach (Vector2I c in ExpandShapeFromCenter(terrain, validCells, center, Mathf.Max(skillArea, 0)))
+		foreach (Vector2I c in shapeCells)
 			keys.Add(HexGridUtil.CellKey(c));
 
 		return keys;
 	}
+
+	static HashSet<Vector2I> ResolveShapeCellsLocal(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
+		Vector2I playerCell, int skillTarget, int skillArea, out Vector2I debugRepresentativeCell)
+	{
+		debugRepresentativeCell = default;
+		int rawCode = Mathf.Max(skillArea, 0);
+
+		if (rawCode == 4)
+			return CellsAllValid(validCells);
+
+		// Target 3：旧数据按「六角圆盘半径」理解巫妖范围；不改变 skill_area 的数值语义。
+		if (skillTarget == 3)
+		{
+			Vector2I pick = PickRandomCenterAnywhere(validCells);
+			debugRepresentativeCell = pick;
+			int radius = rawCode <= 0 ? 1 : rawCode;
+
+			return CellsHexDisk(terrain, validCells, pick, radius);
+		}
+
+		if (skillTarget == 2)
+			return ResolveLineTargetingPlayerCoverage(terrain, validCells, playerCell, rawCode, out debugRepresentativeCell);
+
+		debugRepresentativeCell = playerCell;
+
+		return ResolveLineAnchoredAtPlayerRandomDir(terrain, validCells, playerCell, rawCode);
+	}
+
+	/// <summary>标号 ⇒ 轴向直线连续的格子数。<c>5</c> 策划定义为「直线 3 格」。</summary>
+	static int LineLengthCellsFromSkillAreaCode(int skillAreaCode) =>
+		skillAreaCode switch
+		{
+			0 => 1,
+			1 => 1,
+			2 => 2,
+			3 => 3,
+			// 离散标号 ≠ 字面长度：
+			5 => 3,
+			// 独角兽国王等沿用了「长直线」字面 6；
+			6 => 6,
+			// 兜底：未知的正标号按其数值当作线段长度；
+			_ => skillAreaCode < 1 ? 1 : skillAreaCode,
+		};
 
 	static Vector2I PickRandomCenterAnywhere(Godot.Collections.Dictionary validCells)
 	{
@@ -47,25 +96,6 @@ public static class BossSkillPlanner
 			return default;
 
 		return candidates[(int)(GD.Randi() % candidates.Count)];
-	}
-
-	static Vector2I PickRandomCenterCoveringPlayer(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
-		Vector2I playerCell, int skillArea)
-	{
-		List<Vector2I> candidates = GatherAllValid(validCells);
-		var ok = new List<Vector2I>();
-
-		foreach (Vector2I center in candidates)
-		{
-			HashSet<Vector2I> shape = ExpandShapeFromCenter(terrain, validCells, center, Mathf.Max(skillArea, 0));
-			if (shape.Contains(playerCell))
-				ok.Add(center);
-		}
-
-		if (ok.Count == 0)
-			return playerCell;
-
-		return ok[(int)(GD.Randi() % ok.Count)];
 	}
 
 	static List<Vector2I> GatherAllValid(Godot.Collections.Dictionary validCells)
@@ -78,31 +108,8 @@ public static class BossSkillPlanner
 		return list;
 	}
 
-	static HashSet<Vector2I> ExpandShapeFromCenter(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
-		Vector2I center, int skillAreaShape)
-	{
-		int code = Mathf.Max(skillAreaShape, 0);
-		switch (code)
-		{
-			case 4:
-				return CellsAllValid(validCells);
-			case 3:
-				return CellsTripleRay(terrain, validCells, center);
-			default:
-			{
-				int radius = code <= 0 ? 1 : code;
-
-				return CellsHexDisk(terrain, validCells, center, radius);
-			}
-		}
-	}
-
-	static bool IsValidCoord(Godot.Collections.Dictionary validCells, Vector2I c)
-	{
-		string k = HexGridUtil.CellKey(c);
-
-		return validCells.ContainsKey(k);
-	}
+	static bool IsValidCoord(Godot.Collections.Dictionary validCells, Vector2I c) =>
+		validCells.ContainsKey(HexGridUtil.CellKey(c));
 
 	static HashSet<Vector2I> CellsAllValid(Godot.Collections.Dictionary validCells)
 	{
@@ -138,6 +145,7 @@ public static class BossSkillPlanner
 			{
 				if (!IsValidCoord(validCells, n))
 					continue;
+
 				if (dist.ContainsKey(n))
 					continue;
 
@@ -150,26 +158,117 @@ public static class BossSkillPlanner
 		return set;
 	}
 
-	static HashSet<Vector2I> CellsTripleRay(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
-		Vector2I center)
+	static bool TryBuildAxialRay(TileMapLayer terrain, Godot.Collections.Dictionary validCells,
+		Vector2I startAnchor, TileSet.CellNeighbor dir, int segmentLengthCells, HashSet<Vector2I> sink)
 	{
-		var set = new HashSet<Vector2I>();
+		sink.Clear();
+		Vector2I cur = startAnchor;
 
-		if (IsValidCoord(validCells, center))
-			set.Add(center);
-
-		for (int i = 0; i < 6; i += 2)
+		for (int i = 0; i < segmentLengthCells; i++)
 		{
-			TileSet.CellNeighbor dir = NeighborOrder[i];
-			Vector2I cur = terrain.GetNeighborCell(center, dir);
+			if (!IsValidCoord(validCells, cur))
+				return false;
 
-			while (IsValidCoord(validCells, cur))
+			sink.Add(cur);
+
+			if (i == segmentLengthCells - 1)
+				break;
+
+			cur = terrain.GetNeighborCell(cur, dir);
+		}
+
+		return true;
+	}
+
+	static TileSet.CellNeighbor OppositeNeighbor(TileSet.CellNeighbor d) =>
+		d switch
+		{
+			TileSet.CellNeighbor.RightSide => TileSet.CellNeighbor.LeftSide,
+			TileSet.CellNeighbor.LeftSide => TileSet.CellNeighbor.RightSide,
+			TileSet.CellNeighbor.TopRightSide => TileSet.CellNeighbor.BottomLeftSide,
+			TileSet.CellNeighbor.BottomLeftSide => TileSet.CellNeighbor.TopRightSide,
+			TileSet.CellNeighbor.TopLeftSide => TileSet.CellNeighbor.BottomRightSide,
+			TileSet.CellNeighbor.BottomRightSide => TileSet.CellNeighbor.TopLeftSide,
+			_ => TileSet.CellNeighbor.LeftSide,
+		};
+
+	static Vector2I InverseStep(TileMapLayer terrain, Vector2I from, TileSet.CellNeighbor forwardDir)
+	{
+		TileSet.CellNeighbor backDir = OppositeNeighbor(forwardDir);
+
+		return terrain.GetNeighborCell(from, backDir);
+	}
+
+	static HashSet<Vector2I> ResolveLineAnchoredAtPlayerRandomDir(TileMapLayer terrain,
+		Godot.Collections.Dictionary validCells, Vector2I playerAnchor, int skillAreaCode)
+	{
+		int l = LineLengthCellsFromSkillAreaCode(skillAreaCode);
+
+		var acc = new HashSet<Vector2I>();
+		TileSet.CellNeighbor[] dirs = NeighborOrder;
+		int startDir = (int)(GD.Randi() % 6);
+
+		for (int t = 0; t < 6; t++)
+		{
+			int di = (startDir + t) % 6;
+
+			if (TryBuildAxialRay(terrain, validCells, playerAnchor, dirs[di], l, acc))
+				return acc;
+		}
+
+		acc.Clear();
+		if (IsValidCoord(validCells, playerAnchor))
+			acc.Add(playerAnchor);
+
+		return acc;
+	}
+
+	static HashSet<Vector2I> ResolveLineTargetingPlayerCoverage(TileMapLayer terrain,
+		Godot.Collections.Dictionary validCells, Vector2I playerCell, int skillAreaCode, out Vector2I debugRayStartAnchor)
+	{
+		debugRayStartAnchor = playerCell;
+
+		int l = LineLengthCellsFromSkillAreaCode(skillAreaCode);
+		var candidateStarts = new List<(Vector2I start, int dirIx)>();
+		var probe = new HashSet<Vector2I>();
+
+		for (int dirIx = 0; dirIx < 6; dirIx++)
+		{
+			TileSet.CellNeighbor dir = NeighborOrder[dirIx];
+
+			for (int k = 0; k < l; k++)
 			{
-				set.Add(cur);
-				cur = terrain.GetNeighborCell(cur, dir);
+				Vector2I start = playerCell;
+
+				for (int step = 0; step < k; step++)
+					start = InverseStep(terrain, start, dir);
+
+				if (!TryBuildAxialRay(terrain, validCells, start, dir, l, probe))
+					continue;
+
+				if (!probe.Contains(playerCell))
+					continue;
+
+				candidateStarts.Add((start, dirIx));
 			}
 		}
 
-		return set;
+		if (candidateStarts.Count > 0)
+		{
+			(Vector2I pickedStart, int pickedDir) = candidateStarts[(int)(GD.Randi() % candidateStarts.Count)];
+			debugRayStartAnchor = pickedStart;
+			HashSet<Vector2I> ray = [];
+
+			TryBuildAxialRay(terrain, validCells, pickedStart, NeighborOrder[pickedDir], l, ray);
+
+			return ray;
+		}
+
+		var fallback = new HashSet<Vector2I>();
+
+		if (IsValidCoord(validCells, playerCell))
+			fallback.Add(playerCell);
+
+		return fallback;
 	}
 }

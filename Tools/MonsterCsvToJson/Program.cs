@@ -632,6 +632,6 @@ switch (cmd)
 static class BossExcelHeaders
 {
 	internal const string SkillTarget = "BOSS技能定位（使用位置）";
-	internal const string SkillArea = "BOSS技能范围定义（生效范围）";
+	internal const string SkillArea = "BOSS技能范围定义（生效范围）"; // 离散标号对应「六角轴向直线格子数」：4=全图；5=直线3格等，见 BossSkillPlanner.LineLengthCellsFromSkillAreaCode；skill_target=3 仍为圆盘半径。
 	internal const string SkillEffect = "技能具体效果";
 }
