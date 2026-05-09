@@ -279,6 +279,11 @@ public partial class Gameplay : Node2D
 	List<int> skillList = new List<int>();
 	List<int> askillList = new List<int>();
 	List<int> pskillList = new List<int>();
+	Godot.Collections.Dictionary aconfigDict = new Godot.Collections.Dictionary();
+	Godot.Collections.Dictionary pconfigDict = new Godot.Collections.Dictionary();
+	Godot.Collections.Dictionary acdDict = new Godot.Collections.Dictionary();
+	Godot.Collections.Dictionary apowerDict = new Godot.Collections.Dictionary();
+
 
 	public Godot.Collections.Array aarray = Json.ParseString(FileAccess.GetFileAsString("res://skill/activeskill.json")).AsGodotArray();
 	public Godot.Collections.Array parray = Json.ParseString(FileAccess.GetFileAsString("res://skill/passiveskill.json")).AsGodotArray();
@@ -290,6 +295,8 @@ public partial class Gameplay : Node2D
 	public int grasscount = 0;
 	public bool corpseHp = false;
 	public int corpseCount = 0;
+	public int skillchoose = 0;
+	public bool ischose = false;
 
 	public override void _Ready()
 	{
@@ -322,12 +329,33 @@ public partial class Gameplay : Node2D
 		if (lvl.Count == 0)
 			lvl = LevelIo.LoadFromFile(DefaultLevel);
 
-
+		List<int> activeList = new List<int>();
+		List<int> passiveList = new List<int>();
+		List<int> aconfigList = new List<int>();
+		List<int> pconfigList = new List<int>();
+		List<int> acdList = new List<int>();
+		List<int> apowerList = new List<int>();
 		foreach (var item in parray)
 		{
 			var pskilldict = item.AsGodotDictionary();
 			int pskillid = pskilldict["ID"].AsInt32();
 			skillList.Add(pskillid);
+			passiveList.Add(pskillid);
+			if (pskilldict.ContainsKey("config"))
+			{
+				pconfigList.Add(pskilldict["config"].AsInt32());
+			}
+			else
+			{
+				pconfigList.Add(0);
+			}
+			
+		}
+		for (int i = 0; i < passiveList.Count; i++)
+		{
+			int id = passiveList[i];
+			int value = pconfigList[i];
+			pconfigDict[id] = value;
 		}
 
 		foreach (var item in aarray)
@@ -335,6 +363,36 @@ public partial class Gameplay : Node2D
 			var askilldict = item.AsGodotDictionary();
 			int askillid = askilldict["ID"].AsInt32();
 			skillList.Add(askillid);
+			activeList.Add(askillid);
+			acdList.Add(askilldict["cd"].AsInt32());
+			apowerList.Add(askilldict["power"].AsInt32());
+			if (askilldict.ContainsKey("config"))
+			{
+				aconfigList.Add(askilldict["config"].AsInt32());
+			}
+			else 
+			{
+				aconfigList.Add(0);
+			}
+			
+		}
+		for (int i = 0; i < activeList.Count; i++)
+		{
+			int id = activeList[i];
+			int value = aconfigList[i];
+			aconfigDict[id] = value;
+		}
+		for (int i = 0; i < activeList.Count; i++)
+		{
+			int id = activeList[i];
+			int value = acdList[i];
+			acdDict[id] = value;
+		}
+		for (int i = 0; i < activeList.Count; i++)
+		{
+			int id = activeList[i];
+			int value = acdList[i];
+			apowerDict[id] = value;
 		}
 
 		ApplyLevel(lvl);
@@ -1407,7 +1465,10 @@ public partial class Gameplay : Node2D
 
 						if(RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 						{
-							SpawnGrassInRandomFog();
+							for(int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+							{
+								SpawnGrassInRandomFog();
+							}
 						}
 
 						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
@@ -1427,9 +1488,12 @@ public partial class Gameplay : Node2D
 			case "grass":
 				if (GD.Randf() < 0.5f)
 				{
-					if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 					{
-						SpawnGrassInRandomFog();
+						for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+						{
+							SpawnGrassInRandomFog();
+						}
 					}
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 					await ToastAsync("草丛", "生命值 +1。");
@@ -1449,7 +1513,7 @@ public partial class Gameplay : Node2D
 
 				if (pskillList.Contains(105))
 				{
-					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 2, RunState.Instance.PlayerEnergyMax);
+					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict["105"].AsInt32(), RunState.Instance.PlayerEnergyMax);
 				}
 
 				EraseEvent(cell);
@@ -1460,7 +1524,7 @@ public partial class Gameplay : Node2D
 				if (pskillList.Contains(204))
 				{
 					corpseCount++;
-					if(corpseCount >= 5)
+					if(corpseCount >= pconfigDict["204"].AsInt32())
 					{
 						Hud hud1 = _hudUi!;
 						int pick1 = await hud1.ModalThreeChoiceAsync("祭坛效果", "+1 力量", "+1 魔法", "+2 HP（不超上限）");
@@ -1496,7 +1560,10 @@ public partial class Gameplay : Node2D
 
 								if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 								{
-									SpawnGrassInRandomFog();
+									for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+									{
+										SpawnGrassInRandomFog();
+									}
 								}
 
 								RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
@@ -1509,14 +1576,17 @@ public partial class Gameplay : Node2D
 
 				if (GD.Randf() < 0.5f)
 				{
-					if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 					{
-						SpawnGrassInRandomFog();
+						for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+						{
+							SpawnGrassInRandomFog();
+						}
 					}
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 					if (pskillList.Contains(201))
 					{
-						RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 1, RunState.Instance.PlayerEnergyMax);
+						RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict["201"].AsInt32(), RunState.Instance.PlayerEnergyMax);
 					}
 					await ToastAsync("尸体", "+1 生命（50%）。");
 				}
@@ -1544,9 +1614,12 @@ public partial class Gameplay : Node2D
 						break;
 
 					case 1:
-						if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+						if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 						{
-							SpawnGrassInRandomFog();
+							for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+							{
+								SpawnGrassInRandomFog();
+							}
 						}
 						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 						await ToastAsync("废墟", "占位：生命 +1。");
@@ -1607,7 +1680,22 @@ public partial class Gameplay : Node2D
 		}
 		else
 		{
-			//还没做
+			skillList.Remove(skillId);
+			askillList.Add(skillId);
+			var aname = "SingleSkill" + (askillList.Count);
+			foreach (var item in aarray)
+			{
+				var askilldict = item.AsGodotDictionary();
+				int id = askilldict["ID"].AsInt32();
+
+				if (id == skillId)
+				{
+					string targetAddress = askilldict["address"].AsString();
+					GetNode<Button>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillHi").Visible = true;
+					break;
+				}
+			}
 		}
 
 	}
@@ -1647,12 +1735,15 @@ public partial class Gameplay : Node2D
 			await ToastAsync($"{foe} · 战胜", $"{extra}{label}检定：你的 {attr} ≥ 战力 {mv}。");
 			if(corpseHp == true)
 			{
-				if (RunState.Instance.PlayerHp + 1 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+				if (RunState.Instance.PlayerHp + pconfigDict["202"].AsInt32() > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 				{
-					SpawnGrassInRandomFog();
+					for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+					{
+						SpawnGrassInRandomFog();
+					}
 				}
 
-				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
+				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + pconfigDict["202"].AsInt32(), RunState.Instance.PlayerHpMax);
 				corpseHp = false;
 			}
 			EraseEvent(cell);
@@ -1727,14 +1818,18 @@ public partial class Gameplay : Node2D
 		}
 		grassskill = false;
 
-		if (grasscount >= 3)
+		if (pskillList.Contains(104))
 		{
-			_spentBasic = false;
+			if (grasscount >= pconfigDict["104"].AsInt32()+1)
+			{
+				_spentBasic = false;
+			}
+			else if (grasscount == pconfigDict["104"].AsInt32())
+			{
+				grasscount++;
+			}
 		}
-		else if (grasscount == 2)
-		{
-			grasscount++;
-		}
+		
 
 		if (!_spentBasic)
 
@@ -2363,7 +2458,6 @@ public partial class Gameplay : Node2D
 	{
 		var shuffled = cards.OrderBy(x => GD.Randf()).ToList();
 		List<int> result = shuffled.Take(3).ToList();
-		//result[0] = 101; //测试00000000000000000000000000000000000000000000000
 		return result;
 	}
 
@@ -2382,6 +2476,20 @@ public partial class Gameplay : Node2D
 		if (cardnum[cardchoose - 1] > 100)
 		{
 			await UseSkillAsync(cardnum[cardchoose - 1]);
+		}
+		else
+		{
+			//主动技能槽位00000000000000000000000000000
+			if(askillList.Count >= 6)
+			{
+				for(int i = 0; i < aarray.Count; i++)
+				{
+					if(skillList.Contains(i+1))
+					{
+						skillList.Remove(i + 1);
+					}
+				}
+			}
 		}
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = false;
@@ -2422,6 +2530,64 @@ public partial class Gameplay : Node2D
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = false;
 
 	}
+
+	//async Task click_active1()
+	//{
+	//	skillchoose = 1;
+	//	await useActive();
+
+	//	if(ischose)
+	//	{
+	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = true;
+	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = false;
+	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Visible = true;
+			
+	//	}
+	//}
+
+	//async Task useActive()
+	//{
+	//	int askill = askillList[skillchoose - 1];
+	//	switch(askill)
+	//	{
+	//		case 1:
+	//			HashSet<string> cellsToHighlight = new HashSet<string>();
+
+	//			// 1. 添加主角自己
+	//			cellsToHighlight.Add(HexGridUtil.CellKey(_playerCell));
+
+	//			// 2. 添加周围6格
+	//			foreach (Vector2I neighbor in HexGridUtil.Neighbors(_terrain!, _playerCell))
+	//			{
+	//				cellsToHighlight.Add(HexGridUtil.CellKey(neighbor));
+	//			}
+
+	//			// 使用 BOSS 预警层显示高亮
+	//			_bossWarn?.RebuildFromKeys(cellsToHighlight);
+	//			await askill1();
+	//			break;
+	//		case 2:
+
+	//		case 3:
+
+	//		case 4:
+
+	//		case 5:
+
+	//		case 6:
+
+	//		case 7:
+
+	//		case 8:
+
+	//	}
+
+	//}
+
+	//async Task askill1()
+ //   {
+	//	_bossWarn?.ClearAll();
+	//}
 
 	public void SpawnGrassInRandomFog()
 	{

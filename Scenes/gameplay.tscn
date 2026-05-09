@@ -22,7 +22,6 @@
 [ext_resource type="Texture2D" uid="uid://dljvslyyio6wo" path="res://Art/UI/skillAcquire/RefreshButton_Normal.png" id="13_27sjm"]
 [ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="14"]
 [ext_resource type="Texture2D" uid="uid://c24nfvq8qwlxl" path="res://Art/UI/skillAcquire/Button_Normal.png" id="14_lv0na"]
-[ext_resource type="Texture2D" uid="uid://3oy2s8l4t07p" path="res://Art/UI/mainUI/Skill.png" id="15"]
 [ext_resource type="Texture2D" uid="uid://xxuiocmxubva" path="res://Art/UI/skillAcquire/Button_Selected.png" id="15_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://dkt27qe2mb5l" path="res://Art/UI/mainUI/Skill_cover.png" id="16"]
 [ext_resource type="Texture2D" uid="uid://cn2g388d3rq" path="res://Art/UI/mainUI/SkillBar.png" id="17"]
@@ -85,6 +84,7 @@ mouse_filter = 2
 script = ExtResource("4")
 
 [node name="UILayoutRef" type="TextureRect" parent="UICanvas/HUD" unique_id=2014498998]
+visible = false
 modulate = Color(1, 1, 1, 0.35686275)
 layout_mode = 1
 anchors_preset = 15
@@ -698,23 +698,20 @@ metadata/_edit_lock_ = true
 [node name="SingleSkill1" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=255470598]
 layout_mode = 1
 anchors_preset = 0
-offset_left = -1.0
-offset_top = 26.0
-offset_right = 147.0
-offset_bottom = 204.0
+offset_top = 17.0
+offset_right = 148.0
+offset_bottom = 195.0
 
-[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=299024389]
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1780095814]
 layout_mode = 1
 offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
 mouse_filter = 2
-texture = ExtResource("15")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=335791861]
+visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -737,6 +734,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=228421940]
+visible = false
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -760,17 +758,18 @@ stretch_mode = 5
 
 [node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=45042642]
 layout_mode = 1
-offset_left = 53.5
-offset_top = 139.5
-offset_right = 92.5
-offset_bottom = 164.5
+offset_left = 52.5
+offset_top = 126.0
+offset_right = 91.5
+offset_bottom = 175.0
 theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 30
 text = "1"
 horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1379572783]
+visible = false
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -786,23 +785,21 @@ vertical_alignment = 1
 [node name="SingleSkill2" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=1357991279]
 layout_mode = 1
 anchors_preset = 0
-offset_left = 146.0
-offset_top = 26.0
-offset_right = 294.0
-offset_bottom = 204.0
+offset_left = 150.0
+offset_top = 17.0
+offset_right = 298.0
+offset_bottom = 195.0
 
-[node name="SkillIcon" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1658140743]
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1304789853]
 layout_mode = 1
 offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
 mouse_filter = 2
-texture = ExtResource("15")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1120770816]
+visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -825,6 +822,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1982234833]
+visible = false
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -848,17 +846,366 @@ stretch_mode = 5
 
 [node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=951635083]
 layout_mode = 1
-offset_left = 55.5
-offset_top = 139.5
-offset_right = 94.5
-offset_bottom = 164.5
+offset_left = 53.5
+offset_top = 128.0
+offset_right = 92.5
+offset_bottom = 172.0
 theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "1"
+theme_override_font_sizes/font_size = 30
+text = "2"
 horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1323189572]
+visible = false
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SingleSkill3" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=332522563]
+anchors_preset = 0
+offset_left = 300.0
+offset_top = 17.0
+offset_right = 448.0
+offset_bottom = 195.0
+
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=399821092]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=672891347]
+visible = false
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=1420222412]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=1605410325]
+visible = false
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=810350066]
+layout_mode = 1
+offset_left = 52.5
+offset_top = 129.5
+offset_right = 95.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=1001381367]
+layout_mode = 1
+offset_left = 55.5
+offset_top = 127.0
+offset_right = 94.5
+offset_bottom = 171.0
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "3"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=68484564]
+visible = false
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SingleSkill4" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=1123475795]
+anchors_preset = 0
+offset_left = 450.0
+offset_top = 17.0
+offset_right = 598.0
+offset_bottom = 195.0
+
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=342436499]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=526894494]
+visible = false
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=281819811]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=1889904470]
+visible = false
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=563547812]
+layout_mode = 1
+offset_left = 52.5
+offset_top = 129.5
+offset_right = 95.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=1386494961]
+layout_mode = 1
+offset_left = 55.5
+offset_top = 127.0
+offset_right = 94.5
+offset_bottom = 171.0
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "4"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=1754524395]
+visible = false
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SingleSkill5" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=70311259]
+anchors_preset = 0
+offset_left = 600.0
+offset_top = 17.0
+offset_right = 748.0
+offset_bottom = 195.0
+
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1732401059]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1612793369]
+visible = false
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=863224085]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=209786858]
+visible = false
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=192974312]
+layout_mode = 1
+offset_left = 52.5
+offset_top = 129.5
+offset_right = 95.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=361659107]
+layout_mode = 1
+offset_left = 57.5
+offset_top = 126.0
+offset_right = 96.5
+offset_bottom = 170.0
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "5"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=775867]
+visible = false
+layout_mode = 1
+offset_left = 26.5
+offset_top = 50.5
+offset_right = 118.5
+offset_bottom = 98.5
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SingleSkill6" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=50361009]
+anchors_preset = 0
+offset_left = 750.0
+offset_top = 17.0
+offset_right = 898.0
+offset_bottom = 195.0
+
+[node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=752259050]
+layout_mode = 1
+offset_left = 19.5
+offset_top = 21.5
+offset_right = 126.5
+offset_bottom = 128.5
+mouse_filter = 2
+
+[node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1871681741]
+visible = false
+layout_mode = 1
+offset_left = 20.5
+offset_top = 21.5
+offset_right = 127.5
+offset_bottom = 128.5
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1235445330]
+layout_mode = 1
+offset_left = 13.5
+offset_top = 14.5
+offset_right = 134.5
+offset_bottom = 135.5
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=836897088]
+visible = false
+layout_mode = 1
+offset_left = -1.5
+offset_top = -1.5
+offset_right = 149.5
+offset_bottom = 150.5
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillQtyStrip" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=833389442]
+layout_mode = 1
+offset_left = 52.5
+offset_top = 129.5
+offset_right = 95.5
+offset_bottom = 172.5
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QtyLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=990274625]
+layout_mode = 1
+offset_left = 57.5
+offset_top = 126.0
+offset_right = 96.5
+offset_bottom = 170.0
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "6"
+horizontal_alignment = 1
+
+[node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1616465967]
+visible = false
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -1191,7 +1538,7 @@ offset_top = -270.0
 offset_right = 400.0
 offset_bottom = -246.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0.06, 0.02, 0.06, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
@@ -1210,3 +1557,4 @@ metadata/_edit_lock_ = true
 [connection signal="button_down" from="UICanvas/HUD/SkillChoose/Card3/Button" to="." method="click_card3"]
 [connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed"]
 [connection signal="button_up" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed_close"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillIcon" to="." method="click_active1"]
