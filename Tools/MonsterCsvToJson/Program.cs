@@ -646,6 +646,7 @@ switch (cmd)
 static class BossExcelHeaders
 {
 	internal const string SkillTarget = "BOSS技能定位（使用位置）";
-	internal const string SkillArea = "BOSS技能范围定义（生效范围）"; // 离散标号对应「六角轴向直线格子数」：4=全图；5=直线3格等，见 BossSkillPlanner.LineLengthCellsFromSkillAreaCode；skill_target=3 仍为圆盘半径。
+	internal const string SkillArea =
+		"BOSS技能范围定义（生效范围）"; // 离散标号：4=全图上全部可走格；5=轴向直线3格等见 BossSkillPlanner.LineLengthCellsFromSkillAreaCode；10 且 skill_target=2 = 六角轴向横穿可走棋盘的整条直线（独角仙）；skill_target=3 时 skill_area 为圆盘半径。障碍格不可穿行。
 	internal const string SkillEffect = "技能具体效果";
 }

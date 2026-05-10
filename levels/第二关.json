@@ -1,7 +1,8 @@
 {
 	"boss": {
-		"boss_id": 1001
+		"boss_id": 1002
 	},
+	"campaign_order": 2,
 	"cells": [
 		{
 			"block": false,
@@ -569,7 +570,6 @@
 		}
 	],
 	"level_name": "第二关",
-	"campaign_order": 2,
 	"player_start": {
 		"x": 0,
 		"y": 0

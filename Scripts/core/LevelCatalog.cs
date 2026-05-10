@@ -49,6 +49,53 @@ public static class LevelCatalog
 		return paths;
 	}
 
+	/// <summary>
+	/// 主菜单与关卡编辑器下拉：先按 <see cref="CampaignOrderIndexKey"/> 升序；未配置或未参与闯关的关卡排在最后，其间按文件名排序。
+	/// </summary>
+	public static List<string> EnumerateLevelJsonPathsSortedByCampaignOrderThenStem()
+	{
+		List<string> paths = EnumerateLevelJsonPathsSortedAscending();
+		var withOrder = new List<(string Path, int Order, string Stem)>();
+		var withoutOrder = new List<(string Path, string Stem)>();
+
+		foreach (string raw in paths)
+		{
+			string p = NormalizeResPath(raw);
+			Godot.Collections.Dictionary d = LevelIo.LoadFromFile(p);
+
+			if (d.Count == 0)
+			{
+				withoutOrder.Add((p, FileStemFromResPath(p)));
+				continue;
+			}
+
+			int order = ReadCampaignOrderIndex(d);
+			if (order == CampaignOrderUnset)
+				withoutOrder.Add((p, FileStemFromResPath(p)));
+			else
+				withOrder.Add((p, order, FileStemFromResPath(p)));
+		}
+
+		withOrder.Sort((a, b) =>
+		{
+			int c = a.Order.CompareTo(b.Order);
+			if (c != 0)
+				return c;
+			return string.Compare(a.Stem, b.Stem, StringComparison.OrdinalIgnoreCase);
+		});
+
+		withoutOrder.Sort((a, b) =>
+			string.Compare(a.Stem, b.Stem, StringComparison.OrdinalIgnoreCase));
+
+		var result = new List<string>(withOrder.Count + withoutOrder.Count);
+		foreach (var row in withOrder)
+			result.Add(row.Path);
+		foreach (var row in withoutOrder)
+			result.Add(row.Path);
+
+		return result;
+	}
+
 	public static string FileStemFromResPath(string resPath)
 	{
 		if (string.IsNullOrEmpty(resPath))
@@ -87,6 +134,9 @@ public static class LevelCatalog
 
 	/// <summary>缺省闯关序号（未写字段时使用，保证旧关卡不参与主线顺序）。</summary>
 	public const int CampaignOrderUnset = int.MaxValue;
+
+	/// <summary>闯关序号 ≥ 此值视为「实训/实力关」：不参与传送门<strong>主线</strong>跳转与通关庆祝（如 starter_level 的 999）。</summary>
+	public const int PracticeCampaignOrderMinInclusive = 999;
 
 	public static string NormalizeResPath(string? resPath)
 	{
@@ -153,6 +203,78 @@ public static class LevelCatalog
 		}
 
 		return outList;
+	}
+
+	/// <summary>主线闯关路径（剔除未配置序号与「实力/实训」序号）；排序规则同 <see cref="EnumerateCampaignLevelPathsOrdered"/>。</summary>
+	public static List<string> EnumerateMainCampaignPathsOrdered()
+	{
+		List<string> paths = EnumerateLevelJsonPathsSortedAscending();
+		var rows = new List<(string Path, int Order, string Stem)>();
+
+		foreach (string raw in paths)
+		{
+			string p = NormalizeResPath(raw);
+			Godot.Collections.Dictionary d = LevelIo.LoadFromFile(p);
+			if (d.Count == 0)
+				continue;
+
+			int order = ReadCampaignOrderIndex(d);
+			if (order == CampaignOrderUnset || order >= PracticeCampaignOrderMinInclusive)
+				continue;
+
+			rows.Add((p, order, FileStemFromResPath(p)));
+		}
+
+		rows.Sort((a, b) =>
+		{
+			int c = a.Order.CompareTo(b.Order);
+			if (c != 0)
+				return c;
+			return string.Compare(a.Stem, b.Stem, StringComparison.OrdinalIgnoreCase);
+		});
+
+		List<string> outMain = [];
+
+		HashSet<string> seen = [];
+
+		foreach (var row in rows)
+		{
+			if (seen.Add(row.Path))
+				outMain.Add(row.Path);
+		}
+
+		return outMain;
+	}
+
+	/// <summary>主线中当前关之后的下一关；无主线下一关或未处于主线序列时返回 <c>null</c>。</summary>
+	public static string? ResolveNextMainCampaignLevelPath(string currentLevelResPath)
+	{
+		List<string> ordered = EnumerateMainCampaignPathsOrdered();
+
+		string curPath = NormalizeResPath(currentLevelResPath);
+		if (string.IsNullOrEmpty(curPath) || ordered.Count == 0)
+			return null;
+
+		int ix = IndexOfNormalizedPath(ordered, curPath);
+		if (ix < 0)
+			return null;
+
+		int nextIx = ix + 1;
+
+		return nextIx < ordered.Count ? ordered[nextIx] : null;
+	}
+
+	/// <summary>是否为当前主线排序中的<strong>最后一关</strong>（通关传送门且无下一主线关时弹出庆祝界面）。</summary>
+	public static bool IsTerminalMainCampaignLevel(string completedLevelResPath)
+	{
+		List<string> main = EnumerateMainCampaignPathsOrdered();
+		if (main.Count == 0)
+			return false;
+
+		string cur = NormalizeResPath(completedLevelResPath);
+		string last = NormalizeResPath(main[^1]);
+
+		return string.Equals(cur, last, StringComparison.OrdinalIgnoreCase);
 	}
 
 	static int IndexOfNormalizedPath(List<string> ordered, string currentNormalized)

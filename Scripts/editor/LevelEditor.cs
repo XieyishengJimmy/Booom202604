@@ -74,6 +74,7 @@ public partial class LevelEditor : Control
 	GridContainer? _monsterGrid;
 	GridContainer? _otherGrid;
 	ScrollContainer? _monsterScroll;
+	ScrollContainer? _otherScroll;
 	ScrollContainer? _sidebarScroll;
 
 	bool _editorPendingRefit;
@@ -100,6 +101,9 @@ public partial class LevelEditor : Control
 	/// <summary>Flow 每项最小宽度（避免大字挤成单列）。</summary>
 	const int MonsterPickerCellMinWidthPx = 118;
 	const int ScenePickerCellMinWidthPx = 100;
+
+	/// <summary>与侧栏两处 GridContainer 的 theme_override h_separation 一致（level_editor.tscn）。用于按宽度折算列数。</summary>
+	const int PickerGridHSeparationPx = 10;
 
 	static int PickerIconPixelSize(int basePx, float shrink, float boost)
 	{
@@ -187,17 +191,22 @@ public partial class LevelEditor : Control
 		_monsterScroll = GetNodeOrNull<ScrollContainer>($"{SidebarVBox}/MonsterScroll");
 		if (_monsterScroll != null)
 		{
-			// 8 列网格最宽可能超过侧栏，需要横向滚动以避免裁切。
+			// 多列网格最宽可能超过视区，横向滚动以避免裁切；列数随后续宽变化由 UpdatePickerGridColumnsForScrollWidth 调整。
 			_monsterScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Auto;
 			_monsterScroll.VerticalScrollMode = ScrollContainer.ScrollMode.Auto;
+			_monsterScroll.Resized += OnPickerViewportResized;
 		}
 
-		ScrollContainer? otherScroll = GetNodeOrNull<ScrollContainer>($"{SidebarVBox}/OtherScroll");
-		if (otherScroll != null)
+		_otherScroll = GetNodeOrNull<ScrollContainer>($"{SidebarVBox}/OtherScroll");
+		if (_otherScroll != null)
 		{
-			otherScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Auto;
-			otherScroll.VerticalScrollMode = ScrollContainer.ScrollMode.Auto;
+			_otherScroll.HorizontalScrollMode = ScrollContainer.ScrollMode.Auto;
+			_otherScroll.VerticalScrollMode = ScrollContainer.ScrollMode.Auto;
+			_otherScroll.Resized += OnPickerViewportResized;
 		}
+
+		if (_sidebar != null)
+			_sidebar.Resized += OnPickerViewportResized;
 
 		_wrap = GetNode<SubViewportContainer>("HBox/ViewportContainer");
 		_vp = GetNode<SubViewport>("HBox/ViewportContainer/Viewport");
@@ -217,6 +226,7 @@ public partial class LevelEditor : Control
 			_pickOther = "";
 			UpdatePlacementHint();
 			RefreshPickGlow();
+			Callable.From(UpdatePickerGridColumnsForScrollWidth).CallDeferred();
 		}
 
 		RebuildBossIdOptions();
@@ -318,6 +328,7 @@ public partial class LevelEditor : Control
 					UncheckMonsters();
 				}
 
+				Callable.From(UpdatePickerGridColumnsForScrollWidth).CallDeferred();
 			}
 
 			_lastMonsterJsonUtc = wm;
@@ -343,6 +354,32 @@ public partial class LevelEditor : Control
 		ApplyPreferredEditorSplitOnceForViewport();
 		EditorRefreshViewportResolutionAndCamera(true);
 		ClampEditorSplit();
+		Callable.From(UpdatePickerGridColumnsForScrollWidth).CallDeferred();
+	}
+
+	/// <summary>按滚动区实时宽度折算列数：向左拖分割条拓宽侧栏时，单列可显示更多图标、减少横向滚动。</summary>
+	void OnPickerViewportResized() =>
+		Callable.From(UpdatePickerGridColumnsForScrollWidth).CallDeferred();
+
+	void UpdatePickerGridColumnsForScrollWidth()
+	{
+		if (_monsterGrid == null || _monsterScroll == null || _otherGrid == null || _otherScroll == null)
+			return;
+
+		int iconPxM = PickerIconPixelSize(MonsterPickerIconBasePx, PickerIconScale, PickerIconDisplayBoost);
+		int cellWm = Mathf.Max(MonsterPickerCellMinWidthPx, iconPxM + 16);
+		float innerM = Mathf.Max(48f, _monsterScroll.Size.X);
+		int sep = PickerGridHSeparationPx;
+		float unitM = cellWm + sep;
+		int colsM = unitM <= 1f ? 2 : Mathf.FloorToInt((innerM + sep) / unitM);
+		_monsterGrid.Columns = Mathf.Clamp(colsM, 2, 24);
+
+		int iconPxO = PickerIconPixelSize(ScenePickerIconBasePx, PickerIconScale, PickerIconDisplayBoost);
+		int cellWo = Mathf.Max(ScenePickerCellMinWidthPx, iconPxO + 16);
+		float innerO = Mathf.Max(48f, _otherScroll.Size.X);
+		float unitO = cellWo + sep;
+		int colsO = unitO <= 1f ? 2 : Mathf.FloorToInt((innerO + sep) / unitO);
+		_otherGrid.Columns = Mathf.Clamp(colsO, 2, 24);
 	}
 
 	void ApplyPreferredEditorSplitOnceForViewport()
@@ -375,6 +412,7 @@ public partial class LevelEditor : Control
 		_splitDragActive = false;
 		ClampEditorSplit();
 		EditorRefreshViewportResolutionAndCamera(true);
+		Callable.From(UpdatePickerGridColumnsForScrollWidth).CallDeferred();
 	}
 
 	void ClampEditorSplit() =>
@@ -1480,7 +1518,7 @@ public partial class LevelEditor : Control
 
 		LevelCatalog.EnsureDirectoryExists();
 
-		foreach (string full in LevelCatalog.EnumerateLevelJsonPathsSortedAscending())
+		foreach (string full in LevelCatalog.EnumerateLevelJsonPathsSortedByCampaignOrderThenStem())
 		{
 			int idx = _levelFilesOpt.ItemCount;
 			_levelFilesOpt.AddItem(LevelCatalog.GetDropdownLabel(full));

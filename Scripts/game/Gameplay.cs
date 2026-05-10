@@ -14,6 +14,8 @@ public partial class Gameplay : Node2D
 	private const string DefaultLevel = "res://levels/starter_level.json";
 	private const string MainMenuScene = "res://Scenes/main_menu.tscn";
 	private const string GameplayScenePath = "res://Scenes/gameplay.tscn";
+	private const string VictoryScreenScene = "res://Scenes/victory_screen.tscn";
+	private const string FailScreenScene = "res://Scenes/fail_screen.tscn";
 	private const string CampaignPortalEventTypeName = "campaign_portal";
 
 	[Export(PropertyHint.File, "*.json")]
@@ -45,6 +47,38 @@ public partial class Gameplay : Node2D
 	const float PlayerMoveTweenSeconds = 0.5f;
 	const float PlayerFightKnockbackSeconds = 0.3f;
 	const float PlayerWalkFramesPerSecond = 10f;
+
+	const int PlayerInjuredSpriteCount = 6;
+
+	/// <summary>
+	/// 受击序列播放帧率：<strong>每秒</strong>切换的帧数（每帧停留 <c>1/此值</c> 秒）。
+	/// </summary>
+	const float PlayerInjuredFramesPerSecond = 12f;
+
+	/// <summary>战败击退：受伤动画开始后，经此时间再开始向后位移。</summary>
+	const float PlayerInjuredKnockbackDelaySeconds = 0.5f;
+
+	static float PlayerInjuredFrameHoldSeconds =>
+		1f / Mathf.Max(1e-3f, PlayerInjuredFramesPerSecond);
+
+	static readonly string[] PlayerInjuredTexturePaths =
+	[
+		"res://Art/Player/injured01.png",
+		"res://Art/Player/injured02.png",
+		"res://Art/Player/injured03.png",
+		"res://Art/Player/injured04.png",
+		"res://Art/Player/injured05.png",
+		"res://Art/Player/injured06.png",
+	];
+
+	const int PlayerIdleSpriteCount = 6;
+
+	/// <summary>待机动画：<c>每秒 6 帧</c>（整段循环约 1 秒一轮）。</summary>
+	const float PlayerIdleFramesPerSecond = 6f;
+
+	static float PlayerIdleFrameHoldSeconds =>
+		1f / Mathf.Max(1e-3f, PlayerIdleFramesPerSecond);
+
 	static readonly string[] PlayerIdleTextureCandidates =
 	[
 		"res://Art/Player/idle.png",
@@ -58,8 +92,15 @@ public partial class Gameplay : Node2D
 		"res://Art/Player/walk4.png",
 	];
 
-	Texture2D? _playerIdleTex;
+	Texture2D? _playerIdleFallbackTex;
+	readonly Texture2D?[] _playerIdleFrames = new Texture2D?[PlayerIdleSpriteCount];
+
+	bool _playerIdleAnimActive;
+	int _idleFrameIndex;
+	float _idleFrameAccum;
+
 	readonly Texture2D?[] _playerWalkFrames = new Texture2D?[4];
+	readonly Texture2D?[] _playerInjuredFrames = new Texture2D?[PlayerInjuredSpriteCount];
 	Camera2D? _camera;
 
 	readonly Godot.Collections.Dictionary _valid = [];
@@ -80,11 +121,14 @@ public partial class Gameplay : Node2D
 	bool _busyPlayerAction;
 	string _loadedLevelPath = "";
 
-	/// <summary>清雾胜利后已在场上生成宝箱与传送门，等待相邻交互。</summary>
+	/// <summary>清雾胜利后已在场上生成宝箱与传送门，等待相邻交互（主线最后一关不出现宝箱/传送门，直接结算）。</summary>
 	bool _campaignVictoryPickupPhase;
 
-	/// <summary>本局已尝试过生成胜利宝箱/传送门，避免重复弹胜利逻辑。</summary>
+	/// <summary>本局已尝试过清雾胜利收尾（宝箱/传送门或终局直接去胜利界面），避免重复触发。</summary>
 	bool _campaignVictoryExitsSpawned;
+
+	/// <summary>已切至失败/结算场景，避免重复跳转或继续驱动本场景逻辑。</summary>
+	bool _gameEnding;
 
 	float _bossMeter;
 	float _bossWarnMax = 50f;
@@ -112,8 +156,35 @@ public partial class Gameplay : Node2D
 
 	static readonly StringName CellKeyMeta = new("cell_key");
 
+	/// <summary>逻辑上已无迷雾，但消散动画尚未播完的格（_world 上与仍有迷雾同属「遮挡物件」）。</summary>
+	readonly HashSet<string> _fogRevealVisualPendingCells = [];
+
 	bool CellHasFog(string ck) =>
 		_fogState.ContainsKey(ck) && _fogState[ck].AsBool();
+
+	bool CellOccludesFoggedWorldDecor(string ck) =>
+		CellHasFog(ck) || _fogRevealVisualPendingCells.Contains(ck);
+
+	void WireFogRevealVisualHandlers()
+	{
+		if (_fog == null)
+			return;
+
+		_fog.FogRevealAnimationStarted += OnFogRevealAnimationStarted;
+		_fog.FogRevealAnimationFinished += OnFogRevealAnimationFinished;
+	}
+
+	void OnFogRevealAnimationStarted(string cellKey)
+	{
+		_fogRevealVisualPendingCells.Add(cellKey);
+		RefreshEventIconsFogVisibility();
+	}
+
+	void OnFogRevealAnimationFinished(string cellKey)
+	{
+		_fogRevealVisualPendingCells.Remove(cellKey);
+		RefreshEventIconsFogVisibility();
+	}
 
 	void RefreshEventIconsFogVisibility()
 	{
@@ -127,8 +198,18 @@ public partial class Gameplay : Node2D
 				continue;
 			string ck = ch.GetMeta(CellKeyMeta).AsString();
 			if (ch is CanvasItem cv)
-				cv.Visible = !CellHasFog(ck);
+				cv.Visible = !CellOccludesFoggedWorldDecor(ck);
 		}
+
+		RefreshBlockSpritesFogVisibility();
+	}
+
+	void RefreshBlockSpritesFogVisibility()
+	{
+		if (_blocks == null)
+			return;
+
+		_blocks.ApplyFogVisibility(CellOccludesFoggedWorldDecor);
 	}
 
 	static bool MonsterEventType(string t) =>
@@ -328,6 +409,7 @@ public partial class Gameplay : Node2D
 		_fog = GetNode<FogLayer>("World/FogRoot");
 		_bossWarn = GetNodeOrNull<BossWarningLayer>("World/BossWarningRoot");
 		_blocks = GetNode<BlockLayer>("World/BlockRoot");
+		WireFogRevealVisualHandlers();
 
 		LoadPlayerTexturesForWorldSprite();
 
@@ -401,8 +483,7 @@ public partial class Gameplay : Node2D
 		for (int i = 0; i < activeList.Count; i++)
 		{
 			int id = activeList[i];
-			int value = acdList[i];
-			apowerDict[id] = value;
+			apowerDict[id] = apowerList[i];
 		}
 
 		skillList.Clear();
@@ -424,6 +505,8 @@ public partial class Gameplay : Node2D
 		cardchoose = 0;
 		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } skillPickSureInit)
 			skillPickSureInit.Disabled = true;
+
+		Callable.From(DeferredInitialFogManaSoftLockProbe).CallDeferred();
 	}
 
 	static int GetInt(Godot.Collections.Dictionary d, string key, int def = 0)
@@ -499,6 +582,7 @@ public partial class Gameplay : Node2D
 		_bossWarn?.ClearAll();
 		_fogNeighborAbsorptionLockRef.Clear();
 		_monsterNeighborFogLocksByAnchor.Clear();
+		_fogRevealVisualPendingCells.Clear();
 
 		if (!d.ContainsKey("cells"))
 			return;
@@ -769,6 +853,126 @@ public partial class Gameplay : Node2D
 
 
 	}
+
+	void GoToFailScreenFromGameplay()
+	{
+		if (_gameEnding)
+			return;
+
+		_gameEnding = true;
+
+		RunState.Instance.PrepareReturnToMainMenu();
+
+		GetTree().ChangeSceneToFile(FailScreenScene);
+	}
+
+
+	/// <summary>已装备或仍在牌池中的主动技能（ID≤100）全部高于当前法力时为 true；若无任何主动则 false（仍可能靠被动选牌破局）。</summary>
+	bool PlayerCannotAffordAnyAvailableActiveSkill()
+	{
+		HashSet<int> ids = [];
+
+		foreach (int id in askillList)
+		{
+			if (id <= 100)
+				ids.Add(id);
+		}
+
+		foreach (int id in skillList)
+		{
+			if (id <= 100)
+				ids.Add(id);
+		}
+
+		if (ids.Count == 0)
+			return false;
+
+		int e = RunState.Instance.PlayerEnergy;
+
+		foreach (int id in ids)
+		{
+			int cost = apowerDict.ContainsKey(id) ? apowerDict[id].AsInt32() : 999_999;
+
+			if (e >= cost)
+				return false;
+		}
+
+		return true;
+	}
+
+
+	bool PlayerHasAdjacentMoveOrInteract()
+	{
+		if (_terrain == null)
+			return false;
+
+		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, _playerCell))
+		{
+			string nk = HexGridUtil.CellKey(n);
+
+			if (!_valid.ContainsKey(nk))
+				continue;
+
+			if (CellHasFog(nk))
+				continue;
+
+			if (_events.ContainsKey(nk))
+				return true;
+
+			if (_blockState.ContainsKey(nk) && _blockState[nk].AsBool())
+				continue;
+
+			return true;
+		}
+
+		return false;
+	}
+
+
+	bool SoftLockSkillChoiceBlocksFailTransition()
+	{
+		var panel = GetNodeOrNull<CanvasItem>("UICanvas/HUD/SkillChoose");
+
+		return panel != null && panel.Visible;
+	}
+
+
+	async Task MaybeTransitionToFailScreenForFogManaDeadlockAsync()
+	{
+		if (_gameEnding || _campaignVictoryPickupPhase)
+			return;
+
+		if (SoftLockSkillChoiceBlocksFailTransition())
+			return;
+
+		if (RemainingFog() <= 0)
+			return;
+
+		if (_turn != Turn.Player || _spentBasic)
+			return;
+
+		if (PlayerHasAdjacentMoveOrInteract())
+			return;
+
+		if (!PlayerCannotAffordAnyAvailableActiveSkill())
+			return;
+
+		GoToFailScreenFromGameplay();
+
+		await Task.CompletedTask;
+	}
+
+
+	void DeferredInitialFogManaSoftLockProbe()
+	{
+		if (!IsInsideTree() || _gameEnding)
+			return;
+
+		_ = MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+	}
+
+
+
 
 
 
@@ -1239,6 +1443,9 @@ public partial class Gameplay : Node2D
 			await ToastAsync("受阻", "仍有迷雾遮挡，无法移动到或交互该格。");
 
 
+			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+
+
 			return;
 
 
@@ -1295,7 +1502,14 @@ public partial class Gameplay : Node2D
 		if (!adj)
 
 
+		{
+
+			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+
 			return;
+
+
+		}
 
 
 
@@ -1483,6 +1697,9 @@ public partial class Gameplay : Node2D
 
 
 
+			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+
+
 			return;
 
 
@@ -1503,6 +1720,9 @@ public partial class Gameplay : Node2D
 
 			await ToastAsync("受阻", "该格有事件占位，不能直接走入。请先相邻触发。");
 
+
+
+			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
 
 
 			return;
@@ -1600,20 +1820,39 @@ public partial class Gameplay : Node2D
 
 	void LoadPlayerTexturesForWorldSprite()
 	{
-		_playerIdleTex = null;
+		_playerIdleFallbackTex = null;
 		foreach (string p in PlayerIdleTextureCandidates)
 		{
 			if (ResourceLoader.Exists(p))
 			{
-				_playerIdleTex = GD.Load<Texture2D>(p);
+				_playerIdleFallbackTex = GD.Load<Texture2D>(p);
 				break;
 			}
+		}
+
+		for (int i = 0; i < PlayerIdleSpriteCount; i++)
+		{
+			int num = i + 1;
+			string dd = num < 10 ? $"0{num}" : $"{num}";
+			string tryIdle = $"res://Art/Player/idle{dd}.png";
+			string tryIdel = $"res://Art/Player/idel{dd}.png";
+			_playerIdleFrames[i] = ResourceLoader.Exists(tryIdle)
+				? GD.Load<Texture2D>(tryIdle)
+				: ResourceLoader.Exists(tryIdel)
+					? GD.Load<Texture2D>(tryIdel)
+					: null;
 		}
 
 		for (int i = 0; i < 4; i++)
 		{
 			string path = PlayerWalkFramePaths[i];
 			_playerWalkFrames[i] = ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+		}
+
+		for (int i = 0; i < PlayerInjuredSpriteCount; i++)
+		{
+			string path = PlayerInjuredTexturePaths[i];
+			_playerInjuredFrames[i] = ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
 		}
 
 		if (_playerSprite != null)
@@ -1624,12 +1863,50 @@ public partial class Gameplay : Node2D
 		}
 	}
 
+	Texture2D? GetPlayerIdleFrameOrFallback(int zeroBasedFrame)
+	{
+		int ix = Mathf.Clamp(zeroBasedFrame, 0, PlayerIdleSpriteCount - 1);
+		return _playerIdleFrames[ix] ?? _playerIdleFallbackTex ?? _playerWalkFrames[0];
+	}
+
+	void StopPlayerIdleLoop()
+	{
+		_playerIdleAnimActive = false;
+		_idleFrameAccum = 0f;
+	}
+
+	void TickPlayerIdleLoop(float dt)
+	{
+		if (!_playerIdleAnimActive || _playerSprite == null)
+			return;
+
+		_idleFrameAccum += dt;
+
+		float hold = PlayerIdleFrameHoldSeconds;
+
+		while (_idleFrameAccum >= hold)
+		{
+			_idleFrameAccum -= hold;
+			_idleFrameIndex = (_idleFrameIndex + 1) % PlayerIdleSpriteCount;
+			_playerSprite.Texture = GetPlayerIdleFrameOrFallback(_idleFrameIndex);
+		}
+	}
+
+	public override void _Process(double delta)
+	{
+		base._Process(delta);
+		TickPlayerIdleLoop((float)delta);
+	}
+
 	void SetPlayerIdleVisual()
 	{
 		if (_playerSprite == null)
 			return;
 
-		_playerSprite.Texture = _playerIdleTex ?? _playerWalkFrames[0];
+		_playerIdleAnimActive = true;
+		_idleFrameIndex = 0;
+		_idleFrameAccum = 0f;
+		_playerSprite.Texture = GetPlayerIdleFrameOrFallback(0);
 	}
 
 	void SetPlayerWalkVisualFrame(int frameIndex)
@@ -1637,13 +1914,52 @@ public partial class Gameplay : Node2D
 		if (_playerSprite == null)
 			return;
 
+		StopPlayerIdleLoop();
+
 		int i = ((frameIndex % 4) + 4) % 4;
-		_playerSprite.Texture = _playerWalkFrames[i] ?? _playerIdleTex;
+		_playerSprite.Texture = _playerWalkFrames[i] ?? GetPlayerIdleFrameOrFallback(0);
+	}
+
+	bool PlayerInjuredSequenceAvailable() =>
+		_playerSprite != null
+		&& _playerInjuredFrames.Any(t => t != null);
+
+	void SetPlayerInjuredVisualFrame(int zeroBasedIndex)
+	{
+		if (_playerSprite == null)
+			return;
+
+		StopPlayerIdleLoop();
+
+		int fi = Mathf.Clamp(zeroBasedIndex, 0, PlayerInjuredSpriteCount - 1);
+		Texture2D? frame = _playerInjuredFrames[fi] ?? GetPlayerIdleFrameOrFallback(0) ?? _playerWalkFrames[0];
+		if (frame != null)
+			_playerSprite.Texture = frame;
+	}
+
+	async Task PlayPlayerInjuredVisualSequenceIfAvailableAsync()
+	{
+		if (!PlayerInjuredSequenceAvailable())
+			return;
+
+		float frameDt = Mathf.Max(1e-3f, PlayerInjuredFrameHoldSeconds);
+
+		for (int fi = 0; fi < PlayerInjuredSpriteCount; fi++)
+		{
+			if (_playerSprite == null)
+				return;
+
+			SetPlayerInjuredVisualFrame(fi);
+
+			await ToSignal(GetTree().CreateTimer(frameDt), SceneTreeTimer.SignalName.Timeout);
+		}
+
+		SetPlayerIdleVisual();
 	}
 
 	float PlayerSpriteAnchorOffsetYWorld() =>
 		PlayerSpriteAnchorLayout.WorldOffsetYAnchorBelowCenter(
-			_playerSprite?.Texture ?? _playerIdleTex ?? _playerWalkFrames[0],
+			_playerSprite?.Texture ?? GetPlayerIdleFrameOrFallback(0) ?? _playerWalkFrames[0],
 			Mathf.Abs(_playerSprite?.Scale.Y ?? 1f));
 
 	Vector2 PlayerWorldPositionForCell(Vector2I cell) =>
@@ -1713,27 +2029,57 @@ public partial class Gameplay : Node2D
 			return;
 		}
 
-		// 受击动画素材待补：占位为短暂变色。
-		Color saved = _playerSprite.Modulate;
-		_playerSprite.Modulate = new Color(1f, 0.42f, 0.42f, 1f);
+		StopPlayerIdleLoop();
 
-		ApplyPlayerFacingForAdjacentStep(_playerCell, returnCell);
-
+		// 不退回翻面：保持走向交互目标后的朝向；受伤帧按「每秒 N 帧」节拍推进，延迟后再击退。
 		Vector2 from = PlayerWorldPositionForCell(_playerCell);
 		Vector2 to = PlayerWorldPositionForCell(returnCell);
+
+		bool injured = PlayerInjuredSequenceAvailable();
+		float injuredClipLen = PlayerInjuredSpriteCount * PlayerInjuredFrameHoldSeconds;
+
+		float totalDur;
+		if (!injured)
+			totalDur = PlayerFightKnockbackSeconds;
+		else
+		{
+			float movementSpan = PlayerInjuredKnockbackDelaySeconds + PlayerFightKnockbackSeconds;
+			totalDur = Mathf.Max(movementSpan, injuredClipLen);
+		}
 
 		float elapsed = 0f;
 		const float step = 1f / 60f;
 
-		while (elapsed < PlayerFightKnockbackSeconds)
+		if (injured)
+			SetPlayerInjuredVisualFrame(0);
+
+		while (elapsed < totalDur)
 		{
 			await ToSignal(GetTree().CreateTimer(step), SceneTreeTimer.SignalName.Timeout);
 			elapsed += step;
-			float u = Mathf.Clamp(elapsed / PlayerFightKnockbackSeconds, 0f, 1f);
-			_playerSprite.Position = from.Lerp(to, u);
+
+			if (!injured)
+			{
+				float uKnock = Mathf.Clamp(elapsed / PlayerFightKnockbackSeconds, 0f, 1f);
+				_playerSprite.Position = from.Lerp(to, uKnock);
+			}
+			else if (elapsed < PlayerInjuredKnockbackDelaySeconds)
+				_playerSprite.Position = from;
+			else
+			{
+				float uKnock = Mathf.Clamp(
+					(elapsed - PlayerInjuredKnockbackDelaySeconds) / PlayerFightKnockbackSeconds, 0f, 1f);
+				_playerSprite.Position = from.Lerp(to, uKnock);
+			}
+
+			if (injured)
+			{
+				int fi = Mathf.Clamp((int)(elapsed / PlayerInjuredFrameHoldSeconds), 0,
+					PlayerInjuredSpriteCount - 1);
+				SetPlayerInjuredVisualFrame(fi);
+			}
 		}
 
-		_playerSprite.Modulate = saved;
 		_playerCell = returnCell;
 		SetPlayerIdleVisual();
 		SnapPlayer();
@@ -2019,6 +2365,8 @@ public partial class Gameplay : Node2D
 					{
 						corpseHp = true;
 					}
+
+					await PlayPlayerInjuredVisualSequenceIfAvailableAsync();
 					await ToastAsync("尸体", "-1 生命（50%）。");
 				}
 
@@ -2049,6 +2397,7 @@ public partial class Gameplay : Node2D
 
 					default:
 						RunState.Instance.PlayerHp -= 1;
+						await PlayPlayerInjuredVisualSequenceIfAvailableAsync();
 						await ToastAsync("废墟", "占位：不幸，生命 -1。");
 						break;
 
@@ -2061,13 +2410,18 @@ public partial class Gameplay : Node2D
 				await EnergyAbsorbAsync();
 				EraseEvent(cell);
 				_campaignVictoryPickupPhase = false;
-				string? nextLvl = LevelCatalog.ResolveNextCampaignLevelPath(_loadedLevelPath);
-				if (!string.IsNullOrEmpty(nextLvl))
+				string? nextMain = LevelCatalog.ResolveNextMainCampaignLevelPath(_loadedLevelPath);
+				if (!string.IsNullOrEmpty(nextMain))
 				{
 					RunState.Instance.StoreCampaignSkillSnapshot(skillList, pskillList, askillList);
-					RunState.Instance.PendingLevelPath = nextLvl;
+					RunState.Instance.PendingLevelPath = nextMain;
 					await ToastAsync("传送门", "前往下一关。");
 					GetTree().ChangeSceneToFile(GameplayScenePath);
+				}
+				else if (LevelCatalog.IsTerminalMainCampaignLevel(_loadedLevelPath))
+				{
+					RunState.Instance.PrepareReturnToMainMenu();
+					GetTree().ChangeSceneToFile(VictoryScreenScene);
 				}
 				else
 				{
@@ -2347,8 +2701,8 @@ public partial class Gameplay : Node2D
 			return;
 		if (_bossLockedCellKeys.Count > 0)
 			return;
-		HashSet<string> keys = BossSkillPlanner.ResolveLockedCellKeys(_terrain, _valid, _playerCell, _bossSkillTarget,
-			_bossSkillArea, out _);
+		HashSet<string> keys = BossSkillPlanner.ResolveLockedCellKeys(_terrain, _valid, _blockState, _playerCell,
+			_bossSkillTarget, _bossSkillArea, _bossTableId, out _);
 		foreach (string k in keys)
 			_bossLockedCellKeys.Add(k);
 		RebuildBossWarningVisual();
@@ -2663,9 +3017,24 @@ public partial class Gameplay : Node2D
 		await CheckFailWinAsync();
 		if (RunState.Instance.PlayerHp <= 0)
 			return;
+
 		_turn = Turn.Player;
+
 		_spentBasic = false;
+
+
+		await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+
+
+		if (_gameEnding)
+
+
+			return;
+
+
 		RefreshHud();
+
+
 	}
 
 	async Task MaybeFogDamageAsync()
@@ -2706,6 +3075,7 @@ public partial class Gameplay : Node2D
 
 		RunState.Instance.ClampHp();
 
+		await PlayPlayerInjuredVisualSequenceIfAvailableAsync();
 
 		await ToastAsync("迷雾缠身", "-1 HP（占位：吸收规则）");
 
@@ -2728,13 +3098,7 @@ public partial class Gameplay : Node2D
 		{
 
 
-			RunState.Instance.PrepareReturnToMainMenu();
-
-
-			await ToastAsync("失败", "生命归零。");
-
-
-			GetTree().ChangeSceneToFile(MainMenuScene);
+			GoToFailScreenFromGameplay();
 
 
 			return;
@@ -2757,6 +3121,23 @@ public partial class Gameplay : Node2D
 
 
 				_campaignVictoryExitsSpawned = true;
+
+
+				if (LevelCatalog.IsTerminalMainCampaignLevel(_loadedLevelPath))
+
+				{
+
+					PurgeAllMonsterEncounterEventsFromMap();
+
+					ClearBossForCampaignVictory();
+
+					RunState.Instance.PrepareReturnToMainMenu();
+
+					GetTree().ChangeSceneToFile(VictoryScreenScene);
+
+					return;
+
+				}
 
 
 				await SpawnVictoryChestAndPortalAsync(_playerCell);

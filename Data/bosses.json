@@ -43,7 +43,7 @@
       "warn_meter": 1,
       "gain_per_turn": 1,
       "skill_target": 2,
-      "skill_area": 3,
+      "skill_area": 10,
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",

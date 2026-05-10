@@ -34,7 +34,7 @@ public partial class MainMenu : Control
 		_levelPick.AddItem("— 请选择关卡 —");
 		_levelPick.SetItemMetadata(0, "");
 
-		foreach (string p in LevelCatalog.EnumerateLevelJsonPathsSortedAscending())
+		foreach (string p in LevelCatalog.EnumerateLevelJsonPathsSortedByCampaignOrderThenStem())
 		{
 			int ix = _levelPick.ItemCount;
 			_levelPick.AddItem(LevelCatalog.GetDropdownLabel(p));

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cv5hd7rklismi"
-path="res://.godot/imported/idel.png-029c9a4f3a6a1ad1a1a79bd842c8e88c.ctex"
+uid="uid://g3hyj0bomwdq"
+path="res://.godot/imported/Cloud4.png-38ef55635f7be20a911e60a51861bd52.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Art/Player/idel.png"
-dest_files=["res://.godot/imported/idel.png-029c9a4f3a6a1ad1a1a79bd842c8e88c.ctex"]
+source_file="res://Art/Map/Cloud4.png"
+dest_files=["res://.godot/imported/Cloud4.png-38ef55635f7be20a911e60a51861bd52.ctex"]
 
 [params]
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -75,5 +76,15 @@ public partial class BlockLayer : Node2D
 			kv.Value.QueueFree();
 
 		_sprites.Clear();
+	}
+
+	/// <summary>与迷雾/消散遮罩一致：<paramref name="hideCellContent"/> 为 true 时隐藏该格的障碍图标。</summary>
+	public void ApplyFogVisibility(Func<string, bool> hideCellContent)
+	{
+		foreach (KeyValuePair<string, Sprite2D> kv in _sprites)
+		{
+			if (kv.Value != null)
+				kv.Value.Visible = !hideCellContent(kv.Key);
+		}
 	}
 }

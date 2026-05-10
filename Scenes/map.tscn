@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://cq0m124e682ex"]
+
+[ext_resource type="Texture2D" uid="uid://dwdvb7ragvcbr" path="res://Art/Map/1.png" id="1_ci6au"]
+[ext_resource type="Texture2D" uid="uid://d4ejrvwfj8erp" path="res://Art/Map/Cloud1.png" id="2_26yhd"]
+
+[node name="Map" type="Node2D" unique_id=2056465608]
+
+[node name="2" type="Sprite2D" parent="." unique_id=1392375568]
+texture = ExtResource("1_ci6au")
+
+[node name="1" type="Sprite2D" parent="." unique_id=1967294444]
+position = Vector2(550, 0)
+texture = ExtResource("1_ci6au")
+
+[node name="3" type="Sprite2D" parent="." unique_id=1376791730]
+position = Vector2(275, 385)
+texture = ExtResource("1_ci6au")
+
+[node name="Cloud1" type="Sprite2D" parent="." unique_id=2033116129]
+texture = ExtResource("2_26yhd")
+
+[node name="Cloud2" type="Sprite2D" parent="." unique_id=1629789673]
+position = Vector2(550, 0)
+texture = ExtResource("2_26yhd")
+
+[node name="Cloud3" type="Sprite2D" parent="." unique_id=604266638]
+position = Vector2(275, 385)
+texture = ExtResource("2_26yhd")
