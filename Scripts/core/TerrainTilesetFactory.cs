@@ -194,19 +194,8 @@ public static class TerrainTilesetFactory
 	}
 
 	/// <summary>
-	/// 玩家世界 Sprite2D 缩放：与六角格绘制使用同一「纹素像素 → 棋盘格坐标」倍数，
-	/// 使 480×480 站立图相对 600×600 地砖图在实际尺寸上保留 480:600。
+	/// 与 <c>res://Scenes/map.tscn</c> 对齐：场景中地砖精灵、玩家 <c>Idel01</c>（<c>idel01.png</c>）、参考图层 <c>ONmap</c> 均未改 <c>Scale</c>，即默认 <c>(1,1)</c>，
+	/// 世界单位与精灵贴图像素一比一，与 TileMap 绘制整块地砖 atlas 的尺寸语义一致。
 	/// </summary>
-	public static float PlayerSpriteScaleMatchingTerrainPixels(TileSet? tileSet, float fallbackLegacy = 0.63f)
-	{
-		if (tileSet == null || !TryGetPrimaryAtlasTileDrawablePixelSize(tileSet, out Vector2I drawablePx))
-			return fallbackLegacy;
-
-		int drawH = drawablePx.Y;
-		if (drawH <= 0)
-			return fallbackLegacy;
-
-		float tileH = tileSet.TileSize.Y;
-		return tileH / drawH;
-	}
+	public static Vector2 PlayerWorldScaleMapSceneReference => Vector2.One;
 }

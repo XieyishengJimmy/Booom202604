@@ -539,13 +539,13 @@ public partial class Gameplay : Node2D
 		};
 	}
 
-	void ApplyPlayerWorldSpriteScaleFromTerrain()
+	/// <summary>玩家 <c>Sprite2D.Scale</c> 与 <c>Scenes/map.tscn</c> 中 Idel01/地砖一致（<c>1,1</c>）。</summary>
+	void SyncPlayerSpriteScaleToTerrain()
 	{
-		if (_playerSprite == null || _terrain?.TileSet == null)
+		if (_playerSprite == null)
 			return;
 
-		float sc = TerrainTilesetFactory.PlayerSpriteScaleMatchingTerrainPixels(_terrain.TileSet);
-		_playerSprite.Scale = new Vector2(sc, sc);
+		_playerSprite.Scale = TerrainTilesetFactory.PlayerWorldScaleMapSceneReference;
 	}
 
 
@@ -554,7 +554,7 @@ public partial class Gameplay : Node2D
 		int terrainVar = TerrainTilesetFactory.ResolveTerrainVariantFromLevel(d);
 		_terrain!.TileSet = TerrainTilesetFactory.CreateHexTileset(terrainVar);
 		TerrainTilesetFactory.ApplyTerrainPresentation(_terrain);
-		ApplyPlayerWorldSpriteScaleFromTerrain();
+		SyncPlayerSpriteScaleToTerrain();
 		_terrain.Clear();
 		_valid.Clear();
 		_fogState.Clear();
@@ -1857,7 +1857,6 @@ public partial class Gameplay : Node2D
 
 		if (_playerSprite != null)
 		{
-			ApplyPlayerWorldSpriteScaleFromTerrain();
 			_playerSprite.FlipH = false;
 			SetPlayerIdleVisual();
 		}
@@ -1907,6 +1906,7 @@ public partial class Gameplay : Node2D
 		_idleFrameIndex = 0;
 		_idleFrameAccum = 0f;
 		_playerSprite.Texture = GetPlayerIdleFrameOrFallback(0);
+		SyncPlayerSpriteScaleToTerrain();
 	}
 
 	void SetPlayerWalkVisualFrame(int frameIndex)

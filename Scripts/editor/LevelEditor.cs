@@ -477,10 +477,10 @@ public partial class LevelEditor : Control
 
 	void RefreshEditorPlayerGhostScale()
 	{
-		if (_ghost == null || _terrain?.TileSet == null)
+		if (_ghost == null)
 			return;
-		float sc = TerrainTilesetFactory.PlayerSpriteScaleMatchingTerrainPixels(_terrain.TileSet);
-		_ghost.Scale = new Vector2(sc, sc);
+
+		_ghost.Scale = TerrainTilesetFactory.PlayerWorldScaleMapSceneReference;
 	}
 
 	public void _on_terrain_style_selected(long index)
