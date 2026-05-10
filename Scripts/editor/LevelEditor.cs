@@ -52,6 +52,11 @@ public partial class LevelEditor : Control
 	Camera2D? _cam;
 	OptionButton? _modeOpt;
 	LineEdit? _levelNameEdit;
+
+
+	SpinBox? _levelCampaignOrderSpin;
+
+
 	OptionButton? _levelFilesOpt;
 
 	OptionButton? _terrainStyleOpt;
@@ -164,6 +169,15 @@ public partial class LevelEditor : Control
 		_sidebar = GetNode<Panel>("HBox/Sidebar");
 		_modeOpt = GetNode<OptionButton>($"{SidebarVBox}/ModeOpt");
 		_levelNameEdit = GetNode<LineEdit>($"{SidebarVBox}/LevelNameEdit");
+		_levelCampaignOrderSpin = GetNodeOrNull<SpinBox>($"{SidebarVBox}/CampaignOrderSpin");
+		if (_levelCampaignOrderSpin != null)
+		{
+			_levelCampaignOrderSpin.MinValue = 1;
+			_levelCampaignOrderSpin.MaxValue = 999_999;
+			_levelCampaignOrderSpin.Step = 1;
+			_levelCampaignOrderSpin.Rounded = true;
+			_levelCampaignOrderSpin.Value = 1;
+		}
 		_levelFilesOpt = GetNode<OptionButton>($"{SidebarVBox}/LevelFilesOpt");
 		_bossIdOpt = GetNode<OptionButton>($"{SidebarVBox}/BossIdOpt");
 		_modeHint = GetNodeOrNull<Label>($"{SidebarVBox}/ModeHint");
@@ -1258,10 +1272,15 @@ public partial class LevelEditor : Control
 			evArr.Add(ev);
 		}
 
+		int camOrder =
+			Mathf.Clamp(_levelCampaignOrderSpin != null ? (int)Mathf.Round(_levelCampaignOrderSpin.Value) : 1,
+				1, 999_999);
+
 		return new Godot.Collections.Dictionary
 		{
 			["version"] = LevelIo.Version,
 			["level_name"] = LevelNameTrimmed(),
+			[LevelCatalog.CampaignOrderIndexKey] = camOrder,
 			["player_start"] = new Godot.Collections.Dictionary { ["x"] = _player.X, ["y"] = _player.Y },
 			["boss"] = new Godot.Collections.Dictionary { ["boss_id"] = SelectedBossId() },
 			[TerrainTilesetFactory.TerrainVariantDictKey] = _terrainVariant,
@@ -1375,6 +1394,12 @@ public partial class LevelEditor : Control
 			if (string.IsNullOrEmpty(rn))
 				rn = PathStemFromResPath(_currentLevelPath);
 			_levelNameEdit.Text = rn ?? "";
+		}
+
+		if (_levelCampaignOrderSpin != null)
+		{
+			int parsed = LevelCatalog.ReadCampaignOrderIndex(d);
+			_levelCampaignOrderSpin.Value = parsed == LevelCatalog.CampaignOrderUnset ? 1 : parsed;
 		}
 
 		RefreshVisuals();
@@ -1533,6 +1558,7 @@ public partial class LevelEditor : Control
 		{
 			["version"] = LevelIo.Version,
 			["level_name"] = "",
+			[LevelCatalog.CampaignOrderIndexKey] = 1,
 			["player_start"] = new Godot.Collections.Dictionary { ["x"] = 0, ["y"] = 0 },
 			["boss"] = new Godot.Collections.Dictionary { ["boss_id"] = defaultBossId },
 			[TerrainTilesetFactory.TerrainVariantDictKey] = 1,
@@ -1564,6 +1590,21 @@ public partial class LevelEditor : Control
 		if (string.IsNullOrEmpty(nameTrim))
 		{
 			PopupDialog("无法保存", "请填写关卡名后再保存。");
+			return false;
+		}
+
+		int desiredOrder =
+			Mathf.Clamp(_levelCampaignOrderSpin != null ? (int)Mathf.Round(_levelCampaignOrderSpin.Value) : 1,
+				1, 999_999);
+		List<string> dupPaths =
+			LevelCatalog.FindDuplicateCampaignOrderConflictsElsewhere(_currentLevelPath, desiredOrder);
+		if (dupPaths.Count > 0)
+		{
+			var lines = new System.Text.StringBuilder();
+			foreach (string pth in dupPaths)
+				lines.AppendLine($"· {LevelCatalog.FileStemFromResPath(pth)} ({pth})");
+
+			PopupDialog("闯关序号冲突", $"闯关序号【{desiredOrder}】已被其他关卡使用：\n{lines}请修改为未占用的序号。");
 			return false;
 		}
 
@@ -1671,13 +1712,14 @@ public partial class LevelEditor : Control
 		if (!TrySaveCore(target))
 			return;
 
+		RunState.Instance.PrepareReturnToMainMenu();
 		RunState.Instance.PendingLevelPath = _currentLevelPath;
 		GetTree().ChangeSceneToFile("res://Scenes/gameplay.tscn");
 	}
 
 	public void _on_back_menu_pressed()
 	{
-		RunState.Instance.PendingLevelPath = "";
+		RunState.Instance.PrepareReturnToMainMenu();
 		GetTree().ChangeSceneToFile("res://Scenes/main_menu.tscn");
 	}
 }

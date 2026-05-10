@@ -66,6 +66,9 @@ public partial class HexEventMarker : Node2D
 		if (ev.TryGetValue("type", out Variant tVar) && tVar.VariantType == Variant.Type.String)
 			ty = tVar.AsString();
 
+		if (ty == "campaign_portal")
+			return LoadIcon("res://Art/Icon/Portal.png") ?? TextureFor(Kind.Grass);
+
 		// 祭坛：已使用后固定为「耗尽」贴图；编辑/未使用则尊重关卡里的 icon（默认可用）。
 		if (ty == "altar" && EventDictBool(ev, "altar_used"))
 			return LoadIcon(IconAltarUsed) ?? TexAltar;

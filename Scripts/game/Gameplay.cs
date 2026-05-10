@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
@@ -6,12 +7,14 @@ using System.Linq;
 namespace Booom202604;
 
 /// <summary>
-/// Prototype gameplay ported from GDScript; skills not implemented.
+/// 主闯关场景：事件格、BOSS、被动/宝箱技能等逻辑均在此挂载。
 /// </summary>
 public partial class Gameplay : Node2D
 {
 	private const string DefaultLevel = "res://levels/starter_level.json";
 	private const string MainMenuScene = "res://Scenes/main_menu.tscn";
+	private const string GameplayScenePath = "res://Scenes/gameplay.tscn";
+	private const string CampaignPortalEventTypeName = "campaign_portal";
 
 	[Export(PropertyHint.File, "*.json")]
 	public string LevelJsonPath { get; set; } = DefaultLevel;
@@ -75,6 +78,13 @@ public partial class Gameplay : Node2D
 	Turn _turn = Turn.Player;
 	bool _spentBasic;
 	bool _busyPlayerAction;
+	string _loadedLevelPath = "";
+
+	/// <summary>清雾胜利后已在场上生成宝箱与传送门，等待相邻交互。</summary>
+	bool _campaignVictoryPickupPhase;
+
+	/// <summary>本局已尝试过生成胜利宝箱/传送门，避免重复弹胜利逻辑。</summary>
+	bool _campaignVictoryExitsSpawned;
 
 	float _bossMeter;
 	float _bossWarnMax = 50f;
@@ -325,6 +335,8 @@ public partial class Gameplay : Node2D
 		if (string.IsNullOrWhiteSpace(path))
 			path = LevelJsonPath;
 
+		_loadedLevelPath = LevelCatalog.NormalizeResPath(path);
+
 		Godot.Collections.Dictionary lvl = LevelIo.LoadFromFile(path);
 		if (lvl.Count == 0)
 			lvl = LevelIo.LoadFromFile(DefaultLevel);
@@ -339,7 +351,6 @@ public partial class Gameplay : Node2D
 		{
 			var pskilldict = item.AsGodotDictionary();
 			int pskillid = pskilldict["ID"].AsInt32();
-			skillList.Add(pskillid);
 			passiveList.Add(pskillid);
 			if (pskilldict.ContainsKey("config"))
 			{
@@ -362,7 +373,6 @@ public partial class Gameplay : Node2D
 		{
 			var askilldict = item.AsGodotDictionary();
 			int askillid = askilldict["ID"].AsInt32();
-			skillList.Add(askillid);
 			activeList.Add(askillid);
 			acdList.Add(askilldict["cd"].AsInt32());
 			apowerList.Add(askilldict["power"].AsInt32());
@@ -395,10 +405,25 @@ public partial class Gameplay : Node2D
 			apowerDict[id] = value;
 		}
 
+		skillList.Clear();
+		pskillList.Clear();
+		askillList.Clear();
+		if (!RunState.Instance.TryConsumeCampaignSkillInto(skillList, pskillList, askillList))
+		{
+			foreach (int pid in passiveList)
+				skillList.Add(pid);
+			foreach (int aid in activeList)
+				skillList.Add(aid);
+		}
+
 		ApplyLevel(lvl);
+		RebuildLearnedSkillsHud();
 		SnapPlayer();
 		RefreshHud();
 		FitCamera();
+		cardchoose = 0;
+		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } skillPickSureInit)
+			skillPickSureInit.Disabled = true;
 	}
 
 	static int GetInt(Godot.Collections.Dictionary d, string key, int def = 0)
@@ -455,6 +480,9 @@ public partial class Gameplay : Node2D
 
 		foreach (Node ch in GetNode("World/EventIcons").GetChildren())
 			ch.QueueFree();
+
+		_campaignVictoryPickupPhase = false;
+		_campaignVictoryExitsSpawned = false;
 
 		_bossWarnMax = 50f;
 		_bossChargeMax = 50f;
@@ -746,6 +774,326 @@ public partial class Gameplay : Node2D
 
 
 
+	HashSet<Vector2I> GatherValidCoordinates()
+	{
+
+		var s = new HashSet<Vector2I>();
+
+
+		foreach (Variant vk in _valid.Keys)
+
+
+			s.Add(HexGridUtil.ParseKey(vk.AsString()));
+
+
+		return s;
+
+
+	}
+
+
+
+
+	bool CellEligibleForVictorySpawn(Vector2I c, Vector2I anchorCell, HashSet<Vector2I> extraForbidden)
+
+
+	{
+
+		string ck = HexGridUtil.CellKey(c);
+
+
+		if (!_valid.ContainsKey(ck))
+
+
+			return false;
+
+
+
+
+		if (_blockState.ContainsKey(ck) && _blockState[ck].AsBool())
+
+
+			return false;
+
+
+
+
+		if (_events.ContainsKey(ck))
+
+
+			return false;
+
+
+
+
+		if (HexGridUtil.IsSameCell(c, anchorCell))
+
+
+			return false;
+
+
+
+
+		return !extraForbidden.Contains(c);
+
+
+	}
+
+
+	/// <summary>关卡 <c>block</c> 障碍格：BOSS 技能不得在此处套迷雾、生成怪物或改写事件。</summary>
+	bool TerrainCellMarkedBlocked(string ck) =>
+		_blockState.ContainsKey(ck) && _blockState[ck].AsBool();
+
+
+
+	void AttachRuntimeEvent(Vector2I cell, Godot.Collections.Dictionary ev)
+
+
+	{
+
+		string ck = HexGridUtil.CellKey(cell);
+
+
+		Godot.Collections.Dictionary copy = (Godot.Collections.Dictionary)ev.Duplicate();
+
+
+
+
+		copy["x"] = cell.X;
+
+
+		copy["y"] = cell.Y;
+
+
+
+
+		_events[ck] = copy;
+
+
+
+
+		var icons = GetNode<Node2D>("World/EventIcons");
+
+
+		DestroyEventIconsForCellKey(icons, ck);
+
+
+		var spr = new Sprite2D();
+
+
+		spr.Texture = HexEventMarker.TextureForEventDict(copy);
+
+
+		if (spr.Texture != null)
+
+
+		{
+
+			spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
+
+
+			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
+
+
+		}
+
+
+
+
+		spr.Name = $"Ev_{cell.X}_{cell.Y}";
+
+
+		spr.SetMeta(CellKeyMeta, ck);
+
+
+		spr.Position = _terrain!.MapToLocal(cell);
+
+
+		icons.AddChild(spr);
+
+
+	}
+
+
+
+
+	async Task SpawnVictoryChestAndPortalAsync(Vector2I anchorCell)
+
+	{
+
+		HashSet<Vector2I> allowed = GatherValidCoordinates();
+
+		List<Vector2I> neighbors = HexGridUtil.Neighbors(_terrain!, anchorCell);
+
+
+
+		neighbors.Sort((a, b) => string.Compare(HexGridUtil.CellKey(a), HexGridUtil.CellKey(b), StringComparison.Ordinal));
+
+
+
+		Vector2I? chestCell = null;
+
+
+
+		HashSet<Vector2I> forbid = [];
+
+
+
+		foreach (Vector2I n in neighbors)
+
+		{
+
+			if (!CellEligibleForVictorySpawn(n, anchorCell, forbid))
+
+				continue;
+
+
+
+			chestCell = n;
+
+			break;
+
+		}
+
+
+
+		if (chestCell.HasValue)
+
+			forbid.Add(chestCell.Value);
+
+
+
+		Dictionary<Vector2I, int> depths = HexGridUtil.BfsStepsFrom(allowed, _terrain!, anchorCell);
+
+
+
+		var portalOrdered = new List<(Vector2I C, int D)>();
+
+		foreach (KeyValuePair<Vector2I, int> kv in depths)
+
+		{
+
+			Vector2I cPos = kv.Key;
+
+
+
+			int d = kv.Value;
+
+			if (d < 2)
+
+				continue;
+
+
+
+			if (!CellEligibleForVictorySpawn(cPos, anchorCell, forbid))
+
+				continue;
+
+
+
+			portalOrdered.Add((cPos, d));
+
+		}
+
+
+
+		portalOrdered.Sort((a, b) =>
+
+		{
+
+			int cmp = a.D.CompareTo(b.D);
+
+			if (cmp != 0)
+
+				return cmp;
+
+			return string.Compare(HexGridUtil.CellKey(a.C), HexGridUtil.CellKey(b.C), StringComparison.Ordinal);
+
+		});
+
+
+
+		Vector2I? portalCell = portalOrdered.Count > 0 ? portalOrdered[0].C : null;
+
+
+
+		string hint = "";
+
+
+
+		if (chestCell.HasValue)
+
+		{
+
+			Vector2I c = chestCell.Value;
+
+			Godot.Collections.Dictionary tev = new()
+
+			{
+
+				["type"] = "treasure",
+
+				["value"] = 0f,
+
+			};
+
+			AttachRuntimeEvent(c, tev);
+
+		}
+
+		else
+
+			hint = "相邻无可用空格，未生成宝箱。";
+
+
+
+		if (portalCell.HasValue)
+
+		{
+
+			Vector2I pCell = portalCell.Value;
+
+			Godot.Collections.Dictionary pev = new()
+
+			{
+
+				["type"] = CampaignPortalEventTypeName,
+
+				["icon"] = "res://Art/Icon/Portal.png",
+
+				["value"] = 0f,
+
+			};
+
+			AttachRuntimeEvent(pCell, pev);
+
+		}
+
+		else
+
+			hint = string.IsNullOrEmpty(hint)
+
+				? "未能在距你≥两步格处放置传送门。"
+
+				: hint + " 传送门同上。";
+
+
+
+		await ToastAsync("胜利", string.IsNullOrEmpty(hint)
+
+			? "清雾完成！相邻开箱领奖，走远一步进入传送门前往下一关。"
+
+			: "清雾完成。" + hint);
+
+
+
+		RefreshEventIconsFogVisibility();
+
+	}
+
+
+
+
 	public override void _UnhandledInput(InputEvent @event)
 
 
@@ -1027,6 +1375,10 @@ public partial class Gameplay : Node2D
 
 
 
+		bool verbose = RunState.Instance?.DebugModeVerboseToasts ?? true;
+		if (!verbose && !(title is "受阻" or "失败" or "胜利" or "传送门" or "闯关"))
+			return;
+
 		await _hudUi.ToastAsync(title, msg);
 
 
@@ -1036,6 +1388,67 @@ public partial class Gameplay : Node2D
 
 
 
+
+	void ClearBossForCampaignVictory()
+	{
+		_bossMeter = 0f;
+		_bossLockedCellKeys.Clear();
+		_bossWarn?.ClearAll();
+		RefreshHud();
+	}
+
+	void RebuildLearnedSkillsHud()
+	{
+		for (int i = 1; i <= 10; i++)
+		{
+			string key = $"UICanvas/HUD/PassiveSkillSlot/P{i}";
+			if (GetNodeOrNull<CanvasItem>(key) is { } pn)
+				pn.Visible = false;
+		}
+
+		for (int pi = 0; pi < pskillList.Count && pi < 10; pi++)
+		{
+			int sid = pskillList[pi];
+			string slot = "P" + (pi + 1);
+			var vis = GetNode<CanvasItem>("UICanvas/HUD/PassiveSkillSlot/" + slot);
+			vis.Visible = true;
+			foreach (var item in parray)
+			{
+				var pskilldict = item.AsGodotDictionary();
+				if (pskilldict["ID"].AsInt32() != sid)
+					continue;
+				string targetAddress = pskilldict["address"].AsString();
+				GetNode<TextureRect>("UICanvas/HUD/PassiveSkillSlot/" + slot).Texture = GD.Load<Texture2D>(targetAddress);
+				break;
+			}
+		}
+
+		for (int j = 1; j <= 6; j++)
+		{
+			string root = "UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + j;
+			if (GetNodeOrNull<TextureRect>(root + "/SkillHi") is { } shi)
+				shi.Visible = false;
+			if (GetNodeOrNull<Button>(root + "/SkillIcon") is { } iconBtn)
+				iconBtn.Icon = null;
+		}
+
+		for (int ai = 0; ai < askillList.Count && ai < 6; ai++)
+		{
+			int sid = askillList[ai];
+			string aname = "SingleSkill" + (ai + 1);
+			string rootPath = "UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname;
+			foreach (var item in aarray)
+			{
+				var askilldict = item.AsGodotDictionary();
+				if (askilldict["ID"].AsInt32() != sid)
+					continue;
+				string targetAddress = askilldict["address"].AsString();
+				GetNode<Button>(rootPath + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
+				GetNode<TextureRect>(rootPath + "/SkillHi").Visible = true;
+				break;
+			}
+		}
+	}
 
 	async Task TryMoveAsync(Vector2I dst)
 
@@ -1362,6 +1775,9 @@ public partial class Gameplay : Node2D
 
 				RunState.Instance.ClampHp();
 
+				await EnergyAbsorbAsync();
+
+
 				_spentBasic = true;
 
 				RefreshHud();
@@ -1378,6 +1794,9 @@ public partial class Gameplay : Node2D
 
 
 				EraseEvent(cell);
+				cardchoose = 0;
+				if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } surePickStart)
+					surePickStart.Disabled = true;
 				GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = true;
 				var result = card_random(skillList);
 				cardnum = result;
@@ -1571,6 +1990,8 @@ public partial class Gameplay : Node2D
 								break;
 
 						}
+
+						corpseCount = 0;
 					}
 				}
 
@@ -1586,7 +2007,8 @@ public partial class Gameplay : Node2D
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 					if (pskillList.Contains(201))
 					{
-						RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict["201"].AsInt32(), RunState.Instance.PlayerEnergyMax);
+						int extraHeal = Mathf.Max(1, pconfigDict["201"].AsInt32());
+						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + extraHeal, RunState.Instance.PlayerHpMax);
 					}
 					await ToastAsync("尸体", "+1 生命（50%）。");
 				}
@@ -1635,16 +2057,48 @@ public partial class Gameplay : Node2D
 				EraseEvent(cell);
 				break;
 
+			case CampaignPortalEventTypeName:
+				await EnergyAbsorbAsync();
+				EraseEvent(cell);
+				_campaignVictoryPickupPhase = false;
+				string? nextLvl = LevelCatalog.ResolveNextCampaignLevelPath(_loadedLevelPath);
+				if (!string.IsNullOrEmpty(nextLvl))
+				{
+					RunState.Instance.StoreCampaignSkillSnapshot(skillList, pskillList, askillList);
+					RunState.Instance.PendingLevelPath = nextLvl;
+					await ToastAsync("传送门", "前往下一关。");
+					GetTree().ChangeSceneToFile(GameplayScenePath);
+				}
+				else
+				{
+					RunState.Instance.PrepareReturnToMainMenu();
+					await ToastAsync("闯关", "没有可用的下一关。请在关卡编辑器为各关配置「闯关序号」。");
+					GetTree().ChangeSceneToFile(MainMenuScene);
+				}
+
+				return;
 
 			default:
 
+
 				await ToastAsync("未知事件", t);
+
+
 
 				break;
 
+
 		}
 
+
+
+
 		RunState.Instance.ClampHp();
+
+		await EnergyAbsorbAsync();
+
+
+
 
 		_spentBasic = true;
 
@@ -1756,7 +2210,7 @@ public partial class Gameplay : Node2D
 				_events[HexGridUtil.CellKey(cell)] = corpseEvent;
 				SpawnSingleEventIcon(cell, corpseEvent);
 			}
-			await EnergyAbsorbAsync();
+
 			return;
 		}
 
@@ -1790,17 +2244,30 @@ public partial class Gameplay : Node2D
 		_events.Remove(ck);
 
 		var icons = GetNode<Node2D>("World/EventIcons");
+		DestroyEventIconsForCellKey(icons, ck);
 
-		foreach (Node ch in icons.GetChildren())
+	}
+
+
+
+
+
+	void PurgeAllMonsterEncounterEventsFromMap()
+	{
+		List<string> snapshot = [];
+		foreach (Variant vk in _events.Keys)
+			snapshot.Add(vk.AsString());
+
+		foreach (string ck in snapshot)
 		{
-			if (ch.HasMeta(CellKeyMeta) && ch.GetMeta(CellKeyMeta).AsString() == ck)
-			{
-				ch.QueueFree();
-				break;
-			}
-
+			if (!_events.ContainsKey(ck))
+				continue;
+			if (!TryMonsterEventAtKey(ck, out _))
+				continue;
+			EraseEvent(HexGridUtil.ParseKey(ck));
 		}
 
+		RefreshEventIconsFogVisibility();
 	}
 
 
@@ -1906,8 +2373,18 @@ public partial class Gameplay : Node2D
 			{
 				Godot.Collections.Dictionary ev = _events[ck].AsGodotDictionary();
 				spr.Texture = HexEventMarker.TextureForEventDict(ev);
-				return;
 			}
+		}
+	}
+
+	/// <summary>移除该格索引下所有事件图标节点（避免出现重复 Sprite 导致 EraseEvent 只删掉其一）。</summary>
+	static void DestroyEventIconsForCellKey(Node2D iconsRoot, string ck)
+	{
+		foreach (Node ch in iconsRoot.GetChildren())
+		{
+			if (!ch.HasMeta(CellKeyMeta) || ch.GetMeta(CellKeyMeta).AsString() != ck)
+				continue;
+			ch.QueueFree();
 		}
 	}
 
@@ -1924,6 +2401,7 @@ public partial class Gameplay : Node2D
 
 	void SpawnSingleEventIcon(Node2D iconsRoot, string cellKey, Godot.Collections.Dictionary ev)
 	{
+		DestroyEventIconsForCellKey(iconsRoot, cellKey);
 		Vector2I cell = HexGridUtil.ParseKey(cellKey);
 
 		var spr = new Sprite2D();
@@ -1940,6 +2418,45 @@ public partial class Gameplay : Node2D
 		iconsRoot.AddChild(spr);
 	}
 
+	/// <summary>被动 205「尸横遍野」：BOSS 释放表驱动技能后，在当次预警范围内随机空事件格留下尸体。</summary>
+	void SpawnPassive205CorpsesInBossScope(IReadOnlyList<string> bossSkillScopeCells)
+	{
+		if (_terrain == null || bossSkillScopeCells == null || bossSkillScopeCells.Count == 0 ||
+			!pskillList.Contains(205))
+			return;
+
+		int desired = Mathf.Max(1, pconfigDict["205"].AsInt32());
+		string pk = HexGridUtil.CellKey(_playerCell);
+		var empties = new List<string>();
+
+		foreach (string ck in bossSkillScopeCells)
+		{
+			if (!_valid.ContainsKey(ck))
+				continue;
+			if (TerrainCellMarkedBlocked(ck))
+				continue;
+			if (_events.ContainsKey(ck))
+				continue;
+			if (ck == pk)
+				continue;
+			empties.Add(ck);
+		}
+
+		if (empties.Count == 0)
+			return;
+
+		Node2D iconsRoot = GetNode<Node2D>("World/EventIcons");
+		foreach (string ck in ShuffledTakePrefix(empties, Mathf.Min(desired, empties.Count)))
+		{
+			var corpseEvent = new Godot.Collections.Dictionary
+			{
+				{ "type", "corpse" }
+			};
+			_events[ck] = corpseEvent;
+			SpawnSingleEventIcon(iconsRoot, ck, corpseEvent);
+		}
+	}
+
 	static List<string> ShuffledTakePrefix(IReadOnlyList<string> source, int take)
 	{
 		var copy = new List<string>(source);
@@ -1953,7 +2470,7 @@ public partial class Gameplay : Node2D
 		return copy.GetRange(0, keep);
 	}
 
-	/// <summary>在已通过本次技能套上迷雾的空格（无其它事件）上随机放置战斗怪；不占玩家格。</summary>
+	/// <summary>在已通过本次技能套上迷雾的空格（无障碍、无其它事件）上随机放置战斗怪；不占玩家格。</summary>
 	void SpawnRandomBossAddsInFogCells(IReadOnlyList<string> cellsWhereBossJustFogged, int count)
 	{
 		if (count <= 0 || MonsterTable.All.Count == 0)
@@ -1967,6 +2484,8 @@ public partial class Gameplay : Node2D
 				continue;
 			if (!_valid.ContainsKey(ck))
 				continue;
+			if (TerrainCellMarkedBlocked(ck))
+				continue;
 			if (!(_fogState.ContainsKey(ck) && _fogState[ck].AsBool()))
 				continue;
 			if (_events.ContainsKey(ck))
@@ -1979,7 +2498,10 @@ public partial class Gameplay : Node2D
 
 		foreach (string ck in pick)
 		{
-			MonsterTable.Row? row = MonsterTable.PickBossSummonMonsterRow();
+			MonsterTable.Row? row = BossTable.TryGet(_bossTableId, out BossTable.Row? bb) && bb != null
+				? MonsterTable.PickBossSummonMonsterRowFromBossSummonIds(bb.SummonMonsterIds)
+				: null;
+			row ??= MonsterTable.PickBossSummonMonsterRow();
 			if (row == null)
 				break;
 			Godot.Collections.Dictionary ev = BuildMonsterEncounterDict(row);
@@ -1995,6 +2517,8 @@ public partial class Gameplay : Node2D
 			return;
 		if (_bossLockedCellKeys.Count == 0)
 			CommitBossSkillPreviewLock();
+
+		var passive205BossScopeCells = new List<string>(_bossLockedCellKeys);
 
 		string tip = string.IsNullOrWhiteSpace(_bossSkillText)
 			? "BOSS 释放了技能。"
@@ -2014,6 +2538,8 @@ public partial class Gameplay : Node2D
 			{
 				if (!_valid.ContainsKey(ck))
 					continue;
+				if (TerrainCellMarkedBlocked(ck))
+					continue;
 				Vector2I c = HexGridUtil.ParseKey(ck);
 				_fogState[ck] = true;
 				_fog.SetCell(c, true);
@@ -2024,6 +2550,8 @@ public partial class Gameplay : Node2D
 			SpawnRandomBossAddsInFogCells(fogTargets, fm.MonsterSpawnCount);
 
 			RefreshEventIconsFogVisibility();
+
+			SpawnPassive205CorpsesInBossScope(passive205BossScopeCells);
 
 			_bossLockedCellKeys.Clear();
 			_bossWarn?.ClearAll();
@@ -2037,6 +2565,8 @@ public partial class Gameplay : Node2D
 		foreach (string ck in _bossLockedCellKeys)
 		{
 			if (!_valid.ContainsKey(ck))
+				continue;
+			if (TerrainCellMarkedBlocked(ck))
 				continue;
 			Vector2I c = HexGridUtil.ParseKey(ck);
 			switch (fx)
@@ -2081,6 +2611,8 @@ public partial class Gameplay : Node2D
 
 		RefreshEventIconsFogVisibility();
 
+		SpawnPassive205CorpsesInBossScope(passive205BossScopeCells);
+
 		_bossLockedCellKeys.Clear();
 		_bossWarn?.ClearAll();
 		_bossMeter = 0f;
@@ -2089,6 +2621,15 @@ public partial class Gameplay : Node2D
 
 	async Task BossTurnAsync()
 	{
+		if (_campaignVictoryPickupPhase)
+		{
+			RunState.Instance.ClampHp();
+			_turn = Turn.Player;
+			_spentBasic = false;
+			RefreshHud();
+			return;
+		}
+
 		float before = _bossMeter;
 		_bossMeter += _bossGain;
 		float chargeMax = Mathf.Max(_bossChargeMax, 1f);
@@ -2187,7 +2728,7 @@ public partial class Gameplay : Node2D
 		{
 
 
-			RunState.Instance.PendingLevelPath = "";
+			RunState.Instance.PrepareReturnToMainMenu();
 
 
 			await ToastAsync("失败", "生命归零。");
@@ -2209,19 +2750,45 @@ public partial class Gameplay : Node2D
 
 
 		{
+			if (!_campaignVictoryExitsSpawned)
 
 
-			RunState.Instance.PendingLevelPath = "";
+			{
 
 
-			await ToastAsync("胜利", "全图迷雾已清空（占位：回主菜单）。");
+				_campaignVictoryExitsSpawned = true;
 
 
-			GetTree().ChangeSceneToFile(MainMenuScene);
+				await SpawnVictoryChestAndPortalAsync(_playerCell);
+
+
+				PurgeAllMonsterEncounterEventsFromMap();
+
+				ClearBossForCampaignVictory();
+
+
+				_campaignVictoryPickupPhase = true;
+
+
+				_spentBasic = false;
+
+
+
+				return;
+
+
+
+			}
+
+
+
+
+
+
+			return;
 
 
 		}
-
 
 
 
@@ -2463,16 +3030,24 @@ public partial class Gameplay : Node2D
 
 	public void sure_button_pressed()
 	{
+		var panel = GetNodeOrNull<CanvasItem>("UICanvas/HUD/SkillChoose");
+		if (panel == null || !panel.Visible)
+			return;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = true;
 	}
 
 
 	public async void sure_button_pressed_close()
 	{
-		if (cardnum.Count < cardchoose)
-		{
+		var panel = GetNodeOrNull<CanvasItem>("UICanvas/HUD/SkillChoose");
+		if (panel == null || !panel.Visible)
 			return;
-		}
+		// cardchoose==0（未点选任一卡牌）或与 cardnum 不同步时会 cardnum[-1] 崩；空格/手柄易在未选卡时触发「确定」。
+		if (cardchoose < 1 || cardchoose > cardnum.Count)
+			return;
+		if (cardnum.Count == 0)
+			return;
+
 		if (cardnum[cardchoose - 1] > 100)
 		{
 			await UseSkillAsync(cardnum[cardchoose - 1]);
@@ -2492,12 +3067,17 @@ public partial class Gameplay : Node2D
 			}
 		}
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Sure/SureSelect").Visible = false;
+		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } sureBtnEnd)
+			sureBtnEnd.Disabled = true;
+		cardchoose = 0;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = false;
 	}
 
 	public void click_card1()
 	{
 		cardchoose = 1;
+		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } sure1)
+			sure1.Disabled = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardSelect").Visible = true;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardGlow").Visible = true;
@@ -2510,6 +3090,8 @@ public partial class Gameplay : Node2D
 	public void click_card2()
 	{
 		cardchoose = 2;
+		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } sure2)
+			sure2.Disabled = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardGlow").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = true;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = true;
@@ -2522,6 +3104,8 @@ public partial class Gameplay : Node2D
 	public void click_card3()
 	{
 		cardchoose = 3;
+		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } sure3)
+			sure3.Disabled = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardGlow").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardSelect").Visible = true;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardGlow").Visible = true;
@@ -2530,6 +3114,9 @@ public partial class Gameplay : Node2D
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = false;
 
 	}
+
+	/// <summary>场景仍为 SingleSkill1/SkillIcon 连接 button_down；主动技能管线已注释。</summary>
+	public void click_active1() { }
 
 	//async Task click_active1()
 	//{
@@ -2641,25 +3228,9 @@ public partial class Gameplay : Node2D
 	public void SpawnSingleEventIcon(Vector2I cell, Godot.Collections.Dictionary eventData)
 	{
 		var icons = GetNode<Node2D>("World/EventIcons");
-
-		var spr = new Sprite2D();
-		spr.Texture = HexEventMarker.TextureForEventDict(eventData);
-
-		if (spr.Texture != null)
-		{
-			spr.Scale = new Vector2(0.34f, 0.34f);
-			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
-		}
-
 		string ck = HexGridUtil.CellKey(cell);
-		spr.Name = $"Ev_{cell.X}_{cell.Y}";
-		spr.SetMeta(CellKeyMeta, ck);
-		spr.Position = _terrain!.MapToLocal(cell);
-
-		// 如果格子有迷雾，图标应该隐藏
-		spr.Visible = !CellHasFog(ck);
-
-		icons.AddChild(spr);
+		SpawnSingleEventIcon(icons, ck, eventData);
+		RefreshEventIconsFogVisibility();
 	}
 }
 	internal static class PlayerSpriteAnchorLayout

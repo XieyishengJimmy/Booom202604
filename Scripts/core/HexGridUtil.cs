@@ -66,4 +66,31 @@ public static class HexGridUtil
 
 		return false;
 	}
+
+	/// <summary>在六角邻接图上对 <paramref name="allowed"/> 内的格子做无权 BFS。</summary>
+	public static Dictionary<Vector2I, int> BfsStepsFrom(HashSet<Vector2I> allowed, TileMapLayer layer, Vector2I start)
+	{
+		var depths = new Dictionary<Vector2I, int>();
+		if (!allowed.Contains(start))
+			return depths;
+
+		var queue = new Queue<Vector2I>();
+		depths[start] = 0;
+		queue.Enqueue(start);
+
+		while (queue.Count > 0)
+		{
+			Vector2I c = queue.Dequeue();
+			int next = depths[c] + 1;
+			foreach (Vector2I n in Neighbors(layer, c))
+			{
+				if (!allowed.Contains(n) || depths.ContainsKey(n))
+					continue;
+				depths[n] = next;
+				queue.Enqueue(n);
+			}
+		}
+
+		return depths;
+	}
 }

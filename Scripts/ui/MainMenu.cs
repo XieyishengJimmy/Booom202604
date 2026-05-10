@@ -5,10 +5,12 @@ namespace Booom202604;
 public partial class MainMenu : Control
 {
 	OptionButton? _levelPick;
+	CheckBox? _debugModeChk;
 
 	public override void _Ready()
 	{
 		_levelPick = GetNodeOrNull<OptionButton>("VBox/LevelPickOpt");
+		_debugModeChk = GetNodeOrNull<CheckBox>("VBox/DebugModeChk");
 		FillLevelDropdown();
 
 		if (_levelPick != null)
@@ -74,7 +76,9 @@ public partial class MainMenu : Control
 			return;
 		}
 
+		RunState.Instance.PrepareReturnToMainMenu();
 		RunState.Instance.PendingLevelPath = path;
+		RunState.Instance.DebugModeVerboseToasts = _debugModeChk?.ButtonPressed ?? true;
 		GetTree().ChangeSceneToFile("res://Scenes/gameplay.tscn");
 	}
 

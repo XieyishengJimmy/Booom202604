@@ -22,6 +22,8 @@ public static class BossTable
 		public int SkillArea;
 		public int SkillEffect;
 		public string SkillDetail = "";
+		/// <summary>Excel「怪物ID配置」导出为 <c>summon_monster_ids</c>；BOSS 在迷雾中招怪时仅从该池中随机。</summary>
+		public List<int> SummonMonsterIds = [];
 	}
 
 	static readonly Dictionary<int, Row> ById = [];
@@ -95,6 +97,7 @@ public static class BossTable
 				SkillArea = LooseInt(d, "skill_area", 0),
 				SkillEffect = LooseInt(d, "skill_effect", 0),
 				SkillDetail = GetStr(d, "skill_detail"),
+				SummonMonsterIds = ReadSummonMonsterIds(d),
 			};
 			if (row.GainPerTurn < 1)
 				row.GainPerTurn = 1;
@@ -154,4 +157,31 @@ public static class BossTable
 			_ => def,
 		};
 	}
+
+	static List<int> ReadSummonMonsterIds(Godot.Collections.Dictionary d)
+	{
+		var ids = new List<int>();
+		if (!d.TryGetValue("summon_monster_ids", out Variant v))
+			return ids;
+		if (v.VariantType != Variant.Type.Array)
+			return ids;
+		foreach (Variant item in v.AsGodotArray())
+		{
+			int nid = LooseIntFromVariantSummon(item);
+			if (nid > 0)
+				ids.Add(nid);
+		}
+
+		return ids;
+	}
+
+	static int LooseIntFromVariantSummon(Variant v) =>
+		v.VariantType switch
+		{
+			Variant.Type.Int => v.AsInt32(),
+			Variant.Type.Float => (int)v.AsDouble(),
+			Variant.Type.String when int.TryParse(v.AsString().Trim(), System.Globalization.NumberStyles.Integer,
+				System.Globalization.CultureInfo.InvariantCulture, out int p) => p,
+			_ => 0,
+		};
 }

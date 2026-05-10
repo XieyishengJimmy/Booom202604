@@ -318,6 +318,11 @@ static int RunBosses(string rootDir)
 		string skillDesc = BossFallbackSkillSummary(skillTarget, skillArea, skillEffect, skillDetail);
 		string aiDesc = BossSkillAiHint(skillTarget);
 
+		HashSet<int> bossSummonMonsterIds = [];
+		const string summonCol = "怪物ID配置";
+		if (cmap.ContainsKey(summonCol))
+			ParseMonsterIdPoolTokens(GetCellTrim(ws, r, cmap, summonCol), bossSummonMonsterIds);
+
 		var o = new JsonObject
 		{
 			["id"] = idNum,
@@ -332,6 +337,15 @@ static int RunBosses(string rootDir)
 			["skill_description"] = skillDesc,
 			["ai_description"] = aiDesc,
 		};
+
+		if (bossSummonMonsterIds.Count > 0)
+		{
+			var poolArr = new JsonArray();
+			foreach (int sid in bossSummonMonsterIds.OrderBy(x => x))
+				poolArr.Add(sid);
+			o["summon_monster_ids"] = poolArr;
+		}
+
 		arr.Add(o);
 	}
 

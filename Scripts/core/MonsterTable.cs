@@ -35,6 +35,35 @@ public static class MonsterTable
 		return src.Count == 0 ? null : src[System.Random.Shared.Next(src.Count)];
 	}
 
+	/// <summary>BOSS 行「summon_monster_ids」池中随机选一只有效怪物；为空或均无效则用全局 BOSS 刷怪池。</summary>
+	public static Row? PickBossSummonMonsterRowFromBossSummonIds(IReadOnlyList<int> summonIds)
+	{
+		if (summonIds == null || summonIds.Count == 0)
+			return PickBossSummonMonsterRow();
+
+		var valid = new List<int>();
+		var seen = new HashSet<int>();
+		foreach (int id in summonIds)
+		{
+			if (id <= 0 || !seen.Add(id))
+				continue;
+			if (TryGet(id, out Row? rowOk) && rowOk != null)
+				valid.Add(id);
+		}
+
+
+		if (valid.Count == 0)
+		{
+			GD.PushWarning(
+				"MonsterTable: BOSS 配置的 summon_monster_ids 均无有效怪物行，BOSS 迷雾招怪改用全局 boss_summon_monster_ids / 全员池。");
+			return PickBossSummonMonsterRow();
+		}
+
+		int pickId = valid[(int)(GD.Randi() % valid.Count)];
+		TryGet(pickId, out Row? row);
+		return row;
+	}
+
 	public static void Reload(string jsonPath)
 	{
 		ById.Clear();

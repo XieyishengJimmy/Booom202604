@@ -90,6 +90,14 @@ text = "关卡名（保存必填）"
 layout_mode = 2
 placeholder_text = "例如：第一课"
 
+[node name="CampaignOrderLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+text = "闯关序号（全局唯一；数值越小闯关越早；留空或未配置序号的关卡不参与闯关链）"
+
+[node name="CampaignOrderSpin" type="SpinBox" parent="HBox/Sidebar/SidebarScroll/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="LevelListLabel" type="Label" parent="HBox/Sidebar/SidebarScroll/VBox"]
 layout_mode = 2
 text = "已有关卡（选择后自动载入）"

@@ -12,7 +12,11 @@
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新1个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新1个怪物",
-      "ai_description": "AI：范围仅需包含玩家所在格即可。"
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "summon_monster_ids": [
+        2001,
+        2002
+      ]
     },
     {
       "id": 1002,
@@ -25,7 +29,12 @@
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-      "ai_description": "AI：中心锁定玩家所在格。"
+      "ai_description": "AI：中心锁定玩家所在格。",
+      "summon_monster_ids": [
+        2001,
+        2002,
+        3001
+      ]
     },
     {
       "id": 1003,
@@ -38,7 +47,12 @@
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-      "ai_description": "AI：范围仅需包含玩家所在格即可。"
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "summon_monster_ids": [
+        2002,
+        3001,
+        3002
+      ]
     },
     {
       "id": 1004,
@@ -51,7 +65,12 @@
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新3个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新3个怪物",
-      "ai_description": "AI：范围仅需包含玩家所在格即可。"
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "summon_monster_ids": [
+        3001,
+        3002,
+        4001
+      ]
     },
     {
       "id": 1005,
@@ -64,7 +83,12 @@
       "skill_effect": 0,
       "skill_detail": "在范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成4个怪物",
       "skill_description": "在范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成4个怪物",
-      "ai_description": "AI：可于全地图任意位置施放。"
+      "ai_description": "AI：可于全地图任意位置施放。",
+      "summon_monster_ids": [
+        3002,
+        4001,
+        4002
+      ]
     },
     {
       "id": 1006,
@@ -77,7 +101,11 @@
       "skill_effect": 0,
       "skill_detail": "在范围内所有格子上生成迷雾，并在迷雾中随机位置生成4个怪物",
       "skill_description": "在范围内所有格子上生成迷雾，并在迷雾中随机位置生成4个怪物",
-      "ai_description": "AI：可于全地图任意位置施放。"
+      "ai_description": "AI：可于全地图任意位置施放。",
+      "summon_monster_ids": [
+        4001,
+        4002
+      ]
     }
   ]
 }

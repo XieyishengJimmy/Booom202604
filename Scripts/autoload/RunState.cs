@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace Booom202604;
@@ -17,6 +18,14 @@ public partial class RunState : Node
 	public int PlayerEnergy { get; set; }
 
 	public string PendingLevelPath { get; set; } = "";
+
+	/// <summary>主菜单勾选「调试模式」。为 true 时显示能量吸收、草丛/废墟/战斗检定等吐司；false 仅保留关卡流程与操作阻断提示。</summary>
+	public bool DebugModeVerboseToasts { get; set; } = true;
+
+	readonly List<int> _carrySkillDeck = [];
+	readonly List<int> _carryPassivesEquipped = [];
+	readonly List<int> _carryActivesEquipped = [];
+	bool _campaignSkillCarryPending;
 
 	public override void _EnterTree()
 	{
@@ -39,10 +48,60 @@ public partial class RunState : Node
 		PlayerMagic = 2;
 	}
 
+	/// <summary>每进入一个关卡：<c>PlayerEnergy = 0</c>（不继承法力）；生命值与技能快照由闯关逻辑单独保留。</summary>
 	public void PrepareLevelStart()
 	{
 		PlayerEnergy = 0;
 
+	}
+
+	/// <summary>主菜单/试玩/失败返回：重置角色局外属性并丢弃跨关卡技能快照。</summary>
+	public void PrepareReturnToMainMenu()
+	{
+		PendingLevelPath = "";
+		ResetRunStats();
+		PlayerEnergy = 0;
+		ClearCampaignSkillCarry();
+	}
+
+	public void StoreCampaignSkillSnapshot(IReadOnlyList<int> deck, IReadOnlyList<int> passivesEquipped,
+		IReadOnlyList<int> activesEquipped)
+	{
+		_carrySkillDeck.Clear();
+		foreach (int id in deck)
+			_carrySkillDeck.Add(id);
+		_carryPassivesEquipped.Clear();
+		foreach (int id in passivesEquipped)
+			_carryPassivesEquipped.Add(id);
+		_carryActivesEquipped.Clear();
+		foreach (int id in activesEquipped)
+			_carryActivesEquipped.Add(id);
+		_campaignSkillCarryPending = true;
+	}
+
+	void ClearCampaignSkillCarry()
+	{
+		_campaignSkillCarryPending = false;
+		_carrySkillDeck.Clear();
+		_carryPassivesEquipped.Clear();
+		_carryActivesEquipped.Clear();
+	}
+
+	/// <summary>若为「传送门衔接的下一关」，将快照写入关卡内列表（并清空快照）。否则返回 false，由关卡用表格重新生成初始牌池。</summary>
+	public bool TryConsumeCampaignSkillInto(List<int> skillDeckDst, List<int> passivesEquippedDst, List<int> activesEquippedDst)
+	{
+		skillDeckDst.Clear();
+		passivesEquippedDst.Clear();
+		activesEquippedDst.Clear();
+
+		if (!_campaignSkillCarryPending)
+			return false;
+
+		skillDeckDst.AddRange(_carrySkillDeck);
+		passivesEquippedDst.AddRange(_carryPassivesEquipped);
+		activesEquippedDst.AddRange(_carryActivesEquipped);
+		ClearCampaignSkillCarry();
+		return true;
 	}
 
 	public void ClampHp()
