@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://b23orllakuxk2" path="res://Scripts/game/BlockLayer.cs" id="3"]
 [ext_resource type="Script" uid="uid://c6bci8d0bd8so" path="res://Scripts/ui/Hud.cs" id="4"]
 [ext_resource type="Texture2D" uid="uid://uuh2nxagk2ij" path="res://Art/UI/mainUI/示意图1.png" id="5"]
+[ext_resource type="Script" uid="uid://bl775hs3dmfaa" path="res://Scripts/game/HighlightLayer.cs" id="5_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://bjt6ykcgxnlro" path="res://Art/UI/mainUI/H&MBorder2.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://dds7p2r5xpduq" path="res://Art/UI/mainUI/_HealthBar.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://b542o5hgix1bv" path="res://Art/UI/skillAcquire/Background.png" id="7_e3r7a"]
@@ -65,6 +66,9 @@ script = ExtResource("30")
 [node name="EventIcons" type="Node2D" parent="World" unique_id=1086561768]
 
 [node name="Player" type="Sprite2D" parent="World" unique_id=1138604530]
+
+[node name="HighlightRoot" type="Node2D" parent="World" unique_id=1668139117]
+script = ExtResource("5_yl3i8")
 
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
@@ -701,6 +705,7 @@ anchors_preset = 0
 offset_top = 17.0
 offset_right = 148.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1780095814]
 layout_mode = 1
@@ -708,16 +713,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=335791861]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -789,6 +792,7 @@ offset_left = 150.0
 offset_top = 17.0
 offset_right = 298.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1304789853]
 layout_mode = 1
@@ -796,16 +800,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1120770816]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -876,6 +878,7 @@ offset_left = 300.0
 offset_top = 17.0
 offset_right = 448.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=399821092]
 layout_mode = 1
@@ -883,16 +886,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=672891347]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -963,6 +964,7 @@ offset_left = 450.0
 offset_top = 17.0
 offset_right = 598.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=342436499]
 layout_mode = 1
@@ -970,16 +972,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=526894494]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -1050,6 +1050,7 @@ offset_left = 600.0
 offset_top = 17.0
 offset_right = 748.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1732401059]
 layout_mode = 1
@@ -1057,16 +1058,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1612793369]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -1137,6 +1136,7 @@ offset_left = 750.0
 offset_top = 17.0
 offset_right = 898.0
 offset_bottom = 195.0
+mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=752259050]
 layout_mode = 1
@@ -1144,16 +1144,14 @@ offset_left = 19.5
 offset_top = 21.5
 offset_right = 126.5
 offset_bottom = 128.5
-mouse_filter = 2
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1871681741]
-visible = false
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
 offset_right = 127.5
 offset_bottom = 128.5
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
@@ -1558,3 +1556,8 @@ metadata/_edit_lock_ = true
 [connection signal="button_down" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed"]
 [connection signal="button_up" from="UICanvas/HUD/SkillChoose/Sure" to="." method="sure_button_pressed_close"]
 [connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillIcon" to="." method="click_active1"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillIcon" to="." method="click_active2"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillIcon" to="." method="click_active3"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillIcon" to="." method="click_active4"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillIcon" to="." method="click_active5"]
+[connection signal="button_down" from="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillIcon" to="." method="click_active6"]

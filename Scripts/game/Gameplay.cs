@@ -389,6 +389,15 @@ public partial class Gameplay : Node2D
 	public int skillchoose = 0;
 	public bool ischose = false;
 
+	public bool _isWaitingForTarget = false;
+	public HashSet<string> _highlightedCells = new HashSet<string>();
+	public bool _isWaitingForHighlightClick = false;
+	public TaskCompletionSource<Vector2I>? _clickTcs;
+	public Vector2I _lastHoverCell = Vector2I.Zero;
+	public HighlightLayer? _highlightLayer;
+	public readonly Dictionary<string, Sprite2D> _sprites = new();
+	public readonly Texture2D _highlightTex = GD.Load<Texture2D>("res://Art/Role/player.png")!;
+
 	public override void _Ready()
 	{
 		RunState.Instance.PrepareLevelStart();
@@ -507,6 +516,8 @@ public partial class Gameplay : Node2D
 			skillPickSureInit.Disabled = true;
 
 		Callable.From(DeferredInitialFogManaSoftLockProbe).CallDeferred();
+		_highlightLayer = GetNode<HighlightLayer>("World/HighlightRoot");
+		_highlightLayer.Setup(_terrain);
 	}
 
 	static int GetInt(Godot.Collections.Dictionary d, string key, int def = 0)
@@ -1310,13 +1321,27 @@ public partial class Gameplay : Node2D
 			return;
 		}
 
-		if (@event is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+		if (@event is InputEventMouseButton mb1 && mb1.Pressed && mb1.ButtonIndex == MouseButton.Left)
 		{
 			Vector2 local = _terrain!.GetLocalMousePosition();
 
 			Vector2I cell = _terrain.LocalToMap(local);
 
+			if (_isWaitingForHighlightClick)
+			{
+				OnCellClicked(cell);
+				return;
+			}
+
 			_ = BeginClickTurnAsync(cell);
+		}
+		if (@event is InputEventMouseButton mb2 && mb2.Pressed && mb2.ButtonIndex == MouseButton.Right)
+		{
+			if (_isWaitingForHighlightClick)
+			{
+				CancelSkillWait();
+				return;
+			}
 		}
 	}
 
@@ -1351,7 +1376,7 @@ public partial class Gameplay : Node2D
 				return true;
 			}
 
-			if (mb.ButtonIndex is MouseButton.Middle or MouseButton.Right)
+			if (mb.ButtonIndex is MouseButton.Middle)
 				return true;
 		}
 
@@ -1810,6 +1835,7 @@ public partial class Gameplay : Node2D
 		}
 
 		RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + gained, RunState.Instance.PlayerEnergyMax);
+		powerCheck();
 
 		if (gained > 0)
 			await ToastAsync("吸收迷雾", $"获得能量 +{gained}（仅移动连带吸收计数）。");
@@ -1895,6 +1921,17 @@ public partial class Gameplay : Node2D
 	{
 		base._Process(delta);
 		TickPlayerIdleLoop((float)delta);
+		if (_isWaitingForHighlightClick)
+		{
+			Vector2I currentHover = GetMouseHoverCell();
+
+			// 只有悬停格子改变时才更新高亮
+			if (currentHover != _lastHoverCell)
+			{
+				_lastHoverCell = currentHover;
+				UpdateHighlightForCell(currentHover);
+			}
+		}
 	}
 
 	void SetPlayerIdleVisual()
@@ -2230,7 +2267,7 @@ public partial class Gameplay : Node2D
 
 						if(RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 						{
-							for(int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+							for(int i = 0; i < pconfigDict[102].AsInt32(); i++)
 							{
 								SpawnGrassInRandomFog();
 							}
@@ -2255,7 +2292,7 @@ public partial class Gameplay : Node2D
 				{
 					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 					{
-						for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+						for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
 						{
 							SpawnGrassInRandomFog();
 						}
@@ -2278,7 +2315,8 @@ public partial class Gameplay : Node2D
 
 				if (pskillList.Contains(105))
 				{
-					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict["105"].AsInt32(), RunState.Instance.PlayerEnergyMax);
+					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict[105].AsInt32(), RunState.Instance.PlayerEnergyMax);
+					powerCheck();
 				}
 
 				EraseEvent(cell);
@@ -2289,7 +2327,7 @@ public partial class Gameplay : Node2D
 				if (pskillList.Contains(204))
 				{
 					corpseCount++;
-					if(corpseCount >= pconfigDict["204"].AsInt32())
+					if(corpseCount >= pconfigDict[204].AsInt32())
 					{
 						Hud hud1 = _hudUi!;
 						int pick1 = await hud1.ModalThreeChoiceAsync("祭坛效果", "+1 力量", "+1 魔法", "+2 HP（不超上限）");
@@ -2325,7 +2363,7 @@ public partial class Gameplay : Node2D
 
 								if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 								{
-									for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+									for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
 									{
 										SpawnGrassInRandomFog();
 									}
@@ -2345,7 +2383,7 @@ public partial class Gameplay : Node2D
 				{
 					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 					{
-						for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+						for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
 						{
 							SpawnGrassInRandomFog();
 						}
@@ -2353,7 +2391,7 @@ public partial class Gameplay : Node2D
 					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
 					if (pskillList.Contains(201))
 					{
-						int extraHeal = Mathf.Max(1, pconfigDict["201"].AsInt32());
+						int extraHeal = Mathf.Max(1, pconfigDict[201].AsInt32());
 						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + extraHeal, RunState.Instance.PlayerHpMax);
 					}
 					await ToastAsync("尸体", "+1 生命（50%）。");
@@ -2380,13 +2418,14 @@ public partial class Gameplay : Node2D
 				{
 					case 0:
 						RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 2, RunState.Instance.PlayerEnergyMax);
+						powerCheck();
 						await ToastAsync("废墟", "占位：能量 +2。");
 						break;
 
 					case 1:
 						if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 						{
-							for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+							for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
 							{
 								SpawnGrassInRandomFog();
 							}
@@ -2501,6 +2540,7 @@ public partial class Gameplay : Node2D
 					string targetAddress = askilldict["address"].AsString();
 					GetNode<Button>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillHi").Visible = true;
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillCdCover").Visible = false;
 					break;
 				}
 			}
@@ -2543,15 +2583,15 @@ public partial class Gameplay : Node2D
 			await ToastAsync($"{foe} · 战胜", $"{extra}{label}检定：你的 {attr} ≥ 战力 {mv}。");
 			if(corpseHp == true)
 			{
-				if (RunState.Instance.PlayerHp + pconfigDict["202"].AsInt32() > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+				if (RunState.Instance.PlayerHp + pconfigDict[202].AsInt32() > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 				{
-					for (int i = 0; i < pconfigDict["102"].AsInt32(); i++)
+					for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
 					{
 						SpawnGrassInRandomFog();
 					}
 				}
 
-				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + pconfigDict["202"].AsInt32(), RunState.Instance.PlayerHpMax);
+				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + pconfigDict[202].AsInt32(), RunState.Instance.PlayerHpMax);
 				corpseHp = false;
 			}
 			EraseEvent(cell);
@@ -2641,11 +2681,11 @@ public partial class Gameplay : Node2D
 
 		if (pskillList.Contains(104))
 		{
-			if (grasscount >= pconfigDict["104"].AsInt32()+1)
+			if (grasscount >= pconfigDict[104].AsInt32()+1)
 			{
 				_spentBasic = false;
 			}
-			else if (grasscount == pconfigDict["104"].AsInt32())
+			else if (grasscount == pconfigDict[104].AsInt32())
 			{
 				grasscount++;
 			}
@@ -3022,6 +3062,24 @@ public partial class Gameplay : Node2D
 
 		_spentBasic = false;
 
+		for (int i = 0; i < 6; i++)
+		{
+			if(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Visible)
+			{
+				int cdLeft = int.Parse(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Text);
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = (cdLeft - 1).ToString();
+				if (cdLeft - 1 == 0)
+				{
+					GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Visible = false;	
+					if(RunState.Instance.PlayerEnergy > apowerDict[askillList[i]].AsInt32())
+					{
+						GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = false;
+						GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = true;
+					}
+				}
+			}
+			
+		}
 
 		await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
 
@@ -3429,14 +3487,10 @@ public partial class Gameplay : Node2D
 		if (cardnum.Count == 0)
 			return;
 
-		if (cardnum[cardchoose - 1] > 100)
+		await UseSkillAsync(cardnum[cardchoose - 1]);
+		if (cardnum[cardchoose - 1] < 100)
 		{
-			await UseSkillAsync(cardnum[cardchoose - 1]);
-		}
-		else
-		{
-			//主动技能槽位00000000000000000000000000000
-			if(askillList.Count >= 6)
+			if (askillList.Count >= 6)
 			{
 				for(int i = 0; i < aarray.Count; i++)
 				{
@@ -3497,65 +3551,361 @@ public partial class Gameplay : Node2D
 	}
 
 	/// <summary>场景仍为 SingleSkill1/SkillIcon 连接 button_down；主动技能管线已注释。</summary>
-	public void click_active1() { }
+	public void powerCheck()
+	{
+		for (int i = 0; i < askillList.Count; i++)
+		{
+			if(!GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible)
+			{
+				if(RunState.Instance.PlayerEnergy >= apowerDict[askillList[i]].AsInt32())
+				{
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = false;
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = true;
+				}
+			}
+		}
+	}
 
-	//async Task click_active1()
-	//{
-	//	skillchoose = 1;
-	//	await useActive();
+	async void click_active1()
+	{
+		skillchoose = 1;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = false;
+		await useActive();
 
-	//	if(ischose)
-	//	{
-	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = true;
-	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = false;
-	//		GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Visible = true;
-			
-	//	}
-	//}
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = true;
+		}
+	}
 
-	//async Task useActive()
-	//{
-	//	int askill = askillList[skillchoose - 1];
-	//	switch(askill)
-	//	{
-	//		case 1:
-	//			HashSet<string> cellsToHighlight = new HashSet<string>();
+	async void click_active2()
+	{
+		skillchoose = 2;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillHi").Visible = false;
+		await useActive();
 
-	//			// 1. 添加主角自己
-	//			cellsToHighlight.Add(HexGridUtil.CellKey(_playerCell));
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillHi").Visible = true;
+		}
+	}
 
-	//			// 2. 添加周围6格
-	//			foreach (Vector2I neighbor in HexGridUtil.Neighbors(_terrain!, _playerCell))
-	//			{
-	//				cellsToHighlight.Add(HexGridUtil.CellKey(neighbor));
-	//			}
+	async void click_active3()
+	{
+		skillchoose = 3;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillHi").Visible = false;
+		await useActive();
 
-	//			// 使用 BOSS 预警层显示高亮
-	//			_bossWarn?.RebuildFromKeys(cellsToHighlight);
-	//			await askill1();
-	//			break;
-	//		case 2:
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillHi").Visible = true;
+		}
+	}
 
-	//		case 3:
+	async void click_active4()
+	{
+		skillchoose = 4;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillHi").Visible = false;
+		await useActive();
 
-	//		case 4:
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillHi").Visible = true;
+		}
+	}
 
-	//		case 5:
+	async void click_active5()
+	{
+		skillchoose = 5;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillHi").Visible = false;
+		await useActive();
 
-	//		case 6:
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillHi").Visible = true;
+		}
+	}
 
-	//		case 7:
+	async void click_active6()
+	{
+		skillchoose = 6;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillCdCover").Visible = true;
+		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillHi").Visible = false;
+		await useActive();
 
-	//		case 8:
+		if (ischose)
+		{
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Visible = true;
+			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			ischose = false;
+		}
+		else
+		{
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillCdCover").Visible = false;
+			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillHi").Visible = true;
+		}
+	}
 
-	//	}
+	async Task useActive()
+	{
+		int askill = askillList[skillchoose - 1];
+		switch (askill)
+		{
+			case 1:
+				Vector2I mouseCell1 = GetMouseHoverCell();
 
-	//}
+				Vector2I targetCell1 = await WaitForHighlightClick(null);
+				if (targetCell1.X == -999 && targetCell1.Y == -999)
+				{
+					ischose = false;
+					return;  // 取消技能，不继续执行
+				}
 
-	//async Task askill1()
- //   {
-	//	_bossWarn?.ClearAll();
-	//}
+				foreach (string cellKey in _highlightedCells)
+				{
+					Vector2I cell = HexGridUtil.ParseKey(cellKey);
+					if (CellHasFog(cellKey))
+					{
+						_fog!.SetCell(cell, false);
+						_fogState[cellKey] = false;
+					}
+				}
+				ischose = true;
+				_highlightedCells.Clear();
+				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[1].AsInt32(), 0);
+				powerCheck();
+				return;
+			case 2:
+				Vector2I mouseCell2 = GetMouseHoverCell();
+
+				Vector2I targetCell2 = await WaitForHighlightClick(null);
+				if (targetCell2.X == -999 && targetCell2.Y == -999)
+				{
+					ischose = false;
+					return;  // 取消技能，不继续执行
+				}
+
+				foreach (string cellKey in _highlightedCells)
+				{
+					Vector2I cell = HexGridUtil.ParseKey(cellKey);
+					if (CellHasFog(cellKey))
+					{
+						_fog!.SetCell(cell, false);
+						_fogState[cellKey] = false;
+					}
+				}
+				ischose = true;
+				_highlightedCells.Clear();
+				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[2].AsInt32(), 0);
+				powerCheck();
+				return;
+
+			case 3:
+				SpawnGrassAtRandomVisibleCell();
+				SpawnCorpseAtRandomVisibleCell();
+				SpawnRuinsAtRandomVisibleCell();
+				ischose = true;
+				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[3].AsInt32(), 0);
+				powerCheck();
+				return;
+
+			case 4:
+
+			case 5:
+
+			case 6:
+
+			case 7:
+
+			case 8:
+				return;
+
+		}
+
+	}
+
+	private void UpdateHighlightForCell(Vector2I centerCell)
+	{
+		HashSet<string> cellsToHighlight = new HashSet<string>();
+		int askill = askillList[skillchoose - 1];
+		switch (askill)
+		{
+			case 1:
+				// 添加中心格子（边界检查）
+				string centerKey1 = HexGridUtil.CellKey(centerCell);
+				if (_valid.ContainsKey(centerKey1))
+				{
+					cellsToHighlight.Add(centerKey1);
+				}
+
+				// 添加周围6格（边界检查）
+				foreach (Vector2I neighbor in HexGridUtil.Neighbors(_terrain!, centerCell))
+				{
+					string neighborKey = HexGridUtil.CellKey(neighbor);
+					if (_valid.ContainsKey(neighborKey))
+					{
+						cellsToHighlight.Add(neighborKey);
+					}
+				}
+				break;
+			case 2:
+				string centerKey2 = HexGridUtil.CellKey(centerCell);
+				if (_valid.ContainsKey(centerKey2))
+				{
+					foreach (Vector2I neighbor in HexGridUtil.Neighbors(_terrain!, _playerCell))
+					{
+						GD.Print($"  邻居: ({neighbor.X}, {neighbor.Y})");
+						if (HexGridUtil.IsSameCell(neighbor, HexGridUtil.ParseKey(centerKey2)))
+						{
+							Vector2I direction = GetDirection(_playerCell, HexGridUtil.ParseKey(centerKey2));
+							List<Vector2I> lineCells = GetLineCells(direction, aconfigDict[2].AsInt32());
+
+							foreach (Vector2I cell in lineCells)
+							{
+								cellsToHighlight.Add(HexGridUtil.CellKey(cell));  // 转成 string
+							}
+						}
+					}
+					
+				}
+
+				break;
+		}
+
+		// 更新高亮显示
+		_highlightLayer?.RebuildFromKeys(cellsToHighlight);
+		_highlightedCells = cellsToHighlight;
+	}
+
+	private Vector2I GetMouseHoverCell()
+	{
+		if (_terrain == null) return Vector2I.Zero;
+
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		Vector2 worldPos = GetViewport().GetCanvasTransform().AffineInverse() * mousePos;
+		Vector2 localPos = _terrain.ToLocal(worldPos);
+		Vector2I cell = _terrain.LocalToMap(localPos);
+
+		// 边界检查：如果格子无效，返回玩家自己的格子
+		string cellKey = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(cellKey))
+		{
+			return _playerCell;
+		}
+
+		return cell;
+	}
+
+	public async Task<Vector2I> WaitForHighlightClick(HashSet<string>? cellKeys = null)
+	{
+		// 如果传入了固定高亮格子，就用固定的
+		if (cellKeys != null)
+		{
+			_highlightedCells = cellKeys;
+			_highlightLayer?.RebuildFromKeys(cellKeys);
+		}
+
+		_clickTcs = new TaskCompletionSource<Vector2I>();
+		_isWaitingForHighlightClick = true;
+
+		// 开始鼠标追踪（实时更新高亮）
+		_lastHoverCell = GetMouseHoverCell();
+		UpdateHighlightForCell(_lastHoverCell);
+
+		try
+		{
+			Vector2I clickedCell = await _clickTcs.Task;
+			return clickedCell;
+		}
+		catch (TaskCanceledException)
+		{
+			return new Vector2I(-999, -999);
+		}
+		finally
+		{
+			_isWaitingForHighlightClick = false;
+			_highlightLayer?.ClearAll();
+		}
+	}
+
+	public void OnCellClicked(Vector2I clickedCell)
+	{
+		// 如果正在等待高亮点击
+		if (_isWaitingForHighlightClick)
+		{
+			string cellKey = HexGridUtil.CellKey(clickedCell);
+
+			// 检查点击的格子是否在高亮列表中
+			if (_highlightedCells.Contains(cellKey))
+			{
+				// 是高亮格子，继续执行
+				_clickTcs?.SetResult(clickedCell);
+			}
+			return;
+		}
+
+		
+	}
+
+	private void CancelSkillWait()
+	{
+		// 先检查是否有等待中的任务
+		if (_clickTcs != null && !_clickTcs.Task.IsCompleted)
+		{
+			_clickTcs.SetCanceled();  // 触发取消
+		}
+
+		// 清理状态
+		_isWaitingForHighlightClick = false;
+
+		// 清除高亮
+		_highlightLayer?.ClearAll();
+		_highlightedCells.Clear();
+
+		// 重置技能选择变量
+		ischose = false;
+
+	}
 
 	public void SpawnGrassInRandomFog()
 	{
@@ -3606,12 +3956,147 @@ public partial class Gameplay : Node2D
 		SpawnSingleEventIcon(cell, grassEvent);
 	}
 
+	private Vector2I GetDirection(Vector2I from, Vector2I to)
+	{
+		int dx = to.X - from.X;
+		int dy = to.Y - from.Y;
+
+		// 严格六边形六个方向（硬匹配，绝对不会丢方向）
+		if (dx == 1 && dy == 0) return new Vector2I(1, 0);    // 右
+		if (dx == 0 && dy == 1) return new Vector2I(0, 1);    // 右下
+		if (dx == -1 && dy == 1) return new Vector2I(-1, 1);  // 左 ← 这个现在必触发
+		if (dx == -1 && dy == 0) return new Vector2I(-1, 0);  // 左上
+		if (dx == 0 && dy == -1) return new Vector2I(0, -1);  // 右上
+		if (dx == 1 && dy == -1) return new Vector2I(1, -1); // 左下
+
+		// 兜底：如果是邻居，强制返回正确方向（防止计算误差）
+		var neighbors = HexGridUtil.Neighbors(_terrain, from);
+		foreach (var n in neighbors)
+		{
+			if (n.X == to.X && n.Y == to.Y)
+			{
+				int ndx = n.X - from.X;
+				int ndy = n.Y - from.Y;
+				return new Vector2I(ndx, ndy);
+			}
+		}
+
+		return Vector2I.Zero;
+	}
+
+	private List<Vector2I> GetLineCells(Vector2I direction, int length)
+	{
+		List<Vector2I> cells = new List<Vector2I>();
+
+		for (int i = 1; i <= length; i++)
+		{
+			Vector2I cell = new Vector2I(
+				_playerCell.X + direction.X * i,
+				_playerCell.Y + direction.Y * i
+			);
+
+			string cellKey = HexGridUtil.CellKey(cell);
+			if (_valid.ContainsKey(cellKey))
+			{
+				cells.Add(cell);
+			}
+			else
+			{
+				break;  // 超出边界就停止
+			}
+		}
+
+		return cells;
+	}
+
+	public void AddCorpseAt(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck)) return;
+		if (_events.ContainsKey(ck)) return;
+
+		Godot.Collections.Dictionary corpseEvent = new Godot.Collections.Dictionary
+	{
+		{ "type", "corpse" }
+	};
+
+		_events[ck] = corpseEvent;
+		SpawnSingleEventIcon(cell, corpseEvent);
+	}
+
+	/// <summary>
+	/// 在指定格子生成废墟
+	/// </summary>
+	public void AddRuinsAt(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck)) return;
+		if (_events.ContainsKey(ck)) return;
+
+		Godot.Collections.Dictionary ruinsEvent = new Godot.Collections.Dictionary
+	{
+		{ "type", "ruins" }
+	};
+
+		_events[ck] = ruinsEvent;
+		SpawnSingleEventIcon(cell, ruinsEvent);
+	}
+
+	private void SpawnGrassAtRandomVisibleCell()
+	{
+		List<Vector2I> visibleCells = GetAllVisibleCells();
+		if (visibleCells.Count == 0) return;
+
+		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
+		Vector2I targetCell = visibleCells[randomIndex];
+
+		AddGrassAt(targetCell);
+	}
+
+	private List<Vector2I> GetAllVisibleCells()
+	{
+	List<Vector2I> visibleCells = new List<Vector2I>();
+	
+	foreach (Variant key in _valid.Keys)
+	{
+		string cellKey = key.AsString();
+		if (!CellHasFog(cellKey))  // 没有迷雾 = 明亮
+		{
+			visibleCells.Add(HexGridUtil.ParseKey(cellKey));
+		}
+	}
+	
+	return visibleCells;
+	}
+
+	private void SpawnCorpseAtRandomVisibleCell()
+	{
+		List<Vector2I> visibleCells = GetAllVisibleCells();
+		if (visibleCells.Count == 0) return;
+
+		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
+		Vector2I targetCell = visibleCells[randomIndex];
+
+		AddCorpseAt(targetCell);
+	}
+
 	public void SpawnSingleEventIcon(Vector2I cell, Godot.Collections.Dictionary eventData)
 	{
 		var icons = GetNode<Node2D>("World/EventIcons");
 		string ck = HexGridUtil.CellKey(cell);
 		SpawnSingleEventIcon(icons, ck, eventData);
 		RefreshEventIconsFogVisibility();
+	}
+
+	private void SpawnRuinsAtRandomVisibleCell()
+	{
+		List<Vector2I> visibleCells = GetAllVisibleCells();
+		if (visibleCells.Count == 0) return;
+
+		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
+		Vector2I targetCell = visibleCells[randomIndex];
+
+		AddRuinsAt(targetCell);
 	}
 }
 	internal static class PlayerSpriteAnchorLayout
