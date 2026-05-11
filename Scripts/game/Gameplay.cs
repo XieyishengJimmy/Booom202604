@@ -398,6 +398,10 @@ public partial class Gameplay : Node2D
 	public readonly Dictionary<string, Sprite2D> _sprites = new();
 	public readonly Texture2D _highlightTex = GD.Load<Texture2D>("res://Art/Role/player.png")!;
 
+	public bool strBuff = false;
+	public bool magicBuff = false;
+	public int fastRun = 0;
+
 	public override void _Ready()
 	{
 		RunState.Instance.PrepareLevelStart();
@@ -438,6 +442,7 @@ public partial class Gameplay : Node2D
 		List<int> pconfigList = new List<int>();
 		List<int> acdList = new List<int>();
 		List<int> apowerList = new List<int>();
+		powerCheck();
 		foreach (var item in parray)
 		{
 			var pskilldict = item.AsGodotDictionary();
@@ -2152,9 +2157,49 @@ public partial class Gameplay : Node2D
 		{
 
 			case "monster_str":
+				if (strBuff)
+				{
+					RunState.Instance.PlayerStr += aconfigDict[4].AsInt32();
+				}
+
+				if (magicBuff)
+				{
+					RunState.Instance.PlayerMagic += aconfigDict[5].AsInt32();
+				}
+
+				if (strBuff)
+				{
+					RunState.Instance.PlayerStr -= aconfigDict[4].AsInt32();
+				}
+
+				if (magicBuff)
+				{
+					RunState.Instance.PlayerMagic -= aconfigDict[5].AsInt32();
+				}
+				return;
+
 			case "monster_mag":
+				if(strBuff)
+				{
+					RunState.Instance.PlayerStr += aconfigDict[4].AsInt32();
+				}
+
+				if(magicBuff)
+				{
+					RunState.Instance.PlayerMagic += aconfigDict[5].AsInt32();
+				}
 
 				await ResolveFightAsync(cell, ev, t == "monster_mag", approachOrigin);
+
+				if (strBuff)
+				{
+					RunState.Instance.PlayerStr -= aconfigDict[4].AsInt32();
+				}
+
+				if (magicBuff)
+				{
+					RunState.Instance.PlayerMagic -= aconfigDict[5].AsInt32();
+				}
 
 				RunState.Instance.ClampHp();
 
@@ -2540,6 +2585,7 @@ public partial class Gameplay : Node2D
 					string targetAddress = askilldict["address"].AsString();
 					GetNode<Button>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillHi").Visible = true;
+					GD.Print("获得技能cdcover=false");
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillCdCover").Visible = false;
 					break;
 				}
@@ -2689,6 +2735,12 @@ public partial class Gameplay : Node2D
 			{
 				grasscount++;
 			}
+		}
+
+		if (fastRun > 0)
+		{
+			_spentBasic = false;
+			fastRun--;
 		}
 		
 
@@ -3064,15 +3116,16 @@ public partial class Gameplay : Node2D
 
 		for (int i = 0; i < 6; i++)
 		{
-			if(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Visible)
+			if(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible)
 			{
-				int cdLeft = int.Parse(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Text);
-				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = (cdLeft - 1).ToString();
+				int cdLeft = int.Parse(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Text);
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Text = (cdLeft - 1).ToString();
 				if (cdLeft - 1 == 0)
 				{
-					GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + i + "/CdLabel").Visible = false;	
-					if(RunState.Instance.PlayerEnergy > apowerDict[askillList[i]].AsInt32())
+					GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible = false;	
+					if(RunState.Instance.PlayerEnergy >= apowerDict[askillList[i]].AsInt32())
 					{
+						GD.Print("能量回复cdcover=false");
 						GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = false;
 						GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = true;
 					}
@@ -3557,7 +3610,12 @@ public partial class Gameplay : Node2D
 		{
 			if(!GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible)
 			{
-				if(RunState.Instance.PlayerEnergy >= apowerDict[askillList[i]].AsInt32())
+				if(RunState.Instance.PlayerEnergy < apowerDict[askillList[i]].AsInt32())
+				{
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = true;
+					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = false;
+				}
+				else
 				{
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = false;
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = true;
@@ -3577,10 +3635,13 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[0]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
 		{
+			GD.Print("ischose为false,cdcover=false");
 			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = false;
 			GetNode<CanvasItem>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = true;
 		}
@@ -3597,6 +3658,8 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[1]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
@@ -3617,6 +3680,8 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[2]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
@@ -3637,6 +3702,8 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[3]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
@@ -3657,6 +3724,8 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[4]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
@@ -3677,6 +3746,8 @@ public partial class Gameplay : Node2D
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Visible = true;
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
+			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[5]].AsInt32(), 0);
+			powerCheck();
 			ischose = false;
 		}
 		else
@@ -3712,8 +3783,6 @@ public partial class Gameplay : Node2D
 				}
 				ischose = true;
 				_highlightedCells.Clear();
-				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[1].AsInt32(), 0);
-				powerCheck();
 				return;
 			case 2:
 				Vector2I mouseCell2 = GetMouseHoverCell();
@@ -3736,8 +3805,6 @@ public partial class Gameplay : Node2D
 				}
 				ischose = true;
 				_highlightedCells.Clear();
-				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[2].AsInt32(), 0);
-				powerCheck();
 				return;
 
 			case 3:
@@ -3745,19 +3812,66 @@ public partial class Gameplay : Node2D
 				SpawnCorpseAtRandomVisibleCell();
 				SpawnRuinsAtRandomVisibleCell();
 				ischose = true;
-				RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[3].AsInt32(), 0);
-				powerCheck();
 				return;
 
 			case 4:
+				strBuff = true;
+				ischose = true;
+				return;
 
 			case 5:
+				magicBuff = true;
+				ischose = true;
+				return;
 
 			case 6:
+				fastRun = aconfigDict[6].AsInt32();
+				ischose = true;
+				return;
 
 			case 7:
+				Vector2I mouseCell7 = GetMouseHoverCell();
+
+				Vector2I targetCell7 = await WaitForHighlightClick(null);
+				if (targetCell7.X == -999 && targetCell7.Y == -999)
+				{
+					ischose = false;
+					return;  // 取消技能，不继续执行
+				}
+				foreach (string cellKey in _highlightedCells)
+				{
+					Vector2I cell = HexGridUtil.ParseKey(cellKey);
+					_playerCell = cell;
+				}
+				
+				ischose = true;
+				_highlightedCells.Clear();
+				return;
 
 			case 8:
+				Vector2I mouseCell8 = GetMouseHoverCell();
+
+				Vector2I targetCell8 = await WaitForHighlightClick(null);
+				if (targetCell8.X == -999 && targetCell8.Y == -999)
+				{
+					ischose = false;
+					return;  // 取消技能，不继续执行
+				}
+				foreach (string cellKey in _highlightedCells)
+				{
+					var ev = _events[cellKey].AsGodotDictionary();
+					string type = GetString(ev, "type");
+					if(type == "monster_str")
+					{
+						ev["type"] = "monster_mag";
+					}
+					else if(type == "monster_mag")
+					{
+						ev["type"] = "monster_str";
+					}
+				}
+				ischose = true;
+				_highlightedCells.Clear();
 				return;
 
 		}
@@ -3808,7 +3922,25 @@ public partial class Gameplay : Node2D
 					}
 					
 				}
-
+				break;
+			case 7:
+				string centerKey7 = HexGridUtil.CellKey(centerCell);
+				if (_valid.ContainsKey(centerKey7))
+				{
+					cellsToHighlight.Add(centerKey7);
+				}
+				break;
+			case 8:
+				string centerKey8 = HexGridUtil.CellKey(centerCell);
+				if (_valid.ContainsKey(centerKey8))
+				{
+					var ev = _events[centerKey8].AsGodotDictionary();
+					string type = GetString(ev, "type");
+					if(type == "monster_str" || type == "monster_mag")
+					{
+						cellsToHighlight.Add(centerKey8);
+					}
+				}
 				break;
 		}
 
@@ -4045,6 +4177,7 @@ public partial class Gameplay : Node2D
 	private void SpawnGrassAtRandomVisibleCell()
 	{
 		List<Vector2I> visibleCells = GetAllVisibleCells();
+		visibleCells.RemoveAll(cell => HexGridUtil.IsSameCell(cell, _playerCell));
 		if (visibleCells.Count == 0) return;
 
 		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
@@ -4072,6 +4205,7 @@ public partial class Gameplay : Node2D
 	private void SpawnCorpseAtRandomVisibleCell()
 	{
 		List<Vector2I> visibleCells = GetAllVisibleCells();
+		visibleCells.RemoveAll(cell => HexGridUtil.IsSameCell(cell, _playerCell));
 		if (visibleCells.Count == 0) return;
 
 		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
@@ -4091,6 +4225,7 @@ public partial class Gameplay : Node2D
 	private void SpawnRuinsAtRandomVisibleCell()
 	{
 		List<Vector2I> visibleCells = GetAllVisibleCells();
+		visibleCells.RemoveAll(cell => HexGridUtil.IsSameCell(cell, _playerCell));
 		if (visibleCells.Count == 0) return;
 
 		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
