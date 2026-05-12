@@ -26,6 +26,13 @@ static string? FindProjectDirectory()
 	return null;
 }
 
+static System.Text.Json.JsonSerializerOptions CreateIndentedJsonWriteOptions() => new()
+{
+	WriteIndented = true,
+	Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+	TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver(),
+};
+
 /// <summary>首行标题 → 列号（从 1 开始）。兼容 BOM、空格。</summary>
 static Dictionary<string, int> ReadHeaderColumnMap(IXLRow headerRow)
 {
@@ -150,6 +157,116 @@ static bool TryParsePositiveId(IXLWorksheet ws, int rowNum, Dictionary<string, i
 	return id > 0;
 }
 
+/// <summary>技能等「首行英文键名、首表」表：单元格空 → ""；数值整型写 JSON 整数，否则浮点；其余为字符串。</summary>
+static JsonNode SkillCellToJsonNode(IXLCell cell)
+{
+	if (cell.IsEmpty())
+		return "";
+
+	if (cell.TryGetValue(out double d) && !double.IsNaN(d) && !double.IsInfinity(d))
+	{
+		if (Math.Abs(d - Math.Floor(d)) < 1e-9 && d >= int.MinValue && d <= int.MaxValue)
+			return (int)Math.Floor(d);
+		return d;
+	}
+
+	string s = cell.GetFormattedString()?.Trim() ?? "";
+	if (!string.IsNullOrEmpty(s))
+		return s;
+	return cell.Value.ToString(CultureInfo.InvariantCulture)?.Trim() ?? "";
+}
+
+static List<(int Col, string Header)> ReadSkillTableHeaders(IXLRow headerRow)
+{
+	var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+	var list = new List<(int, string)>();
+	IXLCell? last = headerRow.LastCellUsed();
+	if (last == null)
+		return list;
+	for (int c = 1; c <= last.Address.ColumnNumber; c++)
+	{
+		string h = headerRow.Cell(c).GetString()?.Trim() ?? "";
+		if (string.IsNullOrEmpty(h))
+			continue;
+		h = h.TrimStart('\ufeff');
+		if (!seen.Add(h))
+			continue;
+		list.Add((c, h));
+	}
+
+	return list;
+}
+
+/// <summary>导出为顶层 JSON 数组（与旧 pandas <c>skill/tojson.py</c> 一致），供 Godot <c>Json.ParseString</c> 使用。</summary>
+static int RunHorizontalExcelToJsonArray(string rootDir, string stem)
+{
+	string xlPath = Path.Combine(rootDir, "excel", stem + ".xlsx");
+	string jsonPath = Path.Combine(rootDir, "Data", stem + ".json");
+
+	if (!File.Exists(xlPath))
+	{
+		Console.Error.WriteLine($"缺少工作簿：{xlPath}");
+		return 1;
+	}
+
+	Directory.CreateDirectory(Path.GetDirectoryName(jsonPath)!);
+
+	using var workbook = new XLWorkbook(xlPath);
+	var ws = workbook.Worksheet(1);
+	if (ws.FirstCellUsed() == null || ws.LastRowUsed() == null)
+	{
+		Console.Error.WriteLine($"{stem} 工作簿无数据：{xlPath}");
+		return 1;
+	}
+
+	const int hr = 1;
+	List<(int Col, string Header)> headers = ReadSkillTableHeaders(ws.Row(hr));
+	var cmap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+	foreach ((int col, string h) in headers)
+	{
+		if (!cmap.ContainsKey(h))
+			cmap[h] = col;
+	}
+
+	AddFirstLineHeaderAliases(cmap);
+	if (!cmap.ContainsKey("ID"))
+	{
+		Console.Error.WriteLine($"{stem} 表缺少 ID 列。");
+		return 1;
+	}
+
+	int lastRow = ws.LastRowUsed()!.RowNumber();
+	var arr = new JsonArray();
+	var idsUsed = new HashSet<int>();
+	for (int r = hr + 1; r <= lastRow; r++)
+	{
+		if (!TryParsePositiveId(ws, r, cmap, "ID", out int idNum))
+			continue;
+
+		if (!idsUsed.Add(idNum))
+		{
+			Console.Error.WriteLine($"{stem} 第 {r} 行重复 ID「{idNum}」，已跳过。");
+			continue;
+		}
+
+		var o = new JsonObject();
+		foreach ((int col, string h) in headers)
+		{
+			if (string.Equals(h, "ID", StringComparison.OrdinalIgnoreCase))
+				o[h] = idNum;
+			else
+				o[h] = SkillCellToJsonNode(ws.Cell(r, col));
+		}
+
+		arr.Add(o);
+	}
+
+	var opt = CreateIndentedJsonWriteOptions();
+	File.WriteAllText(jsonPath, arr.ToJsonString(opt), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+	Console.WriteLine($"已导出 {arr.Count} 条 {stem} → {jsonPath}");
+	return 0;
+}
+
 static int RunMonsters(string rootDir)
 {
 	string xlPath = Path.Combine(rootDir, "excel", "monsters.xlsx");
@@ -236,11 +353,7 @@ static int RunMonsters(string rootDir)
 			poolArr.Add(sid);
 		doc["boss_summon_monster_ids"] = poolArr;
 	}
-	var opt = new System.Text.Json.JsonSerializerOptions
-	{
-		WriteIndented = true,
-		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-	};
+	var opt = CreateIndentedJsonWriteOptions();
 	File.WriteAllText(jsonPath, doc.ToJsonString(opt), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 	Console.WriteLine(
 		summonPoolIds.Count > 0
@@ -354,11 +467,7 @@ static int RunBosses(string rootDir)
 		["version"] = 3,
 		["bosses"] = arr,
 	};
-	var opt = new System.Text.Json.JsonSerializerOptions
-	{
-		WriteIndented = true,
-		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-	};
+	var opt = CreateIndentedJsonWriteOptions();
 	File.WriteAllText(jsonPath, doc.ToJsonString(opt), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 	Console.WriteLine($"已导出 {arr.Count} 条 BOSS → {jsonPath}");
 	return 0;
@@ -547,6 +656,8 @@ static int ExportAllWorkbooks(string rootDir)
 	{
 		("monsters", RunMonsters),
 		("bosses", RunBosses),
+		("activeskill", root => RunHorizontalExcelToJsonArray(root, "activeskill")),
+		("passiveskill", root => RunHorizontalExcelToJsonArray(root, "passiveskill")),
 	};
 
 	string excelDir = Path.Combine(rootDir, "excel");
@@ -629,6 +740,10 @@ switch (cmd)
 		return 0;
 	case "monsters":
 		return RunMonsters(rootDir);
+	case "activeskill":
+		return RunHorizontalExcelToJsonArray(rootDir, "activeskill");
+	case "passiveskill":
+		return RunHorizontalExcelToJsonArray(rootDir, "passiveskill");
 	case "bosses":
 	case "boss":
 		return RunBosses(rootDir);
@@ -640,7 +755,15 @@ switch (cmd)
 		EnsureStarterXlsx(rootDir, false);
 		int a = RunMonsters(rootDir);
 		int b = RunBosses(rootDir);
-		return a != 0 ? a : b;
+		int s1 = RunHorizontalExcelToJsonArray(rootDir, "activeskill");
+		int s2 = RunHorizontalExcelToJsonArray(rootDir, "passiveskill");
+		if (a != 0)
+			return a;
+		if (b != 0)
+			return b;
+		if (s1 != 0)
+			return s1;
+		return s2;
 }
 
 static class BossExcelHeaders

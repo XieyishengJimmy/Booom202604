@@ -40,6 +40,7 @@ public partial class Gameplay : Node2D
 	TileMapLayer? _terrain;
 	FogLayer? _fog;
 	BossWarningLayer? _bossWarn;
+	InteractionHintLayer? _interactionHints;
 	BlockLayer? _blocks;
 	Sprite2D? _playerSprite;
 	Hud? _hudUi;
@@ -376,8 +377,8 @@ public partial class Gameplay : Node2D
 	Godot.Collections.Dictionary apowerDict = new Godot.Collections.Dictionary();
 
 
-	public Godot.Collections.Array aarray = Json.ParseString(FileAccess.GetFileAsString("res://skill/activeskill.json")).AsGodotArray();
-	public Godot.Collections.Array parray = Json.ParseString(FileAccess.GetFileAsString("res://skill/passiveskill.json")).AsGodotArray();
+	public Godot.Collections.Array aarray = Json.ParseString(FileAccess.GetFileAsString("res://Data/activeskill.json")).AsGodotArray();
+	public Godot.Collections.Array parray = Json.ParseString(FileAccess.GetFileAsString("res://Data/passiveskill.json")).AsGodotArray();
 
 	public List<int> cardnum = [];
 	public int cardchoose = 0;
@@ -395,6 +396,7 @@ public partial class Gameplay : Node2D
 	public TaskCompletionSource<Vector2I>? _clickTcs;
 	public Vector2I _lastHoverCell = Vector2I.Zero;
 	public HighlightLayer? _highlightLayer;
+	readonly HashSet<string> _cachedNeighborHintKeys = [];
 	public readonly Dictionary<string, Sprite2D> _sprites = new();
 	public readonly Texture2D _highlightTex = GD.Load<Texture2D>("res://Art/Role/player.png")!;
 
@@ -523,6 +525,8 @@ public partial class Gameplay : Node2D
 		Callable.From(DeferredInitialFogManaSoftLockProbe).CallDeferred();
 		_highlightLayer = GetNode<HighlightLayer>("World/HighlightRoot");
 		_highlightLayer.Setup(_terrain);
+		_interactionHints = GetNodeOrNull<InteractionHintLayer>("World/InteractionHintRoot");
+		_interactionHints?.Setup(_terrain!);
 	}
 
 	static int GetInt(Godot.Collections.Dictionary d, string key, int def = 0)
@@ -944,6 +948,74 @@ public partial class Gameplay : Node2D
 		return false;
 	}
 
+	/// <summary>与 <see cref="PlayerHasAdjacentMoveOrInteract"/> 对单邻格判定一致。</summary>
+	bool NeighborCellIsInteractableFromPlayer(Vector2I n)
+	{
+		if (_terrain == null)
+			return false;
+
+		string nk = HexGridUtil.CellKey(n);
+		if (!_valid.ContainsKey(nk))
+			return false;
+
+		if (CellHasFog(nk))
+			return false;
+
+		if (_events.ContainsKey(nk))
+			return true;
+
+		if (_blockState.ContainsKey(nk) && _blockState[nk].AsBool())
+			return false;
+
+		return true;
+	}
+
+	void SyncAdjacentInteractionHints()
+	{
+		if (_interactionHints == null || _terrain == null)
+			return;
+
+		if (_busyPlayerAction || _gameEnding || _isWaitingForHighlightClick)
+		{
+			if (_cachedNeighborHintKeys.Count != 0)
+			{
+				_cachedNeighborHintKeys.Clear();
+				_interactionHints.ClearAll();
+			}
+
+			return;
+		}
+
+		if (_turn != Turn.Player || _spentBasic)
+		{
+			if (_cachedNeighborHintKeys.Count != 0)
+			{
+				_cachedNeighborHintKeys.Clear();
+				_interactionHints.ClearAll();
+			}
+
+			return;
+		}
+
+		var keys = new HashSet<string>();
+		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, _playerCell))
+		{
+			if (!NeighborCellIsInteractableFromPlayer(n))
+				continue;
+
+			keys.Add(HexGridUtil.CellKey(n));
+		}
+
+		if (keys.SetEquals(_cachedNeighborHintKeys))
+			return;
+
+		_cachedNeighborHintKeys.Clear();
+		foreach (string k in keys)
+			_cachedNeighborHintKeys.Add(k);
+
+		_interactionHints.RebuildFromKeys(_cachedNeighborHintKeys);
+	}
+
 
 	bool SoftLockSkillChoiceBlocksFailTransition()
 	{
@@ -1335,6 +1407,7 @@ public partial class Gameplay : Node2D
 			if (_isWaitingForHighlightClick)
 			{
 				OnCellClicked(cell);
+				GetViewport()?.SetInputAsHandled();
 				return;
 			}
 
@@ -1843,7 +1916,7 @@ public partial class Gameplay : Node2D
 		powerCheck();
 
 		if (gained > 0)
-			await ToastAsync("吸收迷雾", $"获得能量 +{gained}（仅移动连带吸收计数）。");
+			await ToastAsync("吸收迷雾", $"获得能量 +{gained}（仅相邻移动后吸收）。");
 
 		RefreshEventIconsFogVisibility();
 
@@ -1926,6 +1999,7 @@ public partial class Gameplay : Node2D
 	{
 		base._Process(delta);
 		TickPlayerIdleLoop((float)delta);
+		SyncAdjacentInteractionHints();
 		if (_isWaitingForHighlightClick)
 		{
 			Vector2I currentHover = GetMouseHoverCell();
@@ -2157,34 +2231,13 @@ public partial class Gameplay : Node2D
 		{
 
 			case "monster_str":
-				if (strBuff)
-				{
-					RunState.Instance.PlayerStr += aconfigDict[4].AsInt32();
-				}
-
-				if (magicBuff)
-				{
-					RunState.Instance.PlayerMagic += aconfigDict[5].AsInt32();
-				}
-
-				if (strBuff)
-				{
-					RunState.Instance.PlayerStr -= aconfigDict[4].AsInt32();
-				}
-
-				if (magicBuff)
-				{
-					RunState.Instance.PlayerMagic -= aconfigDict[5].AsInt32();
-				}
-				return;
-
 			case "monster_mag":
-				if(strBuff)
+				if (strBuff)
 				{
 					RunState.Instance.PlayerStr += aconfigDict[4].AsInt32();
 				}
 
-				if(magicBuff)
+				if (magicBuff)
 				{
 					RunState.Instance.PlayerMagic += aconfigDict[5].AsInt32();
 				}
@@ -2203,9 +2256,6 @@ public partial class Gameplay : Node2D
 
 				RunState.Instance.ClampHp();
 
-				await EnergyAbsorbAsync();
-
-
 				_spentBasic = true;
 
 				RefreshHud();
@@ -2215,8 +2265,6 @@ public partial class Gameplay : Node2D
 				await FinishIfNeededAsync();
 
 				return;
-
-
 
 			case "treasure":
 
@@ -2491,7 +2539,6 @@ public partial class Gameplay : Node2D
 				break;
 
 			case CampaignPortalEventTypeName:
-				await EnergyAbsorbAsync();
 				EraseEvent(cell);
 				_campaignVictoryPickupPhase = false;
 				string? nextMain = LevelCatalog.ResolveNextMainCampaignLevelPath(_loadedLevelPath);
@@ -2532,11 +2579,6 @@ public partial class Gameplay : Node2D
 
 
 		RunState.Instance.ClampHp();
-
-		await EnergyAbsorbAsync();
-
-
-
 
 		_spentBasic = true;
 
@@ -3114,7 +3156,7 @@ public partial class Gameplay : Node2D
 
 		_spentBasic = false;
 
-		for (int i = 0; i < 6; i++)
+		for (int i = 0; i < 6 && i < askillList.Count; i++)
 		{
 			if(GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible)
 			{
@@ -3123,7 +3165,7 @@ public partial class Gameplay : Node2D
 				if (cdLeft - 1 == 0)
 				{
 					GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible = false;	
-					if(RunState.Instance.PlayerEnergy >= apowerDict[askillList[i]].AsInt32())
+					if(apowerDict.ContainsKey(askillList[i]) && RunState.Instance.PlayerEnergy >= apowerDict[askillList[i]].AsInt32())
 					{
 						GD.Print("能量回复cdcover=false");
 						GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = false;
@@ -3610,7 +3652,8 @@ public partial class Gameplay : Node2D
 		{
 			if(!GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/CdLabel").Visible)
 			{
-				if(RunState.Instance.PlayerEnergy < apowerDict[askillList[i]].AsInt32())
+				int cost = apowerDict.ContainsKey(askillList[i]) ? apowerDict[askillList[i]].AsInt32() : 999_999;
+				if(RunState.Instance.PlayerEnergy < cost)
 				{
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillCdCover").Visible = true;
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + (i + 1) + "/SkillHi").Visible = false;
@@ -3624,6 +3667,26 @@ public partial class Gameplay : Node2D
 		}
 	}
 
+	bool TryGetChosenActiveSkillId(out int skillId)
+	{
+		skillId = 0;
+		if (skillchoose < 1 || skillchoose > askillList.Count)
+			return false;
+		skillId = askillList[skillchoose - 1];
+		return true;
+	}
+
+	void DeductEnergyAfterChosenActiveSkill()
+	{
+		if (!TryGetChosenActiveSkillId(out int sid) || !apowerDict.ContainsKey(sid))
+			return;
+		int cost = apowerDict[sid].AsInt32();
+		RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - cost, 0);
+		RefreshHud();
+		powerCheck();
+	}
+
+	/// <summary>异步 void 技能按钮入口：耗能必须与当前 <see cref="skillchoose"/> 槽位对应 <see cref="askillList"/> 技能一致。</summary>
 	async void click_active1()
 	{
 		skillchoose = 1;
@@ -3634,9 +3697,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[0]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3657,9 +3720,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[1]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3679,9 +3742,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[2]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3701,9 +3764,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[3]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3723,9 +3786,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[4]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3745,9 +3808,9 @@ public partial class Gameplay : Node2D
 		if (ischose)
 		{
 			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Visible = true;
-			GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Text = acdDict[askillList[skillchoose - 1]].ToString();
-			RunState.Instance.PlayerEnergy = Mathf.Max(RunState.Instance.PlayerEnergy - apowerDict[askillList[5]].AsInt32(), 0);
-			powerCheck();
+			if (TryGetChosenActiveSkillId(out int sid) && acdDict.ContainsKey(sid))
+				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Text = acdDict[sid].ToString();
+			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
 		}
 		else
@@ -3773,14 +3836,7 @@ public partial class Gameplay : Node2D
 				}
 
 				foreach (string cellKey in _highlightedCells)
-				{
-					Vector2I cell = HexGridUtil.ParseKey(cellKey);
-					if (CellHasFog(cellKey))
-					{
-						_fog!.SetCell(cell, false);
-						_fogState[cellKey] = false;
-					}
-				}
+					DispelFogBySkill(HexGridUtil.ParseKey(cellKey));
 				ischose = true;
 				_highlightedCells.Clear();
 				return;
@@ -3795,14 +3851,7 @@ public partial class Gameplay : Node2D
 				}
 
 				foreach (string cellKey in _highlightedCells)
-				{
-					Vector2I cell = HexGridUtil.ParseKey(cellKey);
-					if (CellHasFog(cellKey))
-					{
-						_fog!.SetCell(cell, false);
-						_fogState[cellKey] = false;
-					}
-				}
+					DispelFogBySkill(HexGridUtil.ParseKey(cellKey));
 				ischose = true;
 				_highlightedCells.Clear();
 				return;
@@ -3859,7 +3908,9 @@ public partial class Gameplay : Node2D
 				}
 				foreach (string cellKey in _highlightedCells)
 				{
-					var ev = _events[cellKey].AsGodotDictionary();
+					if (!_events.ContainsKey(cellKey))
+						continue;
+					var ev = (Godot.Collections.Dictionary)_events[cellKey].AsGodotDictionary().Duplicate();
 					string type = GetString(ev, "type");
 					if(type == "monster_str")
 					{
@@ -3869,7 +3920,12 @@ public partial class Gameplay : Node2D
 					{
 						ev["type"] = "monster_str";
 					}
+					_events[cellKey] = ev;
 				}
+
+				foreach (string cellKey in new List<string>(_highlightedCells))
+					RefreshBossEventIcon(cellKey);
+
 				ischose = true;
 				_highlightedCells.Clear();
 				return;

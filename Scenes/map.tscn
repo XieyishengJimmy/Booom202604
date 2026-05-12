@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://d4ejrvwfj8erp" path="res://Art/Map/Cloud1.png" id="2_26yhd"]
 [ext_resource type="Texture2D" uid="uid://5fef504lbf7a" path="res://Art/Player/idel01.png" id="3_myvm1"]
 [ext_resource type="Texture2D" uid="uid://3bcnisatkyoj" path="res://Art/Player/ONmap.png" id="4_q0mm3"]
+[ext_resource type="Texture2D" uid="uid://d0m1iod00xe6p" path="res://Art/UI/map/ClickIndicator.png" id="5_q0mm3"]
 
 [node name="Map" type="Node2D" unique_id=2056465608]
 
@@ -33,6 +34,7 @@ position = Vector2(275, 385)
 texture = ExtResource("2_26yhd")
 
 [node name="Idel01" type="Sprite2D" parent="." unique_id=537727283]
+visible = false
 position = Vector2(284, 234)
 texture = ExtResource("3_myvm1")
 
@@ -41,3 +43,15 @@ visible = false
 modulate = Color(1, 1, 1, 0.3882353)
 position = Vector2(42, 255)
 texture = ExtResource("4_q0mm3")
+
+[node name="ClickIndicator" type="Sprite2D" parent="." unique_id=2096644972]
+position = Vector2(553, -34)
+texture = ExtResource("5_q0mm3")
+
+[node name="ClickIndicator2" type="Sprite2D" parent="." unique_id=1948460793]
+position = Vector2(0, -34)
+texture = ExtResource("5_q0mm3")
+
+[node name="ClickIndicator3" type="Sprite2D" parent="." unique_id=1539400528]
+position = Vector2(275, 360)
+texture = ExtResource("5_q0mm3")

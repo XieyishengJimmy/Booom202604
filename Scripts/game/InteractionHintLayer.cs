@@ -3,10 +3,10 @@ using Godot;
 
 namespace Booom202604;
 
-/// <summary>BOSS 预警阶段的范围高亮；与迷雾层分离。贴图与六角地块中心对齐。</summary>
-public partial class BossWarningLayer : Node2D
+/// <summary>玩家回合：相邻可移动 / 可交互格上的 <c>ClickIndicator</c>；位于地块之上、障碍与事件图标之下。</summary>
+public partial class InteractionHintLayer : Node2D
 {
-	static readonly Texture2D AttackTex = GD.Load<Texture2D>("res://Art/UI/map/AttackIndicator.png")!;
+	static readonly Texture2D Tex = GD.Load<Texture2D>("res://Art/UI/map/ClickIndicator.png")!;
 
 	TileMapLayer? _terrain;
 	readonly Dictionary<string, Sprite2D> _sprites = [];
@@ -42,15 +42,15 @@ public partial class BossWarningLayer : Node2D
 		if (_sprites.ContainsKey(ck))
 			return;
 
-		Vector2 sc = HexMapIndicatorOverlay.ComputeSpriteScaleMatchTilemap(_terrain.TileSet, AttackTex);
+		Vector2 sc = HexMapIndicatorOverlay.ComputeSpriteScaleMatchTilemap(_terrain.TileSet, Tex);
 		var s = new Sprite2D
 		{
-			Texture = AttackTex,
+			Texture = Tex,
 			Centered = true,
-			Modulate = new Color(1f, 0.42f, 0.32f, 0.72f),
+			Modulate = new Color(1f, 1f, 1f, 0.82f),
 			Scale = sc,
-			ZIndex = 1,
-			Position = HexMapIndicatorOverlay.HexCellAnchorWorld(_terrain, cell),
+			ZIndex = 0,
+			Position = HexMapIndicatorOverlay.ClickIndicatorWorldPosition(_terrain, cell),
 		};
 		AddChild(s);
 		_sprites[ck] = s;

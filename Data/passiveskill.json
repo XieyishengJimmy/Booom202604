@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "ID": 101,
     "name": "草上飞行",
@@ -11,7 +11,7 @@
     "name": "生机蔓延",
     "address": "res://Art/Icon/pskill102.png",
     "describe": "恢复生命值超过上限时，在迷雾里的随机位置生成1个草丛",
-    "config": 1.0
+    "config": 1
   },
   {
     "ID": 103,
@@ -25,28 +25,28 @@
     "name": "踏草留痕",
     "address": "res://Art/Icon/pskill104.png",
     "describe": "每进入2次草地，下一次探索变为快速行动",
-    "config": 2.0
+    "config": 2
   },
   {
     "ID": 105,
     "name": "草叶精华",
     "address": "res://Art/Icon/pskill105.png",
     "describe": "草丛还会使你获得2点法力",
-    "config": 2.0
+    "config": 2
   },
   {
     "ID": 201,
     "name": "亡者余温",
     "address": "res://Art/Icon/pskill201.png",
     "describe": "尸体触发恢复生命值时，额外恢复1点",
-    "config": 1.0
+    "config": 1
   },
   {
     "ID": 202,
     "name": "因果轮回",
     "address": "res://Art/Icon/pskill202.png",
     "describe": "你因尸体而失去生命时，下一次战斗获胜后恢复1点生命",
-    "config": 1.0
+    "config": 1
   },
   {
     "ID": 203,
@@ -60,13 +60,13 @@
     "name": "祭品积累",
     "address": "res://Art/Icon/pskill204.png",
     "describe": "你每消耗5具尸体，获得1次祭坛奖励",
-    "config": 5.0
+    "config": 5
   },
   {
     "ID": 205,
     "name": "尸横遍野",
     "address": "res://Art/Icon/pskill205.png",
     "describe": "每次BOSS使用技能后，在范围内留下2具尸体",
-    "config": 2.0
+    "config": 2
   }
 ]

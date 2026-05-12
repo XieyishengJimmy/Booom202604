@@ -32,8 +32,7 @@
       "ai_description": "AI：中心锁定玩家所在格。",
       "summon_monster_ids": [
         2001,
-        2002,
-        3001
+        2002
       ]
     },
     {
@@ -43,13 +42,12 @@
       "warn_meter": 1,
       "gain_per_turn": 1,
       "skill_target": 2,
-      "skill_area": 10,
+      "skill_area": 3,
       "skill_effect": 0,
       "skill_detail": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "skill_description": "在规定范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "ai_description": "AI：范围仅需包含玩家所在格即可。",
       "summon_monster_ids": [
-        2002,
         3001,
         3002
       ]
@@ -68,8 +66,7 @@
       "ai_description": "AI：范围仅需包含玩家所在格即可。",
       "summon_monster_ids": [
         3001,
-        3002,
-        4001
+        3002
       ]
     },
     {
@@ -85,7 +82,6 @@
       "skill_description": "在范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成4个怪物",
       "ai_description": "AI：可于全地图任意位置施放。",
       "summon_monster_ids": [
-        3002,
         4001,
         4002
       ]

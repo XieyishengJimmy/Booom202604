@@ -40,6 +40,8 @@
 [ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="29"]
 [ext_resource type="Script" uid="uid://ikw7ji2x4ptf" path="res://Scripts/game/BossWarningLayer.cs" id="30"]
 [ext_resource type="Texture2D" uid="uid://gwbuxuxjp03c" path="res://Art/UI/skillAcquire/获得.png" id="39_fm0py"]
+[ext_resource type="Texture2D" uid="uid://bokicrbxqxe37" path="res://Art/UI/map/BG.png" id="40_mapbg"]
+[ext_resource type="Script" uid="uid://c0interhintlayr" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
 
 [node name="Gameplay" type="Node2D" unique_id=841708317]
 script = ExtResource("1")
@@ -47,12 +49,31 @@ GameplayCameraZoomLimitClose = 0.2
 GameplayCameraZoomLimitFar = 1.0
 GameplayCameraFitDivisor = 2500.0
 
+[node name="BackdropCanvas" type="CanvasLayer" parent="."]
+layer = -128
+follow_viewport_enabled = true
+
+[node name="BgTexture" type="TextureRect" parent="BackdropCanvas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("40_mapbg")
+expand_mode = 1
+stretch_mode = 6
+
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1287628607]
 zoom = Vector2(0.85, 0.85)
 
 [node name="World" type="Node2D" parent="." unique_id=727525620]
 
 [node name="TerrainLayer" type="TileMapLayer" parent="World" unique_id=809053411]
+
+[node name="InteractionHintRoot" type="Node2D" parent="World" unique_id=1811000001]
+script = ExtResource("41_inthint")
 
 [node name="BlockRoot" type="Node2D" parent="World" unique_id=1305904022]
 script = ExtResource("3")
