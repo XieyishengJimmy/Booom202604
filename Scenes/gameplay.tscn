@@ -41,20 +41,20 @@
 [ext_resource type="Script" uid="uid://ikw7ji2x4ptf" path="res://Scripts/game/BossWarningLayer.cs" id="30"]
 [ext_resource type="Texture2D" uid="uid://gwbuxuxjp03c" path="res://Art/UI/skillAcquire/获得.png" id="39_fm0py"]
 [ext_resource type="Texture2D" uid="uid://bokicrbxqxe37" path="res://Art/UI/map/BG.png" id="40_mapbg"]
-[ext_resource type="Script" uid="uid://c0interhintlayr" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
+[ext_resource type="Script" uid="uid://bfbq16r3prllp" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
 
 [node name="Gameplay" type="Node2D" unique_id=841708317]
 script = ExtResource("1")
 GameplayCameraZoomLimitClose = 0.2
 GameplayCameraZoomLimitFar = 1.0
-GameplayCameraFitDivisor = 2500.0
+GameplayCameraFitDivisor = 15000.0
 
-[node name="BackdropCanvas" type="CanvasLayer" parent="."]
+[node name="BackdropCanvas" type="CanvasLayer" parent="." unique_id=593041543]
 layer = -128
-follow_viewport_enabled = true
+follow_viewport_enabled = false
 
-[node name="BgTexture" type="TextureRect" parent="BackdropCanvas"]
-layout_mode = 1
+[node name="BgTexture" type="TextureRect" parent="BackdropCanvas" unique_id=417914195]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -75,21 +75,21 @@ zoom = Vector2(0.85, 0.85)
 [node name="InteractionHintRoot" type="Node2D" parent="World" unique_id=1811000001]
 script = ExtResource("41_inthint")
 
+[node name="BossWarningRoot" type="Node2D" parent="World" unique_id=883115945]
+script = ExtResource("30")
+
 [node name="BlockRoot" type="Node2D" parent="World" unique_id=1305904022]
 script = ExtResource("3")
 
 [node name="FogRoot" type="Node2D" parent="World" unique_id=1591225670]
 script = ExtResource("2")
 
-[node name="BossWarningRoot" type="Node2D" parent="World" unique_id=883115945]
-script = ExtResource("30")
+[node name="HighlightRoot" type="Node2D" parent="World" unique_id=1668139117]
+script = ExtResource("5_yl3i8")
 
 [node name="EventIcons" type="Node2D" parent="World" unique_id=1086561768]
 
 [node name="Player" type="Sprite2D" parent="World" unique_id=1138604530]
-
-[node name="HighlightRoot" type="Node2D" parent="World" unique_id=1668139117]
-script = ExtResource("5_yl3i8")
 
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 

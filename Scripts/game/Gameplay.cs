@@ -2256,6 +2256,13 @@ public partial class Gameplay : Node2D
 
 				RunState.Instance.ClampHp();
 
+				// 与 TryMoveAsync 一致：移动落位后吸收邻格迷雾。走入怪物格并战胜后仍站在该格，不经 TryMoveAsync，须在此补吸收。
+				if (HexGridUtil.IsSameCell(_playerCell, cell))
+				{
+					await EnergyAbsorbAsync();
+					await ToSignal(GetTree().CreateTimer(0.06f), SceneTreeTimer.SignalName.Timeout);
+				}
+
 				_spentBasic = true;
 
 				RefreshHud();
@@ -2579,6 +2586,16 @@ public partial class Gameplay : Node2D
 
 
 		RunState.Instance.ClampHp();
+
+		// 与 TryMoveAsync / 战斗胜利落位一致：走到事件格后吸收邻格迷雾；祭坛未改玩家格时仍吸收当前格邻雾。
+		if (t is not ("monster_str" or "monster_mag") && t != CampaignPortalEventTypeName)
+		{
+			if (t == "altar" || HexGridUtil.IsSameCell(_playerCell, cell))
+			{
+				await EnergyAbsorbAsync();
+				await ToSignal(GetTree().CreateTimer(0.06f), SceneTreeTimer.SignalName.Timeout);
+			}
+		}
 
 		_spentBasic = true;
 
@@ -2913,7 +2930,6 @@ public partial class Gameplay : Node2D
 			!pskillList.Contains(205))
 			return;
 
-		int desired = Mathf.Max(1, pconfigDict["205"].AsInt32());
 		string pk = HexGridUtil.CellKey(_playerCell);
 		var empties = new List<string>();
 
@@ -2932,6 +2948,10 @@ public partial class Gameplay : Node2D
 
 		if (empties.Count == 0)
 			return;
+
+		int desired = 1;
+		if (pconfigDict.ContainsKey(205))
+			desired = Mathf.Max(1, pconfigDict[205].AsInt32());
 
 		Node2D iconsRoot = GetNode<Node2D>("World/EventIcons");
 		foreach (string ck in ShuffledTakePrefix(empties, Mathf.Min(desired, empties.Count)))
@@ -3892,7 +3912,8 @@ public partial class Gameplay : Node2D
 					Vector2I cell = HexGridUtil.ParseKey(cellKey);
 					_playerCell = cell;
 				}
-				
+
+				SnapPlayer();
 				ischose = true;
 				_highlightedCells.Clear();
 				return;

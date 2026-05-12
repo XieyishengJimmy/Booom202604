@@ -3,7 +3,7 @@ using Godot;
 
 namespace Booom202604;
 
-/// <summary>玩家回合：相邻可移动 / 可交互格上的 <c>ClickIndicator</c>；位于地块之上、障碍与事件图标之下。</summary>
+/// <summary>玩家回合：相邻可移动 / 可交互格指示；贴图 <c>ClickIndicator.png</c>。与主动技能选格 <see cref="HighlightLayer"/>（<c>Skilldicator.png</c>）分离，勿混用。</summary>
 public partial class InteractionHintLayer : Node2D
 {
 	static readonly Texture2D Tex = GD.Load<Texture2D>("res://Art/UI/map/ClickIndicator.png")!;

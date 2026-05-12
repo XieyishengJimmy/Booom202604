@@ -45,13 +45,13 @@ position = Vector2(42, 255)
 texture = ExtResource("4_q0mm3")
 
 [node name="ClickIndicator" type="Sprite2D" parent="." unique_id=2096644972]
-position = Vector2(553, -34)
+position = Vector2(550, 0)
 texture = ExtResource("5_q0mm3")
 
 [node name="ClickIndicator2" type="Sprite2D" parent="." unique_id=1948460793]
-position = Vector2(0, -34)
+position = Vector2(0, 0)
 texture = ExtResource("5_q0mm3")
 
 [node name="ClickIndicator3" type="Sprite2D" parent="." unique_id=1539400528]
-position = Vector2(275, 360)
+position = Vector2(275, 385)
 texture = ExtResource("5_q0mm3")

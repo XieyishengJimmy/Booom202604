@@ -2,11 +2,7 @@ using Godot;
 
 namespace Booom202604;
 
-/// <summary>
-/// 叠在六角地砖上的 UI 精灵缩放：<c>TileMap</c> 将整块地砖贴图绘制进 <see cref="TileSet.TileSize"/> 的逻辑六角格（与 <see cref="TerrainTilesetFactory.HexTileSizeFromMapSceneReference"/> 一致），
-/// 叠图世界尺度须对齐该<strong>逻辑格</strong>，而不是 atlas 整图像素（<c>Scenes/map.tscn</c> 里地砖用 <c>Sprite2D</c> 1:1 像素摆场，与关卡内 <c>TileMapLayer</c> 的缩放语义不同）。
-/// 使用均匀 <c>(k,k)</c>，且 <c>k = min(TileSize.x/tw, TileSize.y/th)</c>，使叠图完整落在六角格包围盒内、宽度不再按整张贴图被放大。
-/// </summary>
+/// <summary>与 <see cref="FogLayer"/> 一致：叠图按地砖 atlas 区域像素与 TileMap 绘制对齐（整块 atlas 纹素 ≈ 世界单位）；横向/纵向可独立缩放。</summary>
 public static class HexMapIndicatorOverlay
 {
 	public static Vector2 ComputeSpriteScaleMatchTilemap(TileSet? tileSet, Texture2D tex, float coverageMul = 1f)
@@ -14,15 +10,25 @@ public static class HexMapIndicatorOverlay
 		int tw = tex.GetWidth();
 		int th = tex.GetHeight();
 
-		if (tw <= 0 || th <= 0 || tileSet == null)
+		if (tw <= 0 || th <= 0)
 			return new Vector2(0.52f * coverageMul, 0.52f * coverageMul);
 
-		Vector2I logical = tileSet.TileSize;
-		float kx = (float)logical.X / tw * coverageMul;
-		float ky = (float)logical.Y / th * coverageMul;
-		float k = Mathf.Min(kx, ky);
+		if (tileSet == null)
+			return new Vector2(0.52f * coverageMul, 0.52f * coverageMul);
 
-		return new Vector2(k, k);
+		if (!TerrainTilesetFactory.TryGetPrimaryAtlasTileDrawablePixelSize(tileSet, out Vector2I atlas))
+		{
+			float sx = (float)tileSet.TileSize.X / tw;
+			float sy = (float)tileSet.TileSize.Y / th;
+			float vf = Mathf.Min(sx, sy) * coverageMul;
+
+			return new Vector2(vf, vf);
+		}
+
+		float sx2 = (float)atlas.X / tw * coverageMul;
+		float sy2 = (float)atlas.Y / th * coverageMul;
+
+		return new Vector2(sx2, sy2);
 	}
 
 	/// <summary>与迷雾层一致：<c>map_to_local - texture_origin</c>。</summary>
@@ -36,18 +42,13 @@ public static class HexMapIndicatorOverlay
 	}
 
 	/// <summary>
-	/// <c>Scenes/map.tscn</c> 中 ClickIndicator2 / ClickIndicator / ClickIndicator3 相对地砖格心 (0,0)、(550,0)、(275,385) 的位移，
-	/// 与 <see cref="TerrainTilesetFactory.MapSceneReferenceNeighborDeltaX"/> 等参考布局一致；对应格坐标 (0,0)、(1,0)、(0,1) 的奇偶推广。
-	/// 与迷雾锚点不同：<c>ClickIndicator</c> 美术以格心为基准再平移，故<strong>不减</strong> <c>TextureOrigin</c>。
+	/// 在 <c>HexCellAnchorWorld</c> 之后的额外平移，与 <c>Scenes/map.tscn</c> 中「ClickIndicator.position − 同格地砖.position」一致（移动/交互指示参考）。
+	/// 当前 map 中三枚指示与地砖同心；若按六角行再微调，可改为按 <c>(cell.X &amp; 1, cell.Y &amp; 1)</c> 查表。
 	/// </summary>
-	public static Vector2 ClickIndicatorOffsetForHexCell(Vector2I cell)
-	{
-		float ox = (cell.X & 1) != 0 ? 3f : 0f;
-		float oy = (cell.Y & 1) != 0 ? -25f : -34f;
-		return new Vector2(ox, oy);
-	}
+	public static Vector2 ClickIndicatorOffsetForHexCell(Vector2I _) =>
+		Vector2.Zero;
 
-	/// <summary>与 <see cref="ClickIndicatorOffsetForHexCell"/> 及 <c>map.tscn</c> 示意一致的世界坐标。</summary>
+	/// <summary>与 TileMap 单格绘制锚点一致，再叠加 <see cref="ClickIndicatorOffsetForHexCell"/>（与 map.tscn 手工微调一致）。</summary>
 	public static Vector2 ClickIndicatorWorldPosition(TileMapLayer terrain, Vector2I cell) =>
-		terrain.MapToLocal(cell) + ClickIndicatorOffsetForHexCell(cell);
+		HexCellAnchorWorld(terrain, cell) + ClickIndicatorOffsetForHexCell(cell);
 }

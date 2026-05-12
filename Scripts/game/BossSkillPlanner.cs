@@ -16,6 +16,9 @@ namespace Booom202604;
 /// <c>skill_target == 3</c>（全图随机落中心）仍按<strong>六角圆盘半径 = skill_area 数值</strong>。
 /// </para>
 /// <para>
+/// <c>skill_target == 1</c>：以<strong>玩家所在格</strong>为中心，<c>skill_area</c> 为六角圆盘半径（BFS 步数，含中心），用于「中心锁定玩家」类技能。
+/// </para>
+/// <para>
 /// <c>blockedState</c> 与本体战斗一致：障碍格既不可作为 BOSS 范围落点，也不可作为直线穿行格。
 /// </para>
 /// </summary>
@@ -78,6 +81,14 @@ public static class BossSkillPlanner
 			int radius = rawCode <= 0 ? 1 : rawCode;
 
 			return CellsHexDisk(terrain, validCells, blockedState, pick, radius);
+		}
+
+		// Target 1：中心锁定玩家格（如哥布林国王）；skill_area 为六角圆盘「半径」步数（含中心），至少 1。
+		if (skillTarget == 1)
+		{
+			debugRepresentativeCell = playerCell;
+			int radius = rawCode <= 0 ? 1 : rawCode;
+			return CellsHexDisk(terrain, validCells, blockedState, playerCell, radius);
 		}
 
 		if (skillTarget == 2 && rawCode == SkillAreaFullAxialLineThroughPlayer)

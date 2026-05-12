@@ -3,7 +3,7 @@ using Godot;
 
 namespace Booom202604;
 
-/// <summary>BOSS 预警阶段的范围高亮；与迷雾层分离。贴图与六角地块中心对齐。</summary>
+/// <summary>BOSS 预警阶段的范围高亮；与迷雾层分离。贴图与六角地块锚点一致。子精灵勿设正 <c>ZIndex</c>，以免压过 <c>gameplay.tscn</c> 中位于其后的障碍/迷雾/事件/玩家。</summary>
 public partial class BossWarningLayer : Node2D
 {
 	static readonly Texture2D AttackTex = GD.Load<Texture2D>("res://Art/UI/map/AttackIndicator.png")!;
@@ -49,7 +49,6 @@ public partial class BossWarningLayer : Node2D
 			Centered = true,
 			Modulate = new Color(1f, 0.42f, 0.32f, 0.72f),
 			Scale = sc,
-			ZIndex = 1,
 			Position = HexMapIndicatorOverlay.HexCellAnchorWorld(_terrain, cell),
 		};
 		AddChild(s);
