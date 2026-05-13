@@ -19,6 +19,7 @@ public static class TerrainTilesetFactory
 	/// <summary>
 	/// 与 <c>res://Scenes/map.tscn</c> 地砖参考一致：地块「2」在原点，「1」在 <c>(550,0)</c>，「3」在 <c>(275,385)</c>；
 	/// <c>Cloud1/2/3</c> 与同名字块中心重合、同 <c>Scale (1,1)</c>。
+	/// 怪物事件图标在地图上的相对位移见 <see cref="EventWorldIconFactory"/>（与 map 中 2001 / Physic / Magic 节点一致）。
 	/// </summary>
 	public const int MapSceneReferenceNeighborDeltaX = 550;
 

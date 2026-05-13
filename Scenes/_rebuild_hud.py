@@ -5,7 +5,7 @@ from pathlib import Path
 HUD_START_MARKER = '[node name="UILayoutRef"'
 END_MARKER = '[node name="EndTurnBtn"'
 
-# Paths match gameplay ext_resource ids 5..29 (same files as UI.tscn).
+# Paths match gameplay ext_resource ids 5..29 plus Physic/Magic (42_phys, 43_mag).
 
 HUD_BODY = """
 [node name="UILayoutRef" type="TextureRect" parent="UICanvas/HUD"]
@@ -177,65 +177,6 @@ theme_override_font_sizes/font_size = 15
 text = "100/100"
 vertical_alignment = 1
 
-[node name="BuffArea" type="Control" parent="UICanvas/HUD/PlayerInfo"]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 203.0
-offset_top = 51.0
-offset_right = 499.0
-offset_bottom = 103.0
-mouse_filter = 2
-
-[node name="Buff1" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea"]
-modulate = Color(0.45, 0.45, 0.5, 1)
-layout_mode = 1
-anchors_preset = 0
-offset_left = 8.0
-offset_top = 5.0
-offset_right = 50.0
-offset_bottom = 47.0
-mouse_filter = 2
-texture = ExtResource("10")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="BuffFrame1" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea"]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 2.0
-offset_top = -3.0
-offset_right = 56.0
-offset_bottom = 49.0
-mouse_filter = 2
-texture = ExtResource("11")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Buff2" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea"]
-modulate = Color(0.45, 0.45, 0.5, 1)
-layout_mode = 1
-anchors_preset = 0
-offset_left = 56.0
-offset_top = 5.0
-offset_right = 98.0
-offset_bottom = 47.0
-mouse_filter = 2
-texture = ExtResource("10")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="BuffFrame2" type="TextureRect" parent="UICanvas/HUD/PlayerInfo/BuffArea"]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 50.0
-offset_top = -3.0
-offset_right = 104.0
-offset_bottom = 49.0
-mouse_filter = 2
-texture = ExtResource("11")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="PortraitFrame" type="TextureRect" parent="UICanvas/HUD/PlayerInfo"]
 layout_mode = 1
 anchors_preset = 0
@@ -264,42 +205,28 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="StrengthDeco" type="TextureRect" parent="UICanvas/HUD/PlayerInfo"]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 2.5
-offset_top = 149.0
-offset_right = 49.5
-offset_bottom = 195.0
-mouse_filter = 2
-texture = ExtResource("13")
-expand_mode = 1
-stretch_mode = 5
+[node name="StrengthAttribute" type="Sprite2D" parent="UICanvas/HUD/PlayerInfo"]
+position = Vector2(32, 171)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("42_phys")
 
-[node name="MagicDeco" type="TextureRect" parent="UICanvas/HUD/PlayerInfo"]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 146.5
-offset_top = 149.0
-offset_right = 193.5
-offset_bottom = 195.0
-mouse_filter = 2
-texture = ExtResource("13")
-expand_mode = 1
-stretch_mode = 5
+[node name="MagicAttribute" type="Sprite2D" parent="UICanvas/HUD/PlayerInfo"]
+position = Vector2(160, 167)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("43_mag")
 
 [node name="StrLabel" type="Label" parent="UICanvas/HUD/PlayerInfo"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
-offset_left = 10.0
-offset_top = 159.0
-offset_right = 42.0
-offset_bottom = 187.0
-theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
+offset_left = 4.0
+offset_top = 146.0
+offset_right = 60.0
+offset_bottom = 198.0
+theme_override_colors/font_color = Color(0.290196, 0.164706, 0.0627451, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 32
 text = "6"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -308,14 +235,14 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 0
-offset_left = 154.0
-offset_top = 159.0
-offset_right = 186.0
-offset_bottom = 187.0
-theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
+offset_left = 132.0
+offset_top = 142.0
+offset_right = 188.0
+offset_bottom = 194.0
+theme_override_colors/font_color = Color(0.368627, 0.00392157, 0.156863, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 32
 text = "6"
 horizontal_alignment = 1
 vertical_alignment = 1

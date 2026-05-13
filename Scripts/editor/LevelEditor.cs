@@ -630,7 +630,7 @@ public partial class LevelEditor : Control
 				SizeFlagsHorizontal = SizeFlags.ShrinkCenter,
 				SizeFlagsVertical = SizeFlags.ShrinkCenter,
 				FocusMode = FocusModeEnum.None,
-				TooltipText = $"{t.Name}\n{dominant} · 战力 {t.Power}\n{t.Description}",
+				TooltipText = $"{t.Name}\n{dominant} · 力量战力 {t.PowerStr} · 魔法战力 {t.PowerMag}\n{t.Description}",
 				ButtonGroup = _monsterGrp,
 			};
 			Texture2D? tex = ResourceLoader.Exists(t.IconPath) ? GD.Load<Texture2D>(t.IconPath) : null;
@@ -777,8 +777,8 @@ public partial class LevelEditor : Control
 			{
 				MonsterTable.Row r = catalog[_pickMonsterIdx];
 				string duel = r.IsMagic ? "魔法" : "力量";
-			_placementHint.Text =
-				$"将放置：「{r.Name}」（{duel}）· {r.Power} 战力 — 同一格再点相同怪物可移除；地图上右键可取消选中";
+				_placementHint.Text =
+					$"将放置：「{r.Name}」（{duel}）· 力量战力 {r.PowerStr} · 魔法战力 {r.PowerMag} — 同一格再点相同怪物可移除；地图上右键可取消选中";
 			}
 			else
 				_placementHint.Text = "怪物表与界面不同步；请重启编辑器或重新导表。";
@@ -1097,15 +1097,8 @@ public partial class LevelEditor : Control
 				}
 			}
 
-			_ev[ck] = new Godot.Collections.Dictionary
-			{
-				["monster_id"] = t.Id,
-				["type"] = t.IsMagic ? "monster_mag" : "monster_str",
-				["value"] = t.Power,
-				["icon"] = t.IconPath,
-				["name"] = t.Name,
-				["description"] = t.Description,
-			};
+			_ev[ck] = new Godot.Collections.Dictionary { ["monster_id"] = t.Id };
+			MonsterTable.EnrichMonsterEvent(_ev[ck].AsGodotDictionary());
 			return;
 		}
 
@@ -1245,6 +1238,13 @@ public partial class LevelEditor : Control
 		foreach (Node ch in icons.GetChildren())
 			ch.QueueFree();
 
+		Node2D? badgeOverlay = GetNodeOrNull<Node2D>("HBox/ViewportContainer/Viewport/World/MonsterBadgeOverlay");
+		if (badgeOverlay != null)
+		{
+			foreach (Node ch in badgeOverlay.GetChildren())
+				ch.QueueFree();
+		}
+
 		foreach (Variant vk in _ev.Keys)
 		{
 			string ck = vk.AsString();
@@ -1254,19 +1254,16 @@ public partial class LevelEditor : Control
 			if (DictStr(evForIcon, "type", "") == "altar")
 				evForIcon["altar_used"] = false;
 
-			var spr = new Sprite2D();
-			spr.Texture = HexEventMarker.TextureForEventDict(evForIcon);
-
-			if (spr.Texture != null)
-			{
-				spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
-				spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
-			}
+			var host = EventWorldIconFactory.BuildIconRoot(evForIcon, HexEventMarker.EventIconSpriteScale);
 
 			Vector2I c = HexGridUtil.ParseKey(ck);
-			spr.Name = $"Pv_{c.X}_{c.Y}";
-			spr.Position = _terrain!.MapToLocal(c);
-			icons.AddChild(spr);
+			host.Name = $"Pv_{c.X}_{c.Y}";
+			host.Position = _terrain!.MapToLocal(c);
+			icons.AddChild(host);
+
+			if (badgeOverlay != null &&
+			    host.GetNodeOrNull<Sprite2D>(EventWorldIconFactory.MonsterBodyNodeName) != null)
+				EventWorldIconFactory.ReparentMonsterStatBadges(host, badgeOverlay, EventWorldIconFactory.CellKeyMetaName, ck);
 		}
 
 		if (_ghost != null)

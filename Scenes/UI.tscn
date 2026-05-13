@@ -5,10 +5,9 @@
 [ext_resource type="Texture2D" uid="uid://dds7p2r5xpduq" path="res://Art/UI/mainUI/_HealthBar.png" id="3_j04uc"]
 [ext_resource type="Texture2D" uid="uid://ccgckxgtqou2q" path="res://Art/UI/mainUI/H&MBorder1.png" id="4_vqx31"]
 [ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="5_b1goy"]
-[ext_resource type="Texture2D" uid="uid://dbipcuuw8jsmw" path="res://Art/UI/mainUI/Buff.png" id="6_n04ve"]
-[ext_resource type="Texture2D" uid="uid://c8xs5yfohbhys" path="res://Art/UI/mainUI/BuffBar.png" id="7_wi7yl"]
 [ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="8_5q4fb"]
-[ext_resource type="Texture2D" uid="uid://k0qi4ou8ilg6" path="res://Art/UI/mainUI/AttributeBorder.png" id="9_mqm5i"]
+[ext_resource type="Texture2D" uid="uid://cpcoy3iwrtvpt" path="res://Art/UI/monster/Physic.png" id="9_us6mg"]
+[ext_resource type="Texture2D" uid="uid://doenc6x8kb6fg" path="res://Art/UI/monster/Magic.png" id="10_8blbl"]
 [ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="10_us6mg"]
 [ext_resource type="Texture2D" uid="uid://3oy2s8l4t07p" path="res://Art/UI/mainUI/Skill.png" id="11_8blbl"]
 [ext_resource type="Texture2D" uid="uid://dkt27qe2mb5l" path="res://Art/UI/mainUI/Skill_cover.png" id="12_bb0on"]
@@ -68,57 +67,40 @@ texture = ExtResource("5_b1goy")
 [node name="Frame" type="Sprite2D" parent="PlayerInfo/MpRow" unique_id=1218036502]
 texture = ExtResource("4_vqx31")
 
-[node name="BuffArea" type="Control" parent="PlayerInfo" unique_id=1277843368]
-anchors_preset = 0
-offset_left = 203.0
-offset_top = 51.0
-offset_right = 499.0
-offset_bottom = 103.0
-
-[node name="SingleBuff" type="Node2D" parent="PlayerInfo/BuffArea" unique_id=454522680]
-position = Vector2(29, 26)
-
-[node name="Buff" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff" unique_id=1956103888]
-texture = ExtResource("6_n04ve")
-
-[node name="Frame" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff" unique_id=179420422]
-texture = ExtResource("7_wi7yl")
-
-[node name="SingleBuff2" type="Node2D" parent="PlayerInfo/BuffArea" unique_id=1971848842]
-position = Vector2(77, 26)
-
-[node name="Buff" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff2" unique_id=1343377260]
-texture = ExtResource("6_n04ve")
-
-[node name="Frame" type="Sprite2D" parent="PlayerInfo/BuffArea/SingleBuff2" unique_id=1096301487]
-texture = ExtResource("7_wi7yl")
-
 [node name="PlayerHeadIcon" type="Sprite2D" parent="PlayerInfo" unique_id=1503968587]
 position = Vector2(97, 102)
 texture = ExtResource("8_5q4fb")
 
 [node name="StrengthAttribute" type="Sprite2D" parent="PlayerInfo" unique_id=1759508622]
-position = Vector2(26, 172)
-texture = ExtResource("9_mqm5i")
+position = Vector2(32, 171)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("9_us6mg")
 
 [node name="TextEdit" type="TextEdit" parent="PlayerInfo/StrengthAttribute" unique_id=1777694062]
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+offset_left = -28.0
+offset_top = -28.0
+offset_right = 28.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.290196, 0.164706, 0.0627451, 1)
+theme_override_font_sizes/font_size = 32
 text = "6"
+editable = false
 wrap_mode = 1
 
 [node name="MagicAttribute" type="Sprite2D" parent="PlayerInfo" unique_id=831436765]
-position = Vector2(170, 172)
-texture = ExtResource("9_mqm5i")
+position = Vector2(160, 167)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("10_8blbl")
 
 [node name="TextEdit" type="TextEdit" parent="PlayerInfo/MagicAttribute" unique_id=1239771282]
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+offset_left = -28.0
+offset_top = -28.0
+offset_right = 28.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.368627, 0.00392157, 0.156863, 1)
+theme_override_font_sizes/font_size = 32
 text = "6"
+editable = false
 wrap_mode = 1
 
 [node name="ActiveSkillSlot" type="Control" parent="." unique_id=1076337301]

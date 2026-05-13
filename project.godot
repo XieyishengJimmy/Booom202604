@@ -15,9 +15,15 @@ run/main_scene="res://Scenes/main_menu.tscn"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://Art/icon.svg"
 
+[audio]
+
+bgm_volume_db=-20.0
+
 [autoload]
 
 RunState="*res://Scripts/autoload/RunState.cs"
+GameBgm="*res://Scripts/autoload/GameBgm.cs"
+GameSfx="*res://Scripts/autoload/GameSfx.cs"
 
 [display]
 

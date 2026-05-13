@@ -10,9 +10,9 @@ public partial class RunState : Node
 	public int PlayerHpMax { get; set; } = 10;
 	public int PlayerHp { get; set; } = 10;
 
-	public int PlayerStr { get; set; } = 2;
+	public int PlayerStr { get; set; } = 1;
 
-	public int PlayerMagic { get; set; } = 2;
+	public int PlayerMagic { get; set; } = 1;
 
 	public int PlayerEnergyMax { get; set; } = 10;
 	public int PlayerEnergy { get; set; }
@@ -43,9 +43,9 @@ public partial class RunState : Node
 	public void ResetRunStats()
 	{
 		PlayerHp = PlayerHpMax;
-		PlayerStr = 2;
+		PlayerStr = 1;
 
-		PlayerMagic = 2;
+		PlayerMagic = 1;
 	}
 
 	/// <summary>每进入一个关卡：<c>PlayerEnergy = 0</c>（不继承法力）；生命值与技能快照由闯关逻辑单独保留。</summary>

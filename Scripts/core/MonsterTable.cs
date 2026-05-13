@@ -14,8 +14,14 @@ public static class MonsterTable
 		public required string Name;
 		public required string Description;
 		public bool IsMagic;
-		public int Power;
+		/// <summary>与力量型玩家属性对标的怪物力量战力（非 0 语义上的「另一侧」由 <see cref="PowerMag"/> 表示）。</summary>
+		public int PowerStr;
+		/// <summary>与魔法型玩家属性对标的怪物魔法战力。</summary>
+		public int PowerMag;
 		public required string IconPath;
+
+		/// <summary>表定义的主检定类型对应的战力（HUD/编辑器摘要）。</summary>
+		public int DominantCombatPower => IsMagic ? PowerMag : PowerStr;
 	}
 
 	static readonly Dictionary<int, Row> ById = new();
@@ -113,19 +119,25 @@ public static class MonsterTable
 				continue;
 			}
 
+			string monsterName = GetStr(d, "name");
+			int legacyPower = ClampMonsterPower(GetInt(d, "power", 1));
+			int powerStr = d.TryGetValue("power_str", out Variant vps)
+				? ClampMonsterPower(LooseIntFromVariant(vps, legacyPower))
+				: legacyPower;
+			int powerMag = d.TryGetValue("power_mag", out Variant vpm)
+				? ClampMonsterPower(LooseIntFromVariant(vpm, legacyPower))
+				: legacyPower;
+
 			var row = new Row
 			{
 				Id = idNum,
-				Name = GetStr(d, "name"),
+				Name = monsterName,
 				Description = GetStr(d, "description"),
-				IsMagic = ParseKind(GetStr(d, "kind")),
-				Power = GetInt(d, "power", 1),
+				IsMagic = ParseKind(GetStr(d, "kind"), monsterName),
+				PowerStr = powerStr,
+				PowerMag = powerMag,
 				IconPath = GetStr(d, "icon"),
 			};
-			if (row.Power < 1)
-				row.Power = 1;
-			if (row.Power > 99)
-				row.Power = 99;
 			ById[row.Id] = row;
 			Order.Add(row);
 		}
@@ -173,9 +185,28 @@ public static class MonsterTable
 			_ => 0,
 		};
 
-	static bool ParseKind(string raw)
+	static int LooseIntFromVariant(Variant v, int fallback)
 	{
-		string z = raw.Trim();
+		int x = LooseIntFromVariant(v);
+		return x > 0 ? x : fallback;
+	}
+
+	static int ClampMonsterPower(int v) => Mathf.Clamp(v, 1, 99);
+
+	/// <summary>
+	/// 判定怪物为「魔法检定」还是「力量检定」。优先根据 <paramref name="monsterName"/> 前缀纠正常见的
+	/// 「怪物名以魔法开头但 kind 误填力量」表格错误；再解析 kind 字段。
+	/// </summary>
+	static bool ParseKind(string kindRaw, string monsterName)
+	{
+		string n = monsterName.Trim();
+		if (n.StartsWith("魔法", System.StringComparison.Ordinal) ||
+		    n.StartsWith("魔力", System.StringComparison.Ordinal))
+			return true;
+		if (n.StartsWith("力量", System.StringComparison.Ordinal))
+			return false;
+
+		string z = kindRaw.Trim();
 		if (string.IsNullOrEmpty(z))
 			return false;
 		if (z.Contains("魔") || z.Contains("魔法") || z.Contains("精神"))
@@ -234,9 +265,44 @@ public static class MonsterTable
 
 		ev["monster_id"] = row.Id;
 		ev["type"] = row.IsMagic ? "monster_mag" : "monster_str";
-		ev["value"] = row.Power;
+		ev["value_str"] = row.PowerStr;
+		ev["value_mag"] = row.PowerMag;
 		ev["icon"] = row.IconPath;
 		ev["name"] = row.Name;
 		ev["description"] = row.Description;
+		SyncMonsterEventFightValue(ev);
+	}
+
+	/// <summary>
+	/// 根据当前 <c>type</c>（monster_str / monster_mag）把 <c>value</c> 设为对应的怪物战力；
+	/// 力量对决只读 <c>value_str</c>，魔法对决只读 <c>value_mag</c>，互不当作 0 混算。
+	/// </summary>
+	public static void SyncMonsterEventFightValue(Godot.Collections.Dictionary ev)
+	{
+		if (!ev.TryGetValue("type", out Variant tyVar) || tyVar.VariantType != Variant.Type.String)
+			return;
+		string ty = tyVar.AsString();
+		if (ty is not ("monster_str" or "monster_mag"))
+			return;
+
+		int fb = ReadEvInt(ev, "value", 1);
+		int vs = ReadEvInt(ev, "value_str", fb);
+		int vm = ReadEvInt(ev, "value_mag", fb);
+		ev["value"] = ty == "monster_mag" ? vm : vs;
+	}
+
+	static int ReadEvInt(Godot.Collections.Dictionary ev, string key, int def)
+	{
+		if (!ev.TryGetValue(key, out Variant v))
+			return def;
+		return v.VariantType switch
+		{
+			Variant.Type.Int => v.AsInt32(),
+			Variant.Type.Float => (int)v.AsDouble(),
+			Variant.Type.String when int.TryParse(v.AsString().Trim(), System.Globalization.NumberStyles.Integer,
+				System.Globalization.CultureInfo.InvariantCulture, out int p) =>
+				p,
+			_ => def,
+		};
 	}
 }

@@ -37,6 +37,9 @@ public partial class Gameplay : Node2D
 	[Export(PropertyHint.Range, "1.01,2")]
 	public float GameplayCameraZoomWheelFactor { get; set; } = 1.12f;
 
+	/// <summary>主动技能槽 <c>SingleSkillN/SkillIcon</c> 下用于等比缩放显示的技能图节点（与 <c>UI.tscn</c> 中槽位视觉一致）。</summary>
+	const string ActiveSkillIconTexRel = "/SkillIcon/IconTex";
+
 	TileMapLayer? _terrain;
 	FogLayer? _fog;
 	BossWarningLayer? _bossWarn;
@@ -155,7 +158,7 @@ public partial class Gameplay : Node2D
 	/// <summary>每只已亮相怪物格子 key → 曾为其加锁的邻居迷雾格。</summary>
 	readonly Dictionary<string, HashSet<string>> _monsterNeighborFogLocksByAnchor = [];
 
-	static readonly StringName CellKeyMeta = new("cell_key");
+	static readonly StringName CellKeyMeta = EventWorldIconFactory.CellKeyMetaName;
 
 	/// <summary>逻辑上已无迷雾，但消散动画尚未播完的格（_world 上与仍有迷雾同属「遮挡物件」）。</summary>
 	readonly HashSet<string> _fogRevealVisualPendingCells = [];
@@ -193,16 +196,52 @@ public partial class Gameplay : Node2D
 		if (icons == null)
 			return;
 
+		Node2D? badgeOverlay = GetNodeOrNull<Node2D>("World/MonsterBadgeOverlay");
+
 		foreach (Node ch in icons.GetChildren())
 		{
 			if (!ch.HasMeta(CellKeyMeta))
 				continue;
 			string ck = ch.GetMeta(CellKeyMeta).AsString();
+			bool show = !CellOccludesFoggedWorldDecor(ck);
 			if (ch is CanvasItem cv)
-				cv.Visible = !CellOccludesFoggedWorldDecor(ck);
+				cv.Visible = show;
+			if (badgeOverlay != null && ch is Node2D nd &&
+			    nd.GetNodeOrNull<Sprite2D>(EventWorldIconFactory.MonsterBodyNodeName) != null)
+				SyncMonsterBadgeFogVisibility(badgeOverlay, ck, show);
 		}
 
 		RefreshBlockSpritesFogVisibility();
+	}
+
+	void SyncMonsterBadgeFogVisibility(Node2D overlay, string cellKey, bool cellUnobstructed)
+	{
+		bool showPhys = false;
+		bool showMag = false;
+		if (_events.TryGetValue(cellKey, out Variant evVar))
+		{
+			Godot.Collections.Dictionary ev = evVar.AsGodotDictionary();
+			string ty = GetString(ev, "type");
+			showPhys = cellUnobstructed && ty == "monster_str";
+			showMag = cellUnobstructed && ty == "monster_mag";
+		}
+
+		foreach (Node ch in overlay.GetChildren())
+		{
+			if (!ch.HasMeta(CellKeyMeta) || ch.GetMeta(CellKeyMeta).AsString() != cellKey)
+				continue;
+			if (ch is not CanvasItem cv)
+				continue;
+			string kind = ch.HasMeta(EventWorldIconFactory.StatBadgeKindMeta)
+				? ch.GetMeta(EventWorldIconFactory.StatBadgeKindMeta).AsString()
+				: "";
+			if (kind == EventWorldIconFactory.StatBadgeKindPhysValue || ch.Name == EventWorldIconFactory.PhysBadgeNodeName)
+				cv.Visible = showPhys;
+			else if (kind == EventWorldIconFactory.StatBadgeKindMagValue || ch.Name == EventWorldIconFactory.MagBadgeNodeName)
+				cv.Visible = showMag;
+			else
+				cv.Visible = false;
+		}
 	}
 
 	void RefreshBlockSpritesFogVisibility()
@@ -418,7 +457,7 @@ public partial class Gameplay : Node2D
 			_camera.Enabled = true;
 
 		_hudUi = GetNode<Hud>("UICanvas/HUD");
-		var portraitTex = GD.Load<Texture2D>("res://Art/Role/player.png");
+		var portraitTex = GD.Load<Texture2D>("res://Art/Player/head.png");
 		if (portraitTex != null)
 			_hudUi.SetPortrait(portraitTex);
 		_fog = GetNode<FogLayer>("World/FogRoot");
@@ -511,6 +550,9 @@ public partial class Gameplay : Node2D
 				skillList.Add(pid);
 			foreach (int aid in activeList)
 				skillList.Add(aid);
+			// 新开局：默认已装备主动技能 9，并从随机获取池中移除以免重复获得。
+			askillList.Add(9);
+			skillList.Remove(9);
 		}
 
 		ApplyLevel(lvl);
@@ -583,6 +625,13 @@ public partial class Gameplay : Node2D
 
 		foreach (Node ch in GetNode("World/EventIcons").GetChildren())
 			ch.QueueFree();
+
+		Node2D? badgeOv = GetNodeOrNull<Node2D>("World/MonsterBadgeOverlay");
+		if (badgeOv != null)
+		{
+			foreach (Node ch in badgeOv.GetChildren())
+				ch.QueueFree();
+		}
 
 		_campaignVictoryPickupPhase = false;
 		_campaignVictoryExitsSpawned = false;
@@ -753,33 +802,19 @@ public partial class Gameplay : Node2D
 
 			Godot.Collections.Dictionary ev = _events[vk].AsGodotDictionary();
 
-			var spr = new Sprite2D();
-
-			spr.Texture = HexEventMarker.TextureForEventDict(ev);
-
-			if (spr.Texture != null)
-			{
-
-				spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
-
-				spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
-
-
-
-			}
-
-
-
+			var host = EventWorldIconFactory.BuildIconRoot(ev, HexEventMarker.EventIconSpriteScale);
 
 			Vector2I cell = HexGridUtil.ParseKey(ckStr);
 
-			spr.Name = $"Ev_{cell.X}_{cell.Y}";
+			host.Name = $"Ev_{cell.X}_{cell.Y}";
 
-			spr.SetMeta(CellKeyMeta, ckStr);
+			host.SetMeta(CellKeyMeta, ckStr);
 
-			spr.Position = _terrain!.MapToLocal(cell);
+			host.Position = _terrain!.MapToLocal(cell);
 
-			icons.AddChild(spr);
+			icons.AddChild(host);
+
+			TryReparentMonsterStatBadges(host, ckStr);
 
 		}
 
@@ -1169,39 +1204,13 @@ public partial class Gameplay : Node2D
 
 		DestroyEventIconsForCellKey(icons, ck);
 
+		var host = EventWorldIconFactory.BuildIconRoot(copy, HexEventMarker.EventIconSpriteScale);
+		host.Name = $"Ev_{cell.X}_{cell.Y}";
+		host.SetMeta(CellKeyMeta, ck);
+		host.Position = _terrain!.MapToLocal(cell);
+		icons.AddChild(host);
 
-		var spr = new Sprite2D();
-
-
-		spr.Texture = HexEventMarker.TextureForEventDict(copy);
-
-
-		if (spr.Texture != null)
-
-
-		{
-
-			spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
-
-
-			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
-
-
-		}
-
-
-
-
-		spr.Name = $"Ev_{cell.X}_{cell.Y}";
-
-
-		spr.SetMeta(CellKeyMeta, ck);
-
-
-		spr.Position = _terrain!.MapToLocal(cell);
-
-
-		icons.AddChild(spr);
+		TryReparentMonsterStatBadges(host, ck);
 
 
 	}
@@ -1386,6 +1395,30 @@ public partial class Gameplay : Node2D
 
 
 
+	/// <summary>数字键 1–6：触发当前已解锁的第 1–6 个主动技能槽（与 HUD 按钮一致）。</summary>
+	bool TryTriggerActiveSkillHotkey(int slot1To6)
+	{
+		if (_busyPlayerAction || _gameEnding || _isWaitingForHighlightClick)
+			return false;
+		if (_turn != Turn.Player || _spentBasic)
+			return false;
+		if (GetNodeOrNull<CanvasItem>("UICanvas/HUD/SkillChoose") is { Visible: true })
+			return false;
+		if (slot1To6 < 1 || slot1To6 > askillList.Count || slot1To6 > 6)
+			return false;
+
+		switch (slot1To6)
+		{
+			case 1: click_active1(); return true;
+			case 2: click_active2(); return true;
+			case 3: click_active3(); return true;
+			case 4: click_active4(); return true;
+			case 5: click_active5(); return true;
+			case 6: click_active6(); return true;
+			default: return false;
+		}
+	}
+
 	public override void _UnhandledInput(InputEvent @event)
 
 
@@ -1396,6 +1429,25 @@ public partial class Gameplay : Node2D
 			GetViewport()?.SetInputAsHandled();
 
 			return;
+		}
+
+		if (@event is InputEventKey keyEv && keyEv.Pressed && !keyEv.Echo)
+		{
+			int? hotSlot = keyEv.Keycode switch
+			{
+				Key.Key1 => 1,
+				Key.Key2 => 2,
+				Key.Key3 => 3,
+				Key.Key4 => 4,
+				Key.Key5 => 5,
+				Key.Key6 => 6,
+				_ => null,
+			};
+			if (hotSlot is int slot && TryTriggerActiveSkillHotkey(slot))
+			{
+				GetViewport()?.SetInputAsHandled();
+				return;
+			}
 		}
 
 		if (@event is InputEventMouseButton mb1 && mb1.Pressed && mb1.ButtonIndex == MouseButton.Left)
@@ -1745,6 +1797,8 @@ public partial class Gameplay : Node2D
 			string root = "UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + j;
 			if (GetNodeOrNull<TextureRect>(root + "/SkillHi") is { } shi)
 				shi.Visible = false;
+			if (GetNodeOrNull<TextureRect>(root + ActiveSkillIconTexRel) is { } itex)
+				itex.Texture = null;
 			if (GetNodeOrNull<Button>(root + "/SkillIcon") is { } iconBtn)
 				iconBtn.Icon = null;
 		}
@@ -1760,7 +1814,7 @@ public partial class Gameplay : Node2D
 				if (askilldict["ID"].AsInt32() != sid)
 					continue;
 				string targetAddress = askilldict["address"].AsString();
-				GetNode<Button>(rootPath + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
+				GetNode<TextureRect>(rootPath + ActiveSkillIconTexRel).Texture = GD.Load<Texture2D>(targetAddress);
 				GetNode<TextureRect>(rootPath + "/SkillHi").Visible = true;
 				break;
 			}
@@ -2097,7 +2151,7 @@ public partial class Gameplay : Node2D
 		_playerSprite.FlipH = !HexStepMatchesSpriteDefaultLeftFacing(dir);
 	}
 
-	async Task ApproachCellWithWalkAsync(Vector2I fromCell, Vector2I toCell)
+	async Task ApproachCellWithWalkAsync(Vector2I fromCell, Vector2I toCell, bool playWalkSfxDuringMove = true)
 	{
 		if (_playerSprite == null || _terrain == null)
 			return;
@@ -2106,6 +2160,9 @@ public partial class Gameplay : Node2D
 			return;
 
 		ApplyPlayerFacingForAdjacentStep(fromCell, toCell);
+
+		if (playWalkSfxDuringMove)
+			GameSfx.PlayWalk();
 
 		Vector2 baseFrom = _terrain.MapToLocal(fromCell);
 		Vector2 baseTo = _terrain.MapToLocal(toCell);
@@ -2216,12 +2273,15 @@ public partial class Gameplay : Node2D
 		Godot.Collections.Dictionary ev = (Godot.Collections.Dictionary)_events[ck].AsGodotDictionary().Duplicate();
 
 		string t = GetString(ev, "type");
+		if (t is "monster_str" or "monster_mag")
+			MonsterTable.SyncMonsterEventFightValue(ev);
 
 		Vector2I approachOrigin = _playerCell;
 
 		if (t != "altar")
 		{
-			await ApproachCellWithWalkAsync(approachOrigin, cell);
+			bool walkSfx = t is not ("monster_str" or "monster_mag");
+			await ApproachCellWithWalkAsync(approachOrigin, cell, walkSfx);
 			_playerCell = cell;
 			SetPlayerIdleVisual();
 			SnapPlayer();
@@ -2232,27 +2292,31 @@ public partial class Gameplay : Node2D
 
 			case "monster_str":
 			case "monster_mag":
-				if (strBuff)
-				{
-					RunState.Instance.PlayerStr += aconfigDict[4].AsInt32();
-				}
+			{
+				bool hadStrBuff = strBuff;
+				bool hadMagicBuff = magicBuff;
+				int strBonus = 0;
+				int magBonus = 0;
+				if (hadStrBuff && aconfigDict.TryGetValue(4, out Variant strCfgV))
+					strBonus = strCfgV.AsInt32();
+				if (hadMagicBuff && aconfigDict.TryGetValue(5, out Variant magCfgV))
+					magBonus = magCfgV.AsInt32();
+				if (strBonus != 0)
+					RunState.Instance.PlayerStr += strBonus;
+				if (magBonus != 0)
+					RunState.Instance.PlayerMagic += magBonus;
 
-				if (magicBuff)
-				{
-					RunState.Instance.PlayerMagic += aconfigDict[5].AsInt32();
-				}
+				await ResolveFightAsync(cell, ev, approachOrigin);
 
-				await ResolveFightAsync(cell, ev, t == "monster_mag", approachOrigin);
-
-				if (strBuff)
-				{
-					RunState.Instance.PlayerStr -= aconfigDict[4].AsInt32();
-				}
-
-				if (magicBuff)
-				{
-					RunState.Instance.PlayerMagic -= aconfigDict[5].AsInt32();
-				}
+				if (strBonus != 0)
+					RunState.Instance.PlayerStr -= strBonus;
+				if (magBonus != 0)
+					RunState.Instance.PlayerMagic -= magBonus;
+				if (hadStrBuff)
+					strBuff = false;
+				if (hadMagicBuff)
+					magicBuff = false;
+			}
 
 				RunState.Instance.ClampHp();
 
@@ -2383,6 +2447,8 @@ public partial class Gameplay : Node2D
 
 				_events[ck] = ev;
 				RefreshBossEventIcon(ck);
+
+				GameSfx.PlayWalk();
 
 				break;
 
@@ -2642,9 +2708,12 @@ public partial class Gameplay : Node2D
 				if (id == skillId)
 				{
 					string targetAddress = askilldict["address"].AsString();
-					GetNode<Button>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
-					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillHi").Visible = true;
-					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillCdCover").Visible = false;
+					string slotRoot = "UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname;
+					GetNode<TextureRect>(slotRoot + ActiveSkillIconTexRel).Texture = GD.Load<Texture2D>(targetAddress);
+					if (GetNodeOrNull<Button>(slotRoot + "/SkillIcon") is { } skBtn)
+						skBtn.Icon = null;
+					GetNode<TextureRect>(slotRoot + "/SkillHi").Visible = true;
+					GetNode<TextureRect>(slotRoot + "/SkillCdCover").Visible = false;
 					break;
 				}
 			}
@@ -2670,10 +2739,10 @@ public partial class Gameplay : Node2D
 
 
 
-	async Task ResolveFightAsync(Vector2I cell, Godot.Collections.Dictionary ev, bool useMagic,
-		Vector2I lossReturnCell)
+	async Task ResolveFightAsync(Vector2I cell, Godot.Collections.Dictionary ev, Vector2I lossReturnCell)
 	{
-		int mv = GetInt(ev, "value", 1);
+		bool useMagic = GetString(ev, "type") == "monster_mag";
+		int monsterMv = useMagic ? GetInt(ev, "value_mag", GetInt(ev, "value", 1)) : GetInt(ev, "value_str", GetInt(ev, "value", 1));
 		int attr = useMagic ? RunState.Instance.PlayerMagic : RunState.Instance.PlayerStr;
 		string label = useMagic ? "魔法" : "力量";
 		string foe = GetString(ev, "name");
@@ -2682,9 +2751,10 @@ public partial class Gameplay : Node2D
 		string snippet = GetString(ev, "description");
 		string extra = string.IsNullOrEmpty(snippet) ? "\n" : $"\n{snippet}\n";
 
-		if (attr >= mv)
+		if (attr >= monsterMv)
 		{
-			await ToastAsync($"{foe} · 战胜", $"{extra}{label}检定：你的 {attr} ≥ 战力 {mv}。");
+			GameSfx.PlayAttack();
+			await ToastAsync($"{foe} · 战胜", $"{extra}{label}对决：你的{label} {attr} ≥ 怪物{label}战力 {monsterMv}。");
 			if(corpseHp == true)
 			{
 				if (RunState.Instance.PlayerHp + pconfigDict[202].AsInt32() > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
@@ -2712,8 +2782,9 @@ public partial class Gameplay : Node2D
 			return;
 		}
 
-		await ToastAsync($"{foe} · 落败", $"{extra}{label}检定：你的 {attr} < 战力 {mv}。");
-		int loss = Mathf.Max(mv - attr, 1);
+		GameSfx.PlayLose();
+		await ToastAsync($"{foe} · 落败", $"{extra}{label}对决：你的{label} {attr} < 怪物{label}战力 {monsterMv}。");
+		int loss = Mathf.Max(monsterMv - attr, 1);
 
 		RunState.Instance.PlayerHp -= loss;
 
@@ -2873,53 +2944,65 @@ public partial class Gameplay : Node2D
 		{
 			if (!ch.HasMeta(CellKeyMeta) || ch.GetMeta(CellKeyMeta).AsString() != ck)
 				continue;
-			if (ch is Sprite2D spr)
+			if (ch is Node2D nd)
 			{
 				Godot.Collections.Dictionary ev = _events[ck].AsGodotDictionary();
-				spr.Texture = HexEventMarker.TextureForEventDict(ev);
+				Node2D? overlay = GetNodeOrNull<Node2D>("World/MonsterBadgeOverlay");
+				EventWorldIconFactory.RefreshIconFromEvent(nd, ev, overlay, CellKeyMeta, ck);
 			}
 		}
 	}
 
 	/// <summary>移除该格索引下所有事件图标节点（避免出现重复 Sprite 导致 EraseEvent 只删掉其一）。</summary>
-	static void DestroyEventIconsForCellKey(Node2D iconsRoot, string ck)
+	void DestroyEventIconsForCellKey(Node2D iconsRoot, string ck)
 	{
+		Node2D? badgeOverlay = GetNodeOrNull<Node2D>("World/MonsterBadgeOverlay");
 		foreach (Node ch in iconsRoot.GetChildren())
 		{
 			if (!ch.HasMeta(CellKeyMeta) || ch.GetMeta(CellKeyMeta).AsString() != ck)
 				continue;
 			ch.QueueFree();
 		}
+
+		if (badgeOverlay != null)
+		{
+			foreach (Node ch in badgeOverlay.GetChildren())
+			{
+				if (!ch.HasMeta(CellKeyMeta) || ch.GetMeta(CellKeyMeta).AsString() != ck)
+					continue;
+				ch.QueueFree();
+			}
+		}
 	}
 
-	static Godot.Collections.Dictionary BuildMonsterEncounterDict(MonsterTable.Row row) =>
-		new()
-		{
-			["monster_id"] = row.Id,
-			["type"] = row.IsMagic ? "monster_mag" : "monster_str",
-			["value"] = row.Power,
-			["icon"] = row.IconPath,
-			["name"] = row.Name,
-			["description"] = row.Description,
-		};
+	void TryReparentMonsterStatBadges(Node2D host, string cellKey)
+	{
+		Node2D? ov = GetNodeOrNull<Node2D>("World/MonsterBadgeOverlay");
+		if (ov == null)
+			return;
+		if (host.GetNodeOrNull<Sprite2D>(EventWorldIconFactory.MonsterBodyNodeName) == null)
+			return;
+		EventWorldIconFactory.ReparentMonsterStatBadges(host, ov, CellKeyMeta, cellKey);
+	}
+
+	static Godot.Collections.Dictionary BuildMonsterEncounterDict(MonsterTable.Row row)
+	{
+		var d = new Godot.Collections.Dictionary { ["monster_id"] = row.Id };
+		MonsterTable.EnrichMonsterEvent(d);
+		return d;
+	}
 
 	void SpawnSingleEventIcon(Node2D iconsRoot, string cellKey, Godot.Collections.Dictionary ev)
 	{
 		DestroyEventIconsForCellKey(iconsRoot, cellKey);
 		Vector2I cell = HexGridUtil.ParseKey(cellKey);
 
-		var spr = new Sprite2D();
-		spr.Texture = HexEventMarker.TextureForEventDict(ev);
-		if (spr.Texture != null)
-		{
-			spr.Scale = new Vector2(HexEventMarker.EventIconSpriteScale, HexEventMarker.EventIconSpriteScale);
-			spr.Offset = new Vector2(0f, -spr.Texture.GetHeight() * 0.05f);
-		}
-
-		spr.Name = $"Ev_{cell.X}_{cell.Y}";
-		spr.SetMeta(CellKeyMeta, cellKey);
-		spr.Position = _terrain!.MapToLocal(cell);
-		iconsRoot.AddChild(spr);
+		var host = EventWorldIconFactory.BuildIconRoot(ev, HexEventMarker.EventIconSpriteScale);
+		host.Name = $"Ev_{cell.X}_{cell.Y}";
+		host.SetMeta(CellKeyMeta, cellKey);
+		host.Position = _terrain!.MapToLocal(cell);
+		iconsRoot.AddChild(host);
+		TryReparentMonsterStatBadges(host, cellKey);
 	}
 
 	/// <summary>被动 205「尸横遍野」：BOSS 释放表驱动技能后，在当次预警范围内随机空事件格留下尸体。</summary>
@@ -3012,7 +3095,6 @@ public partial class Gameplay : Node2D
 			if (row == null)
 				break;
 			Godot.Collections.Dictionary ev = BuildMonsterEncounterDict(row);
-			MonsterTable.EnrichMonsterEvent(ev);
 			_events[ck] = ev;
 			SpawnSingleEventIcon(iconsRoot, ck, ev);
 		}
@@ -3030,6 +3112,7 @@ public partial class Gameplay : Node2D
 		string tip = string.IsNullOrWhiteSpace(_bossSkillText)
 			? "BOSS 释放了技能。"
 			: _bossSkillText;
+		GameSfx.PlayBossSkill();
 		await ToastAsync(_bossName, tip);
 
 		if (_bossUsesTableSkill && BossSkillParsing.TryParseFogMonsterSkill(_bossSkillDetail, _bossSkillText,
@@ -3064,8 +3147,9 @@ public partial class Gameplay : Node2D
 			_bossWarn?.ClearAll();
 			_bossMeter = 0f;
 			await MaybeFogDamageAsync();
-			return;
 		}
+		else
+		{
 
 		int fx = ResolveBossEffectKind();
 
@@ -3085,7 +3169,12 @@ public partial class Gameplay : Node2D
 						string ty = GetString(ev, "type");
 						if (ty is "monster_str" or "monster_mag")
 						{
-							ev["value"] = GetInt(ev, "value", 1) + 1;
+							int fb = GetInt(ev, "value", 1);
+							int vs = GetInt(ev, "value_str", fb) + 1;
+							int vm = GetInt(ev, "value_mag", fb) + 1;
+							ev["value_str"] = vs;
+							ev["value_mag"] = vm;
+							MonsterTable.SyncMonsterEventFightValue(ev);
 							_events[ck] = ev;
 							RefreshBossEventIcon(ck);
 						}
@@ -3103,6 +3192,7 @@ public partial class Gameplay : Node2D
 							ev["type"] = "monster_str";
 						else
 							break;
+						MonsterTable.SyncMonsterEventFightValue(ev);
 						_events[ck] = ev;
 						RefreshBossEventIcon(ck);
 					}
@@ -3124,6 +3214,7 @@ public partial class Gameplay : Node2D
 		_bossWarn?.ClearAll();
 		_bossMeter = 0f;
 		await MaybeFogDamageAsync();
+	}
 	}
 
 	async Task BossTurnAsync()
@@ -3158,6 +3249,7 @@ public partial class Gameplay : Node2D
 			string tip = string.IsNullOrWhiteSpace(_bossSkillText)
 				? "技能占位：套上迷雾并可能造成迷雾结算。"
 				: _bossSkillText;
+			GameSfx.PlayBossSkill();
 			await ToastAsync(_bossName, tip);
 			string pk = HexGridUtil.CellKey(_playerCell);
 			_fogState[pk] = true;
@@ -3706,6 +3798,21 @@ public partial class Gameplay : Node2D
 		powerCheck();
 	}
 
+	/// <summary>主动技能结算后：清雾可能直接通关，与交互/移动路径一致须跑胜利判定。</summary>
+	async Task AfterChosenActiveSkillResolvedAsync()
+	{
+		GameSfx.PlaySkill();
+		RunState.Instance.ClampHp();
+		RefreshHud();
+		await CheckFailWinAsync();
+		if (_gameEnding)
+			return;
+		await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
+		if (_gameEnding)
+			return;
+		await FinishIfNeededAsync();
+	}
+
 	/// <summary>异步 void 技能按钮入口：耗能必须与当前 <see cref="skillchoose"/> 槽位对应 <see cref="askillList"/> 技能一致。</summary>
 	async void click_active1()
 	{
@@ -3721,6 +3828,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3744,6 +3852,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3766,6 +3875,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3788,6 +3898,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3810,6 +3921,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3832,6 +3944,7 @@ public partial class Gameplay : Node2D
 				GetNode<Label>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/CdLabel").Text = acdDict[sid].ToString();
 			DeductEnergyAfterChosenActiveSkill();
 			ischose = false;
+			await AfterChosenActiveSkillResolvedAsync();
 		}
 		else
 		{
@@ -3861,6 +3974,7 @@ public partial class Gameplay : Node2D
 				_highlightedCells.Clear();
 				return;
 			case 2:
+			case 9:
 				Vector2I mouseCell2 = GetMouseHoverCell();
 
 				Vector2I targetCell2 = await WaitForHighlightClick(null);
@@ -3941,6 +4055,9 @@ public partial class Gameplay : Node2D
 					{
 						ev["type"] = "monster_str";
 					}
+					else
+						continue;
+					MonsterTable.SyncMonsterEventFightValue(ev);
 					_events[cellKey] = ev;
 				}
 
@@ -3980,26 +4097,27 @@ public partial class Gameplay : Node2D
 				}
 				break;
 			case 2:
+			case 9:
+			{
 				string centerKey2 = HexGridUtil.CellKey(centerCell);
+				int lineLen = aconfigDict.ContainsKey(askill) ? Mathf.Max(1, aconfigDict[askill].AsInt32()) : 1;
 				if (_valid.ContainsKey(centerKey2))
 				{
 					foreach (Vector2I neighbor in HexGridUtil.Neighbors(_terrain!, _playerCell))
 					{
-						GD.Print($"  邻居: ({neighbor.X}, {neighbor.Y})");
 						if (HexGridUtil.IsSameCell(neighbor, HexGridUtil.ParseKey(centerKey2)))
 						{
 							Vector2I direction = GetDirection(_playerCell, HexGridUtil.ParseKey(centerKey2));
-							List<Vector2I> lineCells = GetLineCells(direction, aconfigDict[2].AsInt32());
+							List<Vector2I> lineCells = GetLineCells(direction, lineLen);
 
 							foreach (Vector2I cell in lineCells)
-							{
-								cellsToHighlight.Add(HexGridUtil.CellKey(cell));  // 转成 string
-							}
+								cellsToHighlight.Add(HexGridUtil.CellKey(cell));
 						}
 					}
-					
 				}
+
 				break;
+			}
 			case 7:
 				string centerKey7 = HexGridUtil.CellKey(centerCell);
 				if (_valid.ContainsKey(centerKey7))

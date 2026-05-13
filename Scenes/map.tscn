@@ -5,6 +5,9 @@
 [ext_resource type="Texture2D" uid="uid://5fef504lbf7a" path="res://Art/Player/idel01.png" id="3_myvm1"]
 [ext_resource type="Texture2D" uid="uid://3bcnisatkyoj" path="res://Art/Player/ONmap.png" id="4_q0mm3"]
 [ext_resource type="Texture2D" uid="uid://d0m1iod00xe6p" path="res://Art/UI/map/ClickIndicator.png" id="5_q0mm3"]
+[ext_resource type="Texture2D" uid="uid://5y6fupxsoijq" path="res://Art/monsterIcon/2001.png" id="6_6q3n4"]
+[ext_resource type="Texture2D" uid="uid://cpcoy3iwrtvpt" path="res://Art/UI/monster/Physic.png" id="7_4c2oa"]
+[ext_resource type="Texture2D" uid="uid://doenc6x8kb6fg" path="res://Art/UI/monster/Magic.png" id="8_olcgw"]
 
 [node name="Map" type="Node2D" unique_id=2056465608]
 
@@ -49,9 +52,20 @@ position = Vector2(550, 0)
 texture = ExtResource("5_q0mm3")
 
 [node name="ClickIndicator2" type="Sprite2D" parent="." unique_id=1948460793]
-position = Vector2(0, 0)
 texture = ExtResource("5_q0mm3")
 
 [node name="ClickIndicator3" type="Sprite2D" parent="." unique_id=1539400528]
 position = Vector2(275, 385)
 texture = ExtResource("5_q0mm3")
+
+[node name="2001" type="Sprite2D" parent="." unique_id=92099251]
+position = Vector2(0, -143)
+texture = ExtResource("6_6q3n4")
+
+[node name="Physic" type="Sprite2D" parent="." unique_id=1323171524]
+position = Vector2(-187, -356)
+texture = ExtResource("7_4c2oa")
+
+[node name="Magic" type="Sprite2D" parent="." unique_id=1235826164]
+position = Vector2(174, -361)
+texture = ExtResource("8_olcgw")

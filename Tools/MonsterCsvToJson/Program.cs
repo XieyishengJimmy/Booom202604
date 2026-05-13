@@ -338,6 +338,20 @@ static int RunMonsters(string rootDir)
 			["power"] = power,
 			["icon"] = icon,
 		};
+		if (cmap.ContainsKey("力量战力"))
+		{
+			string sPs = GetCellTrim(ws, r, cmap, "力量战力");
+			if (int.TryParse(sPs, out int psi) && psi >= 1)
+				o["power_str"] = psi;
+		}
+
+		if (cmap.ContainsKey("魔法战力"))
+		{
+			string sPm = GetCellTrim(ws, r, cmap, "魔法战力");
+			if (int.TryParse(sPm, out int pmi) && pmi >= 1)
+				o["power_mag"] = pmi;
+		}
+
 		arr.Add(o);
 	}
 

@@ -52,6 +52,10 @@ script = ExtResource("3")
 [node name="PlayerGhost" type="Sprite2D" parent="HBox/ViewportContainer/Viewport/World"]
 centered = true
 
+[node name="MonsterBadgeOverlay" type="Node2D" parent="HBox/ViewportContainer/Viewport/World"]
+z_as_relative = false
+z_index = 200
+
 [node name="Sidebar" type="Panel" parent="HBox"]
 layout_mode = 2
 clip_contents = true
