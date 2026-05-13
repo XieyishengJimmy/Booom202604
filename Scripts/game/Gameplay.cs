@@ -207,7 +207,7 @@ public partial class Gameplay : Node2D
 			if (ch is CanvasItem cv)
 				cv.Visible = show;
 			if (badgeOverlay != null && ch is Node2D nd &&
-			    nd.GetNodeOrNull<Sprite2D>(EventWorldIconFactory.MonsterBodyNodeName) != null)
+				nd.GetNodeOrNull<Sprite2D>(EventWorldIconFactory.MonsterBodyNodeName) != null)
 				SyncMonsterBadgeFogVisibility(badgeOverlay, ck, show);
 		}
 
@@ -443,6 +443,9 @@ public partial class Gameplay : Node2D
 	public bool magicBuff = false;
 	public int fastRun = 0;
 
+	private Panel? _tooltip;
+	private Label? _tooltipLabel;
+
 	public override void _Ready()
 	{
 		RunState.Instance.PrepareLevelStart();
@@ -540,6 +543,15 @@ public partial class Gameplay : Node2D
 			int id = activeList[i];
 			apowerDict[id] = apowerList[i];
 		}
+
+		_tooltip = GetNode<Panel>("UICanvas/Tooltip");
+		_tooltipLabel = _tooltip.GetNode<Label>("MessageLabel");
+
+		// 设置九宫格背景
+		SetupTooltipStyle();
+
+		// 默认隐藏
+		_tooltip.Visible = false;
 
 		skillList.Clear();
 		pskillList.Clear();
@@ -1212,7 +1224,6 @@ public partial class Gameplay : Node2D
 
 		TryReparentMonsterStatBadges(host, ck);
 
-
 	}
 
 
@@ -1392,9 +1403,6 @@ public partial class Gameplay : Node2D
 
 	}
 
-
-
-
 	/// <summary>数字键 1–6：触发当前已解锁的第 1–6 个主动技能槽（与 HUD 按钮一致）。</summary>
 	bool TryTriggerActiveSkillHotkey(int slot1To6)
 	{
@@ -1418,6 +1426,7 @@ public partial class Gameplay : Node2D
 			default: return false;
 		}
 	}
+
 
 	public override void _UnhandledInput(InputEvent @event)
 
@@ -2292,7 +2301,7 @@ public partial class Gameplay : Node2D
 
 			case "monster_str":
 			case "monster_mag":
-			{
+			{ 
 				bool hadStrBuff = strBuff;
 				bool hadMagicBuff = magicBuff;
 				int strBonus = 0;
@@ -2755,7 +2764,7 @@ public partial class Gameplay : Node2D
 		{
 			GameSfx.PlayAttack();
 			await ToastAsync($"{foe} · 战胜", $"{extra}{label}对决：你的{label} {attr} ≥ 怪物{label}战力 {monsterMv}。");
-			if(corpseHp == true)
+			if (corpseHp == true)
 			{
 				if (RunState.Instance.PlayerHp + pconfigDict[202].AsInt32() > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
 				{
@@ -2769,7 +2778,7 @@ public partial class Gameplay : Node2D
 				corpseHp = false;
 			}
 			EraseEvent(cell);
-			if(pskillList.Contains(203))
+			if (pskillList.Contains(203))
 			{
 				var corpseEvent = new Godot.Collections.Dictionary
 				{
@@ -2793,9 +2802,6 @@ public partial class Gameplay : Node2D
 		await PlayerFightLossKnockbackAsync(lossReturnCell);
 
 	}
-
-
-
 
 
 
@@ -3151,70 +3157,69 @@ public partial class Gameplay : Node2D
 		else
 		{
 
-		int fx = ResolveBossEffectKind();
+			int fx = ResolveBossEffectKind();
 
-		foreach (string ck in _bossLockedCellKeys)
-		{
-			if (!_valid.ContainsKey(ck))
-				continue;
-			if (TerrainCellMarkedBlocked(ck))
-				continue;
-			Vector2I c = HexGridUtil.ParseKey(ck);
-			switch (fx)
+			foreach (string ck in _bossLockedCellKeys)
 			{
-				case 2:
-					if (_events.ContainsKey(ck))
-					{
-						var ev = (Godot.Collections.Dictionary)_events[ck].AsGodotDictionary().Duplicate();
-						string ty = GetString(ev, "type");
-						if (ty is "monster_str" or "monster_mag")
+				if (!_valid.ContainsKey(ck))
+					continue;
+				if (TerrainCellMarkedBlocked(ck))
+					continue;
+				Vector2I c = HexGridUtil.ParseKey(ck);
+				switch (fx)
+				{
+					case 2:
+						if (_events.ContainsKey(ck))
 						{
-							int fb = GetInt(ev, "value", 1);
-							int vs = GetInt(ev, "value_str", fb) + 1;
-							int vm = GetInt(ev, "value_mag", fb) + 1;
-							ev["value_str"] = vs;
-							ev["value_mag"] = vm;
+							var ev = (Godot.Collections.Dictionary)_events[ck].AsGodotDictionary().Duplicate();
+							string ty = GetString(ev, "type");
+							if (ty is "monster_str" or "monster_mag")
+							{
+								int fb = GetInt(ev, "value", 1);
+								int vs = GetInt(ev, "value_str", fb) + 1;
+								int vm = GetInt(ev, "value_mag", fb) + 1;
+								ev["value_str"] = vs;
+								ev["value_mag"] = vm;
+								MonsterTable.SyncMonsterEventFightValue(ev);
+								_events[ck] = ev;
+								RefreshBossEventIcon(ck);
+							}
+						}
+						break;
+					case 3:
+						if (_events.ContainsKey(ck))
+						{
+							var ev = (Godot.Collections.Dictionary)_events[ck].AsGodotDictionary().Duplicate();
+							string ty = GetString(ev, "type");
+							if (ty == "monster_str")
+								ev["type"] = "monster_mag";
+							else if (ty == "monster_mag")
+								ev["type"] = "monster_str";
+							else
+								break;
 							MonsterTable.SyncMonsterEventFightValue(ev);
 							_events[ck] = ev;
 							RefreshBossEventIcon(ck);
 						}
-					}
 
-					break;
-				case 3:
-					if (_events.ContainsKey(ck))
-					{
-						var ev = (Godot.Collections.Dictionary)_events[ck].AsGodotDictionary().Duplicate();
-						string ty = GetString(ev, "type");
-						if (ty == "monster_str")
-							ev["type"] = "monster_mag";
-						else if (ty == "monster_mag")
-							ev["type"] = "monster_str";
-						else
-							break;
-						MonsterTable.SyncMonsterEventFightValue(ev);
-						_events[ck] = ev;
-						RefreshBossEventIcon(ck);
-					}
-
-					break;
-				default:
-					_fogState[ck] = true;
-					_fog.SetCell(c, true);
-					OnMonsterCellBecameFogCovered(c);
-					break;
+						break;
+					default:
+						_fogState[ck] = true;
+						_fog.SetCell(c, true);
+						OnMonsterCellBecameFogCovered(c);
+						break;
+				}
 			}
+
+			RefreshEventIconsFogVisibility();
+
+			SpawnPassive205CorpsesInBossScope(passive205BossScopeCells);
+
+			_bossLockedCellKeys.Clear();
+			_bossWarn?.ClearAll();
+			_bossMeter = 0f;
+			await MaybeFogDamageAsync();
 		}
-
-		RefreshEventIconsFogVisibility();
-
-		SpawnPassive205CorpsesInBossScope(passive205BossScopeCells);
-
-		_bossLockedCellKeys.Clear();
-		_bossWarn?.ClearAll();
-		_bossMeter = 0f;
-		await MaybeFogDamageAsync();
-	}
 	}
 
 	async Task BossTurnAsync()
@@ -3670,7 +3675,6 @@ public partial class Gameplay : Node2D
 	{
 		var shuffled = cards.OrderBy(x => GD.Randf()).ToList();
 		List<int> result = shuffled.Take(3).ToList();
-		result[0] = 8;
 		return result;
 	}
 
@@ -4120,23 +4124,32 @@ public partial class Gameplay : Node2D
 			}
 			case 7:
 				string centerKey7 = HexGridUtil.CellKey(centerCell);
-				if (_valid.ContainsKey(centerKey7))
+				HashSet<string> noFogCells7 = new HashSet<string>();
+
+				foreach (Variant key in _fogState.Keys)
+				{
+					if (!_fogState[key].AsBool())
+					{
+						noFogCells7.Add(key.AsString());
+					}
+				}
+				if (_valid.ContainsKey(centerKey7) && noFogCells7.Contains(centerKey7))
 				{
 					cellsToHighlight.Add(centerKey7);
 				}
 				break;
 			case 8:
 				string centerKey8 = HexGridUtil.CellKey(centerCell);
-				HashSet<string> noFogCells = new HashSet<string>();
+				HashSet<string> noFogCells8 = new HashSet<string>();
 
 				foreach (Variant key in _fogState.Keys)
 				{
 					if (!_fogState[key].AsBool())
 					{
-						noFogCells.Add(key.AsString());
+						noFogCells8.Add(key.AsString());
 					}
 				}
-				if (_valid.ContainsKey(centerKey8) && noFogCells.Contains(centerKey8))
+				if (_valid.ContainsKey(centerKey8) && noFogCells8.Contains(centerKey8))
 				{
 					if (_events.ContainsKey(centerKey8))
 					{
@@ -4439,6 +4452,413 @@ public partial class Gameplay : Node2D
 		Vector2I targetCell = visibleCells[randomIndex];
 
 		AddRuinsAt(targetCell);
+	}
+
+	private void SetupTooltipStyle()
+	{
+		Texture2D texture = GD.Load<Texture2D>("res://art/ui/mainui/wavebar.png");
+
+		if (texture == null)
+		{
+			GD.PrintErr("背景图加载失败！");
+			return;
+		}
+
+		var styleBox = new StyleBoxTexture();
+		styleBox.Texture = texture;
+
+		// 九宫格边距（切割边框用）
+		styleBox.TextureMarginLeft = 18;
+		styleBox.TextureMarginTop = 18;
+		styleBox.TextureMarginRight = 18;
+		styleBox.TextureMarginBottom = 18;
+
+		styleBox.AxisStretchHorizontal = 0; // 水平拉伸
+		styleBox.AxisStretchVertical = 0;   // 垂直拉伸
+		styleBox.DrawCenter = true;         // 显示中间（必须开！）
+
+
+		// 内容内边距
+		styleBox.ContentMarginLeft = 40;
+		styleBox.ContentMarginTop = 15;
+		styleBox.ContentMarginRight = 30;
+		styleBox.ContentMarginBottom = 15;
+
+		// 应用
+		_tooltip.AddThemeStyleboxOverride("panel", styleBox);
+	}
+
+	private void OnSkillButtonMouseEnteredP1()
+	{
+		if (pskillList.Count < 1)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[0])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname+"\n"+skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP2()
+	{
+		if(pskillList.Count < 2)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[1])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP3()
+	{
+		if (pskillList.Count < 3)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[2])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP4()
+	{
+		if (pskillList.Count < 4)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[3])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP5()
+	{
+		if (pskillList.Count < 5)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[4])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP6()
+	{
+		if (pskillList.Count < 6)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[5])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP7()
+	{
+		if (pskillList.Count < 7)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[6])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP8()
+	{
+		if (pskillList.Count < 8)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[7])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP9()
+	{
+		if (pskillList.Count < 9)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[8])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP10()
+	{
+		if (pskillList.Count < 10)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[9])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA1()
+	{
+		if (askillList.Count < 1)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[0])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA2()
+	{
+		if (askillList.Count < 2)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[1])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA3()
+	{
+		if (askillList.Count < 3)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[2])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA4()
+	{
+		if (askillList.Count < 4)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[3])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA5()
+	{
+		if (askillList.Count < 5)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[4])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredA6()
+	{
+		if (askillList.Count < 6)
+		{
+			return;
+		}
+		foreach (var item in aarray)
+		{
+			var askilldict = item.AsGodotDictionary();
+			if (askilldict["ID"].AsInt32() == askillList[5])
+			{
+				var skillname = askilldict["name"].ToString();
+				var skilldescribe = askilldict["describe"].ToString();
+				var skillcd = askilldict["cd"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe + "\ncd:" + skillcd);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseExited()
+	{
+		HideTooltip();
+	}
+
+	private async void ShowTooltip(string text)
+	{
+		if (_tooltip == null || _tooltipLabel == null) return;
+
+		_tooltipLabel.Text = text;
+		_tooltipLabel.AutowrapMode = TextServer.AutowrapMode.Word;
+		_tooltipLabel.CustomMinimumSize = new Vector2(200, 0);
+
+		_tooltipLabel.ResetSize();
+
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+		Vector2 labelSize = _tooltipLabel.GetCombinedMinimumSize();
+		if (labelSize.X < 50) labelSize.X = 200;
+
+		// 设置 Panel 大小
+		_tooltip.Size = labelSize + new Vector2(50, 50);
+
+		// ✅ 关键：设置 Label 填满整个 Panel
+		_tooltipLabel.Size = _tooltip.Size;
+		_tooltipLabel.Position = Vector2.Zero;
+
+		// 或者设置锚点
+		_tooltipLabel.AnchorLeft = 0;
+		_tooltipLabel.AnchorTop = 0;
+		_tooltipLabel.AnchorRight = 1;
+		_tooltipLabel.AnchorBottom = 1;
+		_tooltipLabel.OffsetLeft = 15;
+		_tooltipLabel.OffsetTop = 10;
+		_tooltipLabel.OffsetRight = -15;
+		_tooltipLabel.OffsetBottom = -10;
+
+		// 文字居中
+		_tooltipLabel.HorizontalAlignment = HorizontalAlignment.Center;
+		_tooltipLabel.VerticalAlignment = VerticalAlignment.Center;
+
+		// 位置设置
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		_tooltip.Position = mousePos + new Vector2(20, 0);
+
+		Vector2 screenSize = GetViewportRect().Size;
+		if (_tooltip.Position.X + _tooltip.Size.X > screenSize.X)
+			_tooltip.Position = new Vector2(mousePos.X - _tooltip.Size.X - 5, _tooltip.Position.Y);
+		if (_tooltip.Position.Y + _tooltip.Size.Y > screenSize.Y)
+			_tooltip.Position = new Vector2(_tooltip.Position.X, mousePos.Y - _tooltip.Size.Y - 5);
+
+		_tooltip.Visible = true;
+	}
+
+
+
+	private void HideTooltip()
+	{
+		if (_tooltip != null)
+			_tooltip.Visible = false;
 	}
 }
 	internal static class PlayerSpriteAnchorLayout
