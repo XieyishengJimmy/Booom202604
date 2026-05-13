@@ -1459,7 +1459,7 @@ public partial class Gameplay : Node2D
 		}
 
 		if (@event is InputEventMouseMotion mm && (Input.IsMouseButtonPressed(MouseButton.Middle)
-												|| Input.IsMouseButtonPressed(MouseButton.Right)))
+	|| (Input.IsMouseButtonPressed(MouseButton.Right) && !_isWaitingForHighlightClick)))
 		{
 			_camera!.Position -= mm.Relative / _camera.Zoom;
 			return true;
@@ -2644,7 +2644,6 @@ public partial class Gameplay : Node2D
 					string targetAddress = askilldict["address"].AsString();
 					GetNode<Button>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillIcon").Icon = GD.Load<Texture2D>(targetAddress);
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillHi").Visible = true;
-					GD.Print("获得技能cdcover=false");
 					GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/" + aname + "/SkillCdCover").Visible = false;
 					break;
 				}
@@ -3579,6 +3578,7 @@ public partial class Gameplay : Node2D
 	{
 		var shuffled = cards.OrderBy(x => GD.Randf()).ToList();
 		List<int> result = shuffled.Take(3).ToList();
+		result[0] = 8;
 		return result;
 	}
 
@@ -4009,13 +4009,25 @@ public partial class Gameplay : Node2D
 				break;
 			case 8:
 				string centerKey8 = HexGridUtil.CellKey(centerCell);
-				if (_valid.ContainsKey(centerKey8))
+				HashSet<string> noFogCells = new HashSet<string>();
+
+				foreach (Variant key in _fogState.Keys)
 				{
-					var ev = _events[centerKey8].AsGodotDictionary();
-					string type = GetString(ev, "type");
-					if(type == "monster_str" || type == "monster_mag")
+					if (!_fogState[key].AsBool())
 					{
-						cellsToHighlight.Add(centerKey8);
+						noFogCells.Add(key.AsString());
+					}
+				}
+				if (_valid.ContainsKey(centerKey8) && noFogCells.Contains(centerKey8))
+				{
+					if (_events.ContainsKey(centerKey8))
+					{
+						var ev = _events[centerKey8].AsGodotDictionary();
+						string type = GetString(ev, "type");
+						if (type == "monster_str" || type == "monster_mag")
+						{
+							cellsToHighlight.Add(centerKey8);
+						}
 					}
 				}
 				break;
