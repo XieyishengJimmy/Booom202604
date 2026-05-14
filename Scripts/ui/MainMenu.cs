@@ -11,7 +11,16 @@ public partial class MainMenu : Control
 	{
 		_levelPick = GetNodeOrNull<OptionButton>("VBox/LevelPickOpt");
 		_debugModeChk = GetNodeOrNull<CheckBox>("VBox/DebugModeChk");
-		FillLevelDropdown();
+
+		if (!RunState.IsEditorPlaySession)
+		{
+			GetNodeOrNull<Control>("VBox/LevelHint")?.Hide();
+			_levelPick?.Hide();
+			_debugModeChk?.Hide();
+			GetNodeOrNull<Control>("VBox/EditorBtn")?.Hide();
+		}
+		else
+			FillLevelDropdown();
 
 		if (_levelPick != null)
 			StyleLevelDropdown(_levelPick, 22);
@@ -59,15 +68,21 @@ public partial class MainMenu : Control
 
 	public void _on_play_pressed()
 	{
-		if (_levelPick == null)
-			return;
-
-		string path = _levelPick.GetItemMetadata(_levelPick.Selected).AsString();
-		if (string.IsNullOrEmpty(path))
+		string path;
+		if (RunState.IsEditorPlaySession)
 		{
-			PopupBrief("无法开始", "请先在列表中选择一份关卡 JSON（目录 res://levels/）。");
-			return;
+			if (_levelPick == null)
+				return;
+
+			path = _levelPick.GetItemMetadata(_levelPick.Selected).AsString();
+			if (string.IsNullOrEmpty(path))
+			{
+				PopupBrief("无法开始", "请先在列表中选择一份关卡 JSON（目录 res://levels/）。");
+				return;
+			}
 		}
+		else
+			path = RunState.ResolveShippedEntryLevelPath();
 
 		if (RunState.Instance == null)
 		{
@@ -84,6 +99,8 @@ public partial class MainMenu : Control
 
 	public void _on_open_editor()
 	{
+		if (!RunState.IsEditorPlaySession)
+			return;
 		GetTree().ChangeSceneToFile("res://Scenes/level_editor.tscn");
 	}
 

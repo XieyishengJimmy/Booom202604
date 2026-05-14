@@ -7,6 +7,19 @@ public partial class RunState : Node
 {
 	public static RunState Instance { get; private set; } = null!;
 
+	/// <summary>从编辑器按「运行」启动时为 true；独立导出的 exe 为 false。<br/>
+	/// 勿用 <see cref="Engine.IsEditorHint"/> 区分：可玩窗口在子进程里该值常为 false。</summary>
+	public static bool IsEditorPlaySession => OS.HasFeature("editor");
+
+	/// <summary>导出包封面「开始游戏」应进入的关卡：主线 <c>campaign_order</c> 最小者（不含 ≥999 实训关）；无主线表时退回 starter。</summary>
+	public static string ResolveShippedEntryLevelPath()
+	{
+		var main = LevelCatalog.EnumerateMainCampaignPathsOrdered();
+		if (main.Count > 0)
+			return main[0];
+		return "res://levels/starter_level.json";
+	}
+
 	public int PlayerHpMax { get; set; } = 10;
 	public int PlayerHp { get; set; } = 10;
 

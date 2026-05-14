@@ -20,7 +20,7 @@ public partial class FogLayer : Node2D
 	static readonly Texture2D?[] CloudTextures = LoadCloudTextures();
 
 	static readonly Texture2D? LockTexture =
-		ResourceLoader.Exists("res://Art/Icon/lock.png") ? GD.Load<Texture2D>("res://Art/Icon/lock.png") : null;
+		ResourceLoader.Exists("res://Art/Map/LockIcon.png") ? GD.Load<Texture2D>("res://Art/Map/LockIcon.png") : null;
 
 	/// <summary>该地块已开始播放消散特效（用于推迟显示格上事件等）。</summary>
 	public event Action<string>? FogRevealAnimationStarted;
@@ -157,12 +157,16 @@ public partial class FogLayer : Node2D
 			if (_lockOverlays.ContainsKey(ck))
 				return;
 
+			Vector2 lockScale = new Vector2(0.38f, 0.38f);
+			if (_terrain.TileSet != null)
+				lockScale = ComputeFogScaleMatchTilemapDraw(_terrain.TileSet, LockTexture);
+
 			var s = new Sprite2D
 			{
 				Texture = LockTexture,
 				Centered = true,
-				Scale = new Vector2(0.38f, 0.38f),
-				Position = FogAnchorWorld(_terrain, cell) + new Vector2(0f, -6f),
+				Scale = lockScale,
+				Position = FogAnchorWorld(_terrain, cell),
 				ZIndex = 2,
 			};
 			AddChild(s);

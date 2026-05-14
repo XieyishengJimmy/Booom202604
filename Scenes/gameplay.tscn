@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://d0q7pgchdj7c5" path="res://Art/UI/skillAcquire/Card_Normal.png" id="8_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="9"]
 [ext_resource type="Texture2D" uid="uid://443b7wu7q42j" path="res://Art/UI/skillAcquire/SkillIcon.png" id="9_solsi"]
+[ext_resource type="Texture2D" uid="uid://cr67qlhnhfd7f" path="res://Art/UI/mainUI/ScreenEdgeWarning.png" id="9_v8xiy"]
 [ext_resource type="Texture2D" uid="uid://cbr0goakx7b1b" path="res://Art/UI/skillAcquire/Card_Glow.png" id="10_xrja5"]
 [ext_resource type="Texture2D" uid="uid://bd73swdiehk8w" path="res://Art/UI/skillAcquire/Card_Selected.png" id="11_cnqtm"]
 [ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="12"]
@@ -29,9 +30,7 @@
 [ext_resource type="Texture2D" uid="uid://b2ac8qlcnvott" path="res://Art/UI/mainUI/Passiveskill.png" id="21"]
 [ext_resource type="Texture2D" uid="uid://duwy278vbai6f" path="res://Art/UI/mainUI/WaveBarBorder_dark.png" id="22"]
 [ext_resource type="Texture2D" uid="uid://6b1prtcv2gn3" path="res://Art/UI/mainUI/WaveBarBorder_light.png" id="23"]
-[ext_resource type="Texture2D" uid="uid://c2kho7u7dlfof" path="res://Art/UI/mainUI/WaveIndicator_dark.png" id="24"]
 [ext_resource type="Texture2D" uid="uid://boo05s0g3bwg2" path="res://Art/UI/mainUI/WaveIndicator_light.png" id="25"]
-[ext_resource type="Texture2D" uid="uid://dv7v8242ikjb2" path="res://Art/UI/mainUI/WaveBar.png" id="26"]
 [ext_resource type="Texture2D" uid="uid://b4clvt2ypw5fd" path="res://Art/UI/mainUI/map.png" id="27"]
 [ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="28"]
 [ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="29"]
@@ -42,7 +41,10 @@
 [ext_resource type="Script" uid="uid://bfbq16r3prllp" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
 [ext_resource type="Texture2D" uid="uid://cpcoy3iwrtvpt" path="res://Art/UI/monster/Physic.png" id="42_phys"]
 [ext_resource type="Texture2D" uid="uid://doenc6x8kb6fg" path="res://Art/UI/monster/Magic.png" id="43_mag"]
+[ext_resource type="Texture2D" uid="uid://8uutnt00pamg" path="res://Art/UI/mainUI/Cover.png" id="43_v8xiy"]
 [ext_resource type="FontFile" uid="uid://cqu3dgmkpbafk" path="res://思源黑体+SourceHanSansCN-Normal.otf" id="44_skill_tooltip_font"]
+[ext_resource type="Texture2D" uid="uid://cpx82f5vktvwt" path="res://Art/UI/mainUI/BOSSSkillicon.png" id="45_bossico1"]
+[ext_resource type="Texture2D" uid="uid://hsn3fq7pgglx" path="res://Art/UI/mainUI/BOSSSkillicon2.png" id="46_bossico2"]
 
 [node name="Gameplay" type="Node2D" unique_id=841708317]
 script = ExtResource("1")
@@ -122,10 +124,34 @@ z_as_relative = false
 
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
-[node name="示意图1" type="Sprite2D" parent="UICanvas" unique_id=888530062]
-visible = false
-texture = ExtResource("5")
+[node name="Cover" type="Sprite2D" parent="UICanvas" unique_id=907191566]
+texture = ExtResource("43_v8xiy")
 centered = false
+
+[node name="BossCornerSplash" type="TextureRect" parent="UICanvas" unique_id=1158288855]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 1620.0
+offset_top = 580.0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScreenEdgeWarning" type="TextureRect" parent="UICanvas" unique_id=1997464741]
+visible = false
+z_index = 100
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("9_v8xiy")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HUD" type="Control" parent="UICanvas" unique_id=484638374]
 layout_mode = 3
@@ -221,7 +247,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=658229955]
-clip_contents = true
 layout_mode = 0
 offset_left = 55.0
 offset_top = 374.0
@@ -229,7 +254,7 @@ offset_right = 313.0
 offset_bottom = 506.0
 theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
-autowrap_mode = 2
+autowrap_mode = 3
 
 [node name="Card2" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=1369564049]
 anchors_preset = 0
@@ -288,7 +313,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=2091471989]
-clip_contents = true
 layout_mode = 0
 offset_left = 40.0
 offset_top = 366.0
@@ -296,7 +320,7 @@ offset_right = 298.0
 offset_bottom = 498.0
 theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
-autowrap_mode = 2
+autowrap_mode = 3
 
 [node name="Card3" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=351088451]
 anchors_preset = 0
@@ -355,7 +379,6 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SkillDescribe" type="Label" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1461195713]
-clip_contents = true
 layout_mode = 0
 offset_left = 47.0
 offset_top = 356.0
@@ -363,7 +386,7 @@ offset_right = 305.0
 offset_bottom = 488.0
 theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
-autowrap_mode = 2
+autowrap_mode = 3
 
 [node name="Skip" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=718415223]
 layout_mode = 0
@@ -1688,89 +1711,70 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="BossPhaseLabel" type="Label" parent="UICanvas/HUD/BossSkillArea" unique_id=1098653837]
+[node name="BossActionBarButton" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=2089431095]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = -3.925
-offset_bottom = 42.975
-grow_horizontal = 2
-theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.06, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "BOSS"
-horizontal_alignment = 1
-
-[node name="BossMeterWrap" type="Control" parent="UICanvas/HUD/BossSkillArea" unique_id=1049319285]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 13.975
-offset_top = 6.975
-offset_right = 42.975
-offset_bottom = 499.975
-mouse_filter = 2
-
-[node name="BossSkillTrack" type="TextureRect" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=371003045]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 21.0
+offset_top = -35.0
+offset_right = 157.0
+offset_bottom = 643.0
 mouse_filter = 2
 texture = ExtResource("22")
-expand_mode = 1
-stretch_mode = 5
 
-[node name="BossActionBarFill" type="TextureProgressBar" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=151522062]
+[node name="BossActionBarFill" type="TextureProgressBar" parent="UICanvas/HUD/BossSkillArea" unique_id=151522062]
 unique_name_in_owner = true
+z_index = 1
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 70.5
+offset_top = 11.5
+offset_right = 107.5
+offset_bottom = 594.5
 mouse_filter = 2
+fill_mode = 3
 texture_progress = ExtResource("23")
-
-[node name="BossWarnDividerMarker" type="TextureRect" parent="UICanvas/HUD/BossSkillArea/BossMeterWrap" unique_id=1136957019]
-unique_name_in_owner = true
-layout_mode = 1
-offset_left = -3.0
-offset_top = 170.0
-offset_right = 27.0
-offset_bottom = 200.0
-mouse_filter = 2
-texture = ExtResource("24")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="IsWarningIcon" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=712547437]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-offset_left = 3.975
-offset_top = 177.975
-offset_right = 33.975
-offset_bottom = 207.975
-mouse_filter = 2
-texture = ExtResource("25")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="BossSkillIcon" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=69739708]
 unique_name_in_owner = true
+z_index = 2
 layout_mode = 1
-offset_left = 37.5
-offset_top = 12.5
-offset_right = 194.5
-offset_bottom = 122.5
+offset_left = 47.0
+offset_top = -50.0
+offset_right = 131.0
+offset_bottom = 34.0
 mouse_filter = 2
-texture = ExtResource("26")
-expand_mode = 1
-stretch_mode = 5
+texture = ExtResource("45_bossico1")
+
+[node name="BossSkillIcon2" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=69739709]
+unique_name_in_owner = true
+z_index = 3
+layout_mode = 1
+offset_left = 40.5
+offset_top = -57.0
+offset_right = 137.5
+offset_bottom = 41.0
+mouse_filter = 2
+texture = ExtResource("46_bossico2")
+
+[node name="BossSkillIconsHitBox" type="Control" parent="UICanvas/HUD/BossSkillArea" unique_id=2089431096]
+unique_name_in_owner = true
+z_index = 4
+layout_mode = 1
+anchors_preset = 0
+offset_left = 40.5
+offset_top = -57.0
+offset_right = 137.5
+offset_bottom = 41.0
+
+[node name="IsWarningIcon" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=712547437]
+unique_name_in_owner = true
+z_index = 5
+layout_mode = 1
+offset_left = 106.5
+offset_top = 181.5
+offset_right = 169.5
+offset_bottom = 226.5
+mouse_filter = 2
+texture = ExtResource("25")
 
 [node name="MistProgress" type="Control" parent="UICanvas/HUD" unique_id=1607698721]
 layout_mode = 1
@@ -1778,10 +1782,10 @@ anchor_left = 1.0
 anchor_top = 0.24212962
 anchor_right = 1.0
 anchor_bottom = 0.24212962
-offset_left = -228.0
-offset_top = -107.5
-offset_right = -13.0
-offset_bottom = 107.5
+offset_left = -239.0
+offset_top = -136.5
+offset_right = -24.0
+offset_bottom = 78.5
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -1924,3 +1928,5 @@ metadata/_edit_lock_ = true
 [connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P9" to="." method="OnSkillButtonMouseExited"]
 [connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P10" to="." method="OnSkillButtonMouseEnteredP10"]
 [connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P10" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/BossSkillArea/BossSkillIconsHitBox" to="." method="OnBossSkillIconsSlotMouseEntered"]
+[connection signal="mouse_exited" from="UICanvas/HUD/BossSkillArea/BossSkillIconsHitBox" to="." method="OnSkillButtonMouseExited"]

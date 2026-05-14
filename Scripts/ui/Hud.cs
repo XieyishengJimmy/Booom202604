@@ -23,18 +23,20 @@ public partial class Hud : Control
 
 	Label? _turnLabel;
 
-	TextureRect? _bossTrack;
+	TextureRect? _bossActionBarButton;
 	TextureProgressBar? _bossVerticalFill;
-	TextureRect? _warnDivider;
-	CanvasItem? _isWarningCanvas;
+	TextureRect? _isWarningIcon;
 	Label? _bossSubtitleLabel;
 
 	TextureRect? _bossSkillIcon;
+	TextureRect? _bossSkillIcon2;
+
+	CanvasItem? _screenEdgeWarning;
+	Tween? _screenEdgeBreatheTween;
+	bool _screenEdgeBreathingActive;
 
 	TextureProgressBar? _mistRing;
 	Label? _mistPctLabel;
-
-	float _dividerXSnap = float.NaN;
 
 	public override void _Ready()
 	{
@@ -47,15 +49,17 @@ public partial class Hud : Control
 		_magCornerLabel = GetNodeOrNull<Label>("%MagLabel");
 		_turnLabel = GetNodeOrNull<Label>("%TurnLabel");
 
-		_bossTrack = GetNodeOrNull<TextureRect>("%BossSkillTrack");
+		_bossActionBarButton = GetNodeOrNull<TextureRect>("%BossActionBarButton");
 		_bossVerticalFill = GetNodeOrNull<TextureProgressBar>("%BossActionBarFill");
-		_warnDivider = GetNodeOrNull<TextureRect>("%BossWarnDividerMarker");
-		_isWarningCanvas = GetNodeOrNull<CanvasItem>("%IsWarningIcon");
+		_isWarningIcon = GetNodeOrNull<TextureRect>("%IsWarningIcon");
 		_bossSubtitleLabel = GetNodeOrNull<Label>("%BossPhaseLabel");
 		_bossSkillIcon = GetNodeOrNull<TextureRect>("%BossSkillIcon");
+		_bossSkillIcon2 = GetNodeOrNull<TextureRect>("%BossSkillIcon2");
 
 		_mistRing = GetNodeOrNull<TextureProgressBar>("%MistRingFill");
 		_mistPctLabel = GetNodeOrNull<Label>("%MistPctLabel");
+
+		_screenEdgeWarning = GetParent()?.GetNodeOrNull<CanvasItem>("ScreenEdgeWarning");
 
 		// 迷雾环：0°=12 点，角度顺时针递增。7 点=210°，5 点=150°。
 		// 满雾为「7→顺时针经 12→到 5」长弧 300°；雾减少时从 7 点侧沿顺时针收回至 5。
@@ -67,6 +71,56 @@ public partial class Hud : Control
 			_mistRing.RadialInitialAngle = 150f;
 			_mistRing.RadialFillDegrees = 300f;
 		}
+
+		ApplyBossMeterNativePixelSizes();
+	}
+
+	/// <summary>BOSS 外框与填充条按贴图像素 1:1（与 UI 场景一致），不拉伸变形。</summary>
+	void ApplyBossMeterNativePixelSizes()
+	{
+		if (_bossActionBarButton?.Texture != null)
+		{
+			Texture2D t = _bossActionBarButton.Texture;
+			_bossActionBarButton.ExpandMode = TextureRect.ExpandModeEnum.KeepSize;
+			_bossActionBarButton.StretchMode = TextureRect.StretchModeEnum.Scale;
+			Vector2 s = new(t.GetWidth(), t.GetHeight());
+			_bossActionBarButton.CustomMinimumSize = s;
+			_bossActionBarButton.Size = s;
+		}
+
+		if (_bossVerticalFill?.TextureProgress != null)
+		{
+			Texture2D tp = _bossVerticalFill.TextureProgress;
+			Vector2 s = new(tp.GetWidth(), tp.GetHeight());
+			_bossVerticalFill.CustomMinimumSize = s;
+			_bossVerticalFill.Size = s;
+		}
+	}
+
+	/// <summary>与 UI 场景一致：预警图标宽 63、高 45；X 中心 138；Y 为「蓄力段:总段」分界——从 BossActionBarButton 底边向上 (蓄力/总)×条高，再垂直居中图标。</summary>
+	void LayoutIsWarningIconByChargeRatio(float chargeMeterMax, float warnMeterMax)
+	{
+		if (_bossActionBarButton == null || _isWarningIcon == null)
+			return;
+
+		float denom = Mathf.Max(chargeMeterMax + warnMeterMax, 1e-6f);
+		float cMx = Mathf.Max(chargeMeterMax, 0f);
+
+		float btnTop = _bossActionBarButton.Position.Y;
+		float btnH = Mathf.Max(_bossActionBarButton.Size.Y, 1f);
+		float btnBottom = btnTop + btnH;
+		float splitY = btnBottom - (cMx / denom) * btnH;
+
+		const float IconW = 63f;
+		const float IconH = 45f;
+		const float UiCenterX = 138f;
+
+		_isWarningIcon.ExpandMode = TextureRect.ExpandModeEnum.KeepSize;
+		_isWarningIcon.StretchMode = TextureRect.StretchModeEnum.Scale;
+		_isWarningIcon.CustomMinimumSize = new Vector2(IconW, IconH);
+		_isWarningIcon.Size = new Vector2(IconW, IconH);
+		_isWarningIcon.Position = new Vector2(UiCenterX - IconW * 0.5f, splitY - IconH * 0.5f);
+		_isWarningIcon.Visible = true;
 	}
 
 	public void SetPortrait(Texture2D? tex)
@@ -117,7 +171,16 @@ public partial class Hud : Control
 			_bossSubtitleLabel.Text = string.IsNullOrWhiteSpace(name) ? "BOSS" : name;
 	}
 
-	/// <summary>占位：未来按 Boss 技能 ID / 资源配置切换 %BossSkillIcon。</summary>
+	/// <summary>按资源切换 BOSS 行动条顶部双图标（场景默认已绑图时可不传）。</summary>
+	public void SetBossSkillIcons(Texture2D? primary, Texture2D? secondary)
+	{
+		if (_bossSkillIcon != null && primary != null)
+			_bossSkillIcon.Texture = primary;
+		if (_bossSkillIcon2 != null && secondary != null)
+			_bossSkillIcon2.Texture = secondary;
+	}
+
+	/// <summary>兼容旧调用：仅更新第一个 BOSS 技能图标。</summary>
 	public void SetBossSkillIcon(Texture2D? tex)
 	{
 		if (_bossSkillIcon != null)
@@ -130,33 +193,54 @@ public partial class Hud : Control
 		float wMx = Mathf.Max(warnMax, 1e-3f);
 		float denom = Mathf.Max(cMx + wMx, 1e-3f);
 		float cur = Mathf.Clamp(chargeCur, 0f, cMx) + Mathf.Clamp(warnCur, 0f, wMx);
-		float pct = Mathf.Clamp(cur / denom, 0f, 1f);
-		float splitFracUi = Mathf.Clamp(cMx / denom, 0f, 1f);
 
 		if (_bossVerticalFill != null)
 		{
 			_bossVerticalFill.MinValue = 0f;
-			_bossVerticalFill.MaxValue = 100f;
-			_bossVerticalFill.Value = 100f * pct;
+			_bossVerticalFill.MaxValue = denom;
+			_bossVerticalFill.Value = cur;
 			_bossVerticalFill.SetDeferred(TextureProgressBar.PropertyName.FillMode, FillBottomToTop);
 		}
 
-		var wrapBar = _bossVerticalFill?.GetParent() as Control;
-		if (wrapBar != null && _warnDivider != null)
+		LayoutIsWarningIconByChargeRatio(cMx, wMx);
+	}
+
+	/// <summary>与地图上 BOSS 预期技能范围（<see cref="BossWarningLayer"/>）同步：有锁定格即显示屏边预警呼吸，清空即隐藏。</summary>
+	public void SetBossMapSkillPreviewActive(bool active) =>
+		UpdateScreenEdgeWarningBreathing(active);
+
+	void KillScreenEdgeBreatheTween()
+	{
+		if (_screenEdgeBreatheTween != null && GodotObject.IsInstanceValid(_screenEdgeBreatheTween))
+			_screenEdgeBreatheTween.Kill();
+		_screenEdgeBreatheTween = null;
+	}
+
+	void UpdateScreenEdgeWarningBreathing(bool inWarnPhase)
+	{
+		if (_screenEdgeWarning == null)
+			return;
+
+		if (!inWarnPhase)
 		{
-			if (float.IsNaN(_dividerXSnap))
-
-				_dividerXSnap = _warnDivider.Position.X;
-
-			float h = Mathf.Max(wrapBar.Size.Y, 1f);
-
-			float yCenter = h * (1f - splitFracUi);
-
-			_warnDivider.Position = new Vector2(_dividerXSnap, yCenter - _warnDivider.Size.Y * 0.5f);
+			KillScreenEdgeBreatheTween();
+			_screenEdgeBreathingActive = false;
+			_screenEdgeWarning.Visible = false;
+			_screenEdgeWarning.Modulate = Colors.White;
+			return;
 		}
 
-		if (_isWarningCanvas != null)
-			_isWarningCanvas.Visible = warnCur > 1e-4f;
+		_screenEdgeWarning.Visible = true;
+		if (_screenEdgeBreathingActive)
+			return;
+
+		_screenEdgeBreathingActive = true;
+		KillScreenEdgeBreatheTween();
+		var tw = CreateTween();
+		tw.SetLoops(0);
+		tw.TweenProperty(_screenEdgeWarning, "modulate", new Color(1f, 1f, 1f, 0.6f), 1.5f);
+		tw.TweenProperty(_screenEdgeWarning, "modulate", Colors.White, 1.5f);
+		_screenEdgeBreatheTween = tw;
 	}
 
 	public void SetFogRemainingRatio(float remaining01)
@@ -239,4 +323,3 @@ public partial class Hud : Control
 		return Mathf.Clamp(pick, 0, 2);
 	}
 }
-

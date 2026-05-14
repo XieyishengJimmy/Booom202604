@@ -18,9 +18,9 @@
 [ext_resource type="Texture2D" uid="uid://b2ac8qlcnvott" path="res://Art/UI/mainUI/Passiveskill.png" id="17_qqo6a"]
 [ext_resource type="Texture2D" uid="uid://duwy278vbai6f" path="res://Art/UI/mainUI/WaveBarBorder_dark.png" id="18_8ekee"]
 [ext_resource type="Texture2D" uid="uid://6b1prtcv2gn3" path="res://Art/UI/mainUI/WaveBarBorder_light.png" id="19_j0pu8"]
-[ext_resource type="Texture2D" uid="uid://c2kho7u7dlfof" path="res://Art/UI/mainUI/WaveIndicator_dark.png" id="20_6maro"]
+[ext_resource type="Texture2D" uid="uid://hsn3fq7pgglx" path="res://Art/UI/mainUI/BOSSSkillicon2.png" id="20_b8rtp"]
 [ext_resource type="Texture2D" uid="uid://boo05s0g3bwg2" path="res://Art/UI/mainUI/WaveIndicator_light.png" id="21_45jp6"]
-[ext_resource type="Texture2D" uid="uid://dv7v8242ikjb2" path="res://Art/UI/mainUI/WaveBar.png" id="22_q6a8d"]
+[ext_resource type="Texture2D" uid="uid://cpx82f5vktvwt" path="res://Art/UI/mainUI/BOSSSkillicon.png" id="21_612k1"]
 [ext_resource type="Texture2D" uid="uid://b4clvt2ypw5fd" path="res://Art/UI/mainUI/map.png" id="23_6lb63"]
 [ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="24_dgrhb"]
 [ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="25_wypb4"]
@@ -299,24 +299,24 @@ grow_horizontal = 0
 grow_vertical = 2
 
 [node name="BossActionBarButton" type="Sprite2D" parent="BossSkillArea" unique_id=2089431095]
-position = Vector2(27, 253.5)
+position = Vector2(89, 304)
 texture = ExtResource("18_8ekee")
 
 [node name="BossActionBarFill" type="Sprite2D" parent="BossSkillArea" unique_id=856144114]
-position = Vector2(27, 252.5)
+position = Vector2(89, 303)
 texture = ExtResource("19_j0pu8")
 
-[node name="WarningPosButton" type="Sprite2D" parent="BossSkillArea" unique_id=1124207086]
-position = Vector2(18, 194.5)
-texture = ExtResource("20_6maro")
-
 [node name="IsWarningIcon" type="Sprite2D" parent="BossSkillArea" unique_id=1096824931]
-position = Vector2(18, 195.5)
+position = Vector2(138, 204)
 texture = ExtResource("21_45jp6")
 
-[node name="BossSkill" type="Sprite2D" parent="BossSkillArea" unique_id=426150513]
-position = Vector2(116, 67)
-texture = ExtResource("22_q6a8d")
+[node name="BossSkillicon2" type="Sprite2D" parent="BossSkillArea" unique_id=1850115919]
+position = Vector2(89, -8)
+texture = ExtResource("20_b8rtp")
+
+[node name="BossSkillicon" type="Sprite2D" parent="BossSkillArea" unique_id=824704537]
+position = Vector2(89, -8)
+texture = ExtResource("21_612k1")
 
 [node name="MistProgress" type="Control" parent="." unique_id=1608658710]
 layout_mode = 3

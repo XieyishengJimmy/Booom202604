@@ -50,6 +50,7 @@ public partial class Gameplay : Node2D
 	BlockLayer? _blocks;
 	Sprite2D? _playerSprite;
 	Hud? _hudUi;
+	TextureRect? _bossCornerSplash;
 
 	const string HpFloatFontPath = "res://思源黑体+SourceHanSansCN-Normal.otf";
 
@@ -180,6 +181,7 @@ public partial class Gameplay : Node2D
 	int _bossSkillArea;
 	int _bossSkillEffect;
 	string _bossSkillDetail = "";
+	string _bossAiDescription = "";
 	int _bossTableId;
 
 	readonly HashSet<string> _bossLockedCellKeys = [];
@@ -457,6 +459,8 @@ public partial class Gameplay : Node2D
 	public int cardchoose = 0;
 
 	public bool grassskill = false;
+	/// <summary>被动 103：走入尸体格后视同「快速行动」，本回合仍可再动。</summary>
+	bool _corpseExtraAction;
 	public int grasscount = 0;
 	public bool corpseHp = false;
 	public int corpseCount = 0;
@@ -494,6 +498,10 @@ public partial class Gameplay : Node2D
 			_camera.Enabled = true;
 
 		_hudUi = GetNode<Hud>("UICanvas/HUD");
+		_bossCornerSplash = GetNodeOrNull<TextureRect>("%BossCornerSplash");
+		if (_bossCornerSplash != null)
+			GetViewport().SizeChanged += OnViewportSizeChangedForBossCorner;
+
 		var portraitTex = GD.Load<Texture2D>("res://Art/Player/head.png");
 		if (portraitTex != null)
 			_hudUi.SetPortrait(portraitTex);
@@ -535,7 +543,7 @@ public partial class Gameplay : Node2D
 			passiveList.Add(pskillid);
 			if (pskilldict.ContainsKey("config"))
 			{
-				pconfigList.Add(pskilldict["config"].AsInt32());
+				pconfigList.Add(ReadPassiveConfigVariant(pskilldict["config"]));
 			}
 			else
 			{
@@ -611,6 +619,7 @@ public partial class Gameplay : Node2D
 
 		ApplyLevel(lvl);
 		RebuildLearnedSkillsHud();
+		RecalculatePlayerEnergyMaxFromPassives();
 		SnapPlayer();
 		RefreshHud();
 		powerCheck();
@@ -654,6 +663,27 @@ public partial class Gameplay : Node2D
 				System.Globalization.CultureInfo.InvariantCulture, out int parsed) => parsed,
 			_ => 0,
 		};
+	}
+
+	static int ReadPassiveConfigVariant(Variant cfgVar)
+	{
+		return cfgVar.VariantType switch
+		{
+			Variant.Type.Int => cfgVar.AsInt32(),
+			Variant.Type.Float => (int)cfgVar.AsDouble(),
+			Variant.Type.String when int.TryParse(cfgVar.AsString().Trim(),
+				System.Globalization.NumberStyles.Integer,
+				System.Globalization.CultureInfo.InvariantCulture, out int parsed) => parsed,
+			_ => 0,
+		};
+	}
+
+	/// <summary>三选一描述：中文等无空格文本须 WordSmart 换行。</summary>
+	static void ApplySkillPickDescribe(Label lab, string describe)
+	{
+		lab.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+		lab.ClipContents = false;
+		lab.Text = describe;
 	}
 
 	/// <summary>玩家 <c>Sprite2D.Scale</c> 与 <c>Scenes/map.tscn</c> 中 Idel01/地砖一致（<c>1,1</c>）。</summary>
@@ -701,9 +731,11 @@ public partial class Gameplay : Node2D
 		_bossSkillArea = 0;
 		_bossSkillEffect = 0;
 		_bossSkillDetail = "";
+		_bossAiDescription = "";
 		_bossTableId = 0;
 		_bossLockedCellKeys.Clear();
 		_bossWarn?.ClearAll();
+		SyncScreenEdgeWarningWithBossMapPreview();
 		_fogNeighborAbsorptionLockRef.Clear();
 		_monsterNeighborFogLocksByAnchor.Clear();
 		_fogRevealVisualPendingCells.Clear();
@@ -781,6 +813,7 @@ public partial class Gameplay : Node2D
 				_bossSkillArea = br.SkillArea;
 				_bossSkillEffect = br.SkillEffect;
 				_bossSkillDetail = string.IsNullOrWhiteSpace(br.SkillDetail) ? "" : br.SkillDetail;
+				_bossAiDescription = string.IsNullOrWhiteSpace(br.AiDescription) ? "" : br.AiDescription;
 				_bossUsesTableSkill = true;
 				_bossTableId = bossId;
 				if (BossTable.MeterTotal(br) < 1)
@@ -801,6 +834,8 @@ public partial class Gameplay : Node2D
 				_bossSkillEffect = 0;
 				_bossSkillDetail = "";
 
+				_bossAiDescription = "";
+
 				float total = Mathf.Max(GetFloat(b, "meter_max", 100f), 10f);
 				_bossGain = Mathf.Max(GetFloat(b, "meter_gain_per_turn", _bossGain), 1f);
 				float half = Mathf.Floor(total * 0.5f);
@@ -818,6 +853,8 @@ public partial class Gameplay : Node2D
 				_bossSkillEffect = 0;
 				_bossSkillDetail = "";
 
+				_bossAiDescription = "";
+
 				_bossWarnMax = 50f;
 				_bossChargeMax = 50f;
 				_bossGain = Mathf.Max(_bossGain, 1f);
@@ -826,6 +863,7 @@ public partial class Gameplay : Node2D
 			}
 		}
 
+		ApplyBossCornerSplashForCurrentBossConfig();
 
 		_bossWarn?.Setup(_terrain!);
 
@@ -834,9 +872,69 @@ public partial class Gameplay : Node2D
 
 	}
 
+	void OnViewportSizeChangedForBossCorner()
+	{
+		if (_bossCornerSplash is { Visible: true, Texture: not null })
+			LayoutBossCornerSplashPixels();
+	}
 
+	void ApplyBossCornerSplashForCurrentBossConfig()
+	{
+		if (_bossUsesTableSkill && BossTable.TryGet(_bossTableId, out BossTable.Row? br) && br != null)
+			RefreshBossCornerSplashFromTableRow(br);
+		else
+			RefreshBossCornerSplashFromTableRow(null);
+	}
 
+	/// <summary>右下角对齐窗口右下角；贴图 1:1 像素尺寸，路径为表字段 boss_image_id 对应 <c>res://Art/BOSS/</c> 下 PNG。</summary>
+	void RefreshBossCornerSplashFromTableRow(BossTable.Row? br)
+	{
+		if (_bossCornerSplash == null)
+			return;
 
+		int imageId = br?.BossImageId ?? 0;
+		if (imageId <= 0)
+		{
+			_bossCornerSplash.Texture = null;
+			_bossCornerSplash.Visible = false;
+			return;
+		}
+
+		string resPath = $"res://Art/BOSS/{imageId}.png";
+		if (!ResourceLoader.Exists(resPath))
+		{
+			GD.PushWarning($"[Gameplay] BOSS 立绘不存在：{resPath}（boss_image_id={imageId}）");
+			_bossCornerSplash.Texture = null;
+			_bossCornerSplash.Visible = false;
+			return;
+		}
+
+		Texture2D? tex = GD.Load<Texture2D>(resPath);
+		if (tex == null)
+		{
+			_bossCornerSplash.Visible = false;
+			return;
+		}
+
+		_bossCornerSplash.Texture = tex;
+		_bossCornerSplash.MouseFilter = Control.MouseFilterEnum.Ignore;
+		_bossCornerSplash.ExpandMode = TextureRect.ExpandModeEnum.KeepSize;
+		_bossCornerSplash.StretchMode = TextureRect.StretchModeEnum.Scale;
+		LayoutBossCornerSplashPixels();
+		_bossCornerSplash.Visible = true;
+	}
+
+	void LayoutBossCornerSplashPixels()
+	{
+		if (_bossCornerSplash == null || _bossCornerSplash.Texture is not Texture2D tex)
+			return;
+
+		Vector2 sz = new(tex.GetWidth(), tex.GetHeight());
+		Vector2 vp = GetViewport().GetVisibleRect().Size;
+		_bossCornerSplash.CustomMinimumSize = sz;
+		_bossCornerSplash.Size = sz;
+		_bossCornerSplash.Position = vp - sz;
+	}
 
 	void SpawnEventIcons()
 
@@ -1035,6 +1133,23 @@ public partial class Gameplay : Node2D
 			return true;
 		}
 
+		if (!Passive208ExtraMoveRangeUnlocked())
+			return false;
+
+		foreach (Vector2I n1 in HexGridUtil.Neighbors(_terrain, _playerCell))
+		{
+			if (!CellIs208WalkThroughIntermediate(n1))
+				continue;
+			foreach (Vector2I n2 in HexGridUtil.Neighbors(_terrain, n1))
+			{
+				if (HexGridUtil.IsSameCell(n2, _playerCell))
+					continue;
+				if (!CellIs208EmptyMoveDestination(n2))
+					continue;
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -1058,6 +1173,103 @@ public partial class Gameplay : Node2D
 			return false;
 
 		return true;
+	}
+
+	const int BaseCampaignPlayerEnergyMax = 10;
+
+	void RecalculatePlayerEnergyMaxFromPassives()
+	{
+		int m = BaseCampaignPlayerEnergyMax;
+		if (pskillList.Contains(206) && pconfigDict.ContainsKey(206))
+			m += Mathf.Max(0, pconfigDict[206].AsInt32());
+		RunState.Instance.PlayerEnergyMax = m;
+		RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy, m);
+	}
+
+	bool Passive208ExtraMoveRangeUnlocked() => pskillList.Contains(208);
+
+	bool CellIs208WalkThroughIntermediate(Vector2I c)
+	{
+		string ck = HexGridUtil.CellKey(c);
+		if (!_valid.ContainsKey(ck) || CellHasFog(ck))
+			return false;
+		if (_blockState.ContainsKey(ck) && _blockState[ck].AsBool())
+			return false;
+		if (_events.ContainsKey(ck))
+			return false;
+		return true;
+	}
+
+	bool CellIs208EmptyMoveDestination(Vector2I c)
+	{
+		string ck = HexGridUtil.CellKey(c);
+		if (!_valid.ContainsKey(ck) || CellHasFog(ck))
+			return false;
+		if (_blockState.ContainsKey(ck) && _blockState[ck].AsBool())
+			return false;
+		if (_events.ContainsKey(ck))
+			return false;
+		return true;
+	}
+
+	bool TryGet208TwoHopMid(Vector2I from, Vector2I dst, out Vector2I mid)
+	{
+		mid = default;
+		if (_terrain == null || !CellIs208EmptyMoveDestination(dst))
+			return false;
+
+		foreach (Vector2I b in HexGridUtil.Neighbors(_terrain, from))
+		{
+			if (HexGridUtil.IsSameCell(b, dst))
+				continue;
+			if (!CellIs208WalkThroughIntermediate(b))
+				continue;
+			foreach (Vector2I x in HexGridUtil.Neighbors(_terrain, b))
+			{
+				if (HexGridUtil.IsSameCell(x, dst))
+				{
+					mid = b;
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	bool HexCellsAreAdjacent(Vector2I from, Vector2I to)
+	{
+		if (_terrain == null)
+			return false;
+		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, from))
+		{
+			if (HexGridUtil.IsSameCell(n, to))
+				return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>本回合左键目标是否可达（相邻事件交互，或相邻/被动208二格空移）。</summary>
+	bool CanPlayerActOnCellThisTurn(Vector2I cell)
+	{
+		if (_terrain == null)
+			return false;
+
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck) || CellHasFog(ck))
+			return false;
+
+		if (_events.ContainsKey(ck))
+			return HexCellsAreAdjacent(_playerCell, cell) && NeighborCellIsInteractableFromPlayer(cell);
+
+		if (_blockState.ContainsKey(ck) && _blockState[ck].AsBool())
+			return false;
+
+		if (HexCellsAreAdjacent(_playerCell, cell))
+			return true;
+
+		return Passive208ExtraMoveRangeUnlocked() && TryGet208TwoHopMid(_playerCell, cell, out _);
 	}
 
 	void SyncAdjacentInteractionHints()
@@ -1094,6 +1306,23 @@ public partial class Gameplay : Node2D
 				continue;
 
 			keys.Add(HexGridUtil.CellKey(n));
+		}
+
+		if (Passive208ExtraMoveRangeUnlocked())
+		{
+			foreach (Vector2I n1 in HexGridUtil.Neighbors(_terrain, _playerCell))
+			{
+				if (!CellIs208WalkThroughIntermediate(n1))
+					continue;
+				foreach (Vector2I n2 in HexGridUtil.Neighbors(_terrain, n1))
+				{
+					if (HexGridUtil.IsSameCell(n2, _playerCell))
+						continue;
+					if (!CellIs208EmptyMoveDestination(n2))
+						continue;
+					keys.Add(HexGridUtil.CellKey(n2));
+				}
+			}
 		}
 
 		if (keys.SetEquals(_cachedNeighborHintKeys))
@@ -1679,61 +1908,10 @@ public partial class Gameplay : Node2D
 
 
 
-		bool adj = false;
-
-
-
-
-
-		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain!, _playerCell))
-
-
+		if (!CanPlayerActOnCellThisTurn(cell))
 		{
-
-
-
-
-
-			if (HexGridUtil.IsSameCell(n, cell))
-
-
-			{
-
-
-
-
-
-				adj = true;
-
-
-
-
-
-				break;
-
-
-
-			}
-
-
-
-
-		}
-
-
-
-
-
-		if (!adj)
-
-
-		{
-
 			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
-
 			return;
-
-
 		}
 
 
@@ -1833,6 +2011,8 @@ public partial class Gameplay : Node2D
 		_bossMeter = 0f;
 		_bossLockedCellKeys.Clear();
 		_bossWarn?.ClearAll();
+		SyncScreenEdgeWarningWithBossMapPreview();
+		RefreshBossCornerSplashFromTableRow(null);
 		RefreshHud();
 	}
 
@@ -1981,8 +2161,27 @@ public partial class Gameplay : Node2D
 
 
 		Vector2I origin = _playerCell;
+		bool use208TwoHop = false;
+		Vector2I hopMid = default;
 
-		await ApproachCellWithWalkAsync(origin, dst);
+		if (!HexCellsAreAdjacent(origin, dst))
+		{
+			if (!Passive208ExtraMoveRangeUnlocked() || !TryGet208TwoHopMid(origin, dst, out hopMid))
+				return;
+
+			use208TwoHop = true;
+		}
+
+		if (use208TwoHop)
+		{
+			await ApproachCellWithWalkAsync(origin, hopMid);
+			_playerCell = hopMid;
+			SetPlayerIdleVisual();
+			SnapPlayer();
+			await ApproachCellWithWalkAsync(hopMid, dst);
+		}
+		else
+			await ApproachCellWithWalkAsync(origin, dst);
 
 		_playerCell = dst;
 
@@ -1996,6 +2195,14 @@ public partial class Gameplay : Node2D
 
 
 		await EnergyAbsorbAsync();
+
+		if (pskillList.Contains(206))
+		{
+			RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + 1, RunState.Instance.PlayerEnergyMax);
+			powerCheck();
+		}
+
+		await MaybeTriggerPassive207AdjacentGrassAfterMoveAsync(dst);
 
 
 
@@ -2350,6 +2557,64 @@ public partial class Gameplay : Node2D
 		SnapPlayer();
 	}
 
+	/// <summary>草丛格子结算（走入触发或被动 207 邻格自动触发）；含 <see cref="EraseEvent"/>。</summary>
+	async Task ApplyGrassTileEffectsAsync(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_events.TryGetValue(ck, out Variant evVar))
+			return;
+
+		Godot.Collections.Dictionary ev = evVar.AsGodotDictionary();
+		if (GetString(ev, "type") != "grass")
+			return;
+
+		bool grassHealHappen = pskillList.Contains(106) || GD.Randf() < 0.5f;
+		if (grassHealHappen)
+		{
+			if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+			{
+				for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
+					SpawnGrassInRandomFog();
+			}
+
+			RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
+			await ToastAsync("草丛", "生命值 +1。");
+		}
+		else
+			await ToastAsync("草丛", "无事发生（50%占位）。");
+
+		if (pskillList.Contains(101))
+			grassskill = true;
+
+		if (pskillList.Contains(104))
+			grasscount++;
+
+		if (pskillList.Contains(105))
+		{
+			RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict[105].AsInt32(),
+				RunState.Instance.PlayerEnergyMax);
+			powerCheck();
+		}
+
+		EraseEvent(cell);
+	}
+
+	async Task MaybeTriggerPassive207AdjacentGrassAfterMoveAsync(Vector2I landedCell)
+	{
+		if (!pskillList.Contains(207) || _terrain == null)
+			return;
+
+		foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, landedCell))
+		{
+			string nk = HexGridUtil.CellKey(n);
+			if (!_events.ContainsKey(nk))
+				continue;
+			Godot.Collections.Dictionary evNeighbor = _events[nk].AsGodotDictionary();
+			if (GetString(evNeighbor, "type") != "grass")
+				continue;
+			await ApplyGrassTileEffectsAsync(n);
+		}
+	}
 
 	async Task TryInteractAsync(Vector2I cell)
 
@@ -2454,7 +2719,7 @@ public partial class Gameplay : Node2D
 							{
 								GetNode<TextureRect>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Button/SkillIcon").Texture = GD.Load<Texture2D>(pskilldict["address"].ToString());
 								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillName").Text = pskilldict["name"].ToString();
-								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe").Text = pskilldict["describe"].ToString();
+								ApplySkillPickDescribe(GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe"), pskilldict["describe"].AsString());
 								break;
 							}
 						}
@@ -2468,7 +2733,7 @@ public partial class Gameplay : Node2D
 							{
 								GetNode<TextureRect>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Button/SkillIcon").Texture = GD.Load<Texture2D>(askilldict["address"].ToString());
 								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillName").Text = askilldict["name"].ToString();
-								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe").Text = askilldict["describe"].ToString();
+								ApplySkillPickDescribe(GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe"), askilldict["describe"].AsString());
 								break;
 							}
 						}
@@ -2546,44 +2811,15 @@ public partial class Gameplay : Node2D
 
 
 			case "grass":
-				if (GD.Randf() < 0.5f)
-				{
-					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
-					{
-						for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
-						{
-							SpawnGrassInRandomFog();
-						}
-					}
-					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
-					await ToastAsync("草丛", "生命值 +1。");
-				}
-				else
-					await ToastAsync("草丛", "无事发生（50%占位）。");
-
-				if (pskillList.Contains(101))
-				{
-					grassskill = true;
-				}
-
-				if (pskillList.Contains(104))
-				{
-					grasscount++;
-				}
-
-				if (pskillList.Contains(105))
-				{
-					RunState.Instance.PlayerEnergy = Mathf.Min(RunState.Instance.PlayerEnergy + pconfigDict[105].AsInt32(), RunState.Instance.PlayerEnergyMax);
-					powerCheck();
-				}
-
-				EraseEvent(cell);
+				await ApplyGrassTileEffectsAsync(cell);
 				break;
 
 
 			case "corpse":
 				await ApplyCorpseEventEffectsAsync();
 				EraseEvent(cell);
+				if (pskillList.Contains(103))
+					_corpseExtraAction = true;
 				break;
 
 
@@ -2702,6 +2938,11 @@ public partial class Gameplay : Node2D
 					break;
 				}
 			}
+
+			if (skillId == 206)
+				RecalculatePlayerEnergyMaxFromPassives();
+			RefreshHud();
+			powerCheck();
 
 		}
 		else
@@ -2916,6 +3157,12 @@ public partial class Gameplay : Node2D
 		}
 		grassskill = false;
 
+		if (_corpseExtraAction)
+		{
+			_spentBasic = false;
+		}
+		_corpseExtraAction = false;
+
 		if (pskillList.Contains(104))
 		{
 			if (grasscount >= pconfigDict[104].AsInt32()+1)
@@ -2989,7 +3236,11 @@ public partial class Gameplay : Node2D
 		foreach (string k in keys)
 			_bossLockedCellKeys.Add(k);
 		RebuildBossWarningVisual();
+		SyncScreenEdgeWarningWithBossMapPreview();
 	}
+
+	void SyncScreenEdgeWarningWithBossMapPreview() =>
+		_hudUi?.SetBossMapSkillPreviewActive(_bossLockedCellKeys.Count > 0);
 
 	void RebuildBossWarningVisual()
 	{
@@ -3207,6 +3458,7 @@ public partial class Gameplay : Node2D
 
 			_bossLockedCellKeys.Clear();
 			_bossWarn?.ClearAll();
+			SyncScreenEdgeWarningWithBossMapPreview();
 			_bossMeter = 0f;
 			await MaybeFogDamageAsync();
 		}
@@ -3273,6 +3525,7 @@ public partial class Gameplay : Node2D
 
 			_bossLockedCellKeys.Clear();
 			_bossWarn?.ClearAll();
+			SyncScreenEdgeWarningWithBossMapPreview();
 			_bossMeter = 0f;
 			await MaybeFogDamageAsync();
 		}
@@ -5040,12 +5293,21 @@ public partial class Gameplay : Node2D
 		HideTooltip();
 	}
 
+	private void OnBossSkillIconsSlotMouseEntered()
+	{
+		string line2 = string.IsNullOrWhiteSpace(_bossSkillText) ? "（无简短说明）" : _bossSkillText;
+		string body = !string.IsNullOrWhiteSpace(_bossSkillDetail)
+			? _bossSkillDetail
+			: (!string.IsNullOrWhiteSpace(_bossAiDescription) ? _bossAiDescription : "（无详情）");
+		ShowTooltip($"{_bossName}\n{line2}\n\n技能详情\n{body}");
+	}
+
 	private async void ShowTooltip(string text)
 	{
 		if (_tooltip == null || _tooltipLabel == null) return;
 
 		_tooltipLabel.Text = text;
-		_tooltipLabel.AutowrapMode = TextServer.AutowrapMode.Word;
+		_tooltipLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 		_tooltipLabel.CustomMinimumSize = new Vector2(200, 0);
 
 		_tooltipLabel.ResetSize();

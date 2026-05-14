@@ -64,6 +64,15 @@ static string GetCellTrim(IXLWorksheet ws, int rowNum, Dictionary<string, int> m
 	return cell.Value.ToString(CultureInfo.InvariantCulture)?.Trim() ?? "";
 }
 
+/// <summary>策划表列名可能为「BOSS图片配置」或「BOSS图片编号」，统一映射到「BOSS图片编号」列索引。</summary>
+static void NormalizeBossImageColumn(Dictionary<string, int> cmap)
+{
+	if (cmap.ContainsKey("BOSS图片编号"))
+		return;
+	if (cmap.TryGetValue("BOSS图片配置", out int col))
+		cmap["BOSS图片编号"] = col;
+}
+
 /// <summary>长表头（单元格内含换行的说明文字）时用首行作为主键别名，便于 Required 校验与读取。</summary>
 static void AddFirstLineHeaderAliases(Dictionary<string, int> map)
 {
@@ -400,6 +409,7 @@ static int RunBosses(string rootDir)
 	const int hr = 1;
 	Dictionary<string, int> cmap = ReadHeaderColumnMap(ws.Row(hr));
 	AddFirstLineHeaderAliases(cmap);
+	NormalizeBossImageColumn(cmap);
 	string[] req =
 	[
 		"ID", "BOSS名", "蓄力行动条", "预警行动条", "每回合增长",
@@ -450,6 +460,10 @@ static int RunBosses(string rootDir)
 		if (cmap.ContainsKey(summonCol))
 			ParseMonsterIdPoolTokens(GetCellTrim(ws, r, cmap, summonCol), bossSummonMonsterIds);
 
+		int bossImageId = 0;
+		if (cmap.ContainsKey("BOSS图片编号"))
+			bossImageId = GetBossEnumIntCell(ws, r, cmap, "BOSS图片编号");
+
 		var o = new JsonObject
 		{
 			["id"] = idNum,
@@ -463,6 +477,7 @@ static int RunBosses(string rootDir)
 			["skill_detail"] = skillDetail,
 			["skill_description"] = skillDesc,
 			["ai_description"] = aiDesc,
+			["boss_image_id"] = bossImageId,
 		};
 
 		if (bossSummonMonsterIds.Count > 0)
@@ -656,6 +671,8 @@ static int EnsureStarterXlsx(string rootDir, bool forceOverwrite)
 		ws.Cell(2, 6).Value = 1;
 		ws.Cell(2, 7).Value = 1;
 		ws.Cell(2, 8).Value = 1;
+		ws.Cell(1, 9).Value = "BOSS图片编号";
+		ws.Cell(2, 9).Value = 1;
 		wb.SaveAs(bx);
 		Console.WriteLine(forceOverwrite ? $"已覆盖 BOSS 表模板：{bx}" : $"已生成模板：{bx}");
 	}

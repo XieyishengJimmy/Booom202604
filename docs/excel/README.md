@@ -30,8 +30,10 @@
 6. **BOSS技能定位（使用位置）** — 策划表内可带换行枚举说明；首行须含此短标题。填 **整数**（如 1=中心锁定玩家格、2=范围含玩家格、3=全图任意），空或非整数导出为 `0`。  
 7. **BOSS技能范围定义（生效范围）** — 同上，整数枚举（如 1=半径 1 圆、2=半径 2 圆等），导出 `skill_area`。  
 8. **技能具体效果** — 若整格为 **纯数字** `1～99`，导出为枚举字段 **`skill_effect`**；否则整段文字导出为 **`skill_detail`**，`skill_effect` 为 `0`（可与列 6～7 的枚举组合描述技能）。  
+9. **BOSS图片编号**（可选，整数 `≥ 0`）— 导出为 **`boss_image_id`**；`> 0` 时运行时在 **`res://Art/BOSS/{编号}.png`** 按原像素显示在画面右下角。表头也可写作 **BOSS图片配置**（与「BOSS图片编号」同列）。  
+10. **怪物ID配置**（可选）— BOSS 召唤池，导出 **`summon_monster_ids`**。  
 
-导出的 **`Data/bosses.json`** 中每条 BOSS 另含：**`skill_target`**、**`skill_area`**、**`skill_effect`**、**`skill_detail`**（无文案时为空串）。兼容旧逻辑的 **`skill_description`**、**`ai_description`** 仍会被填充（分别来自自由文案或枚举摘要、以及定位列生成的简短 AI 提示）。顶层 **`version`** 为 **3**。  
+导出的 **`Data/bosses.json`** 中每条 BOSS 另含：**`skill_target`**、**`skill_area`**、**`skill_effect`**、**`skill_detail`**（无文案时为空串）。兼容旧逻辑的 **`skill_description`**、**`ai_description`** 仍会被填充（分别来自自由文案或枚举摘要、以及定位列生成的简短 AI 提示）。顶层 **`version`** 为 **3**。
 
 若表头格子内写有长说明（多行文本），导出工具会为 **第一行标题** 建立别名；列校验以短标题关键字为准。
 

@@ -24,6 +24,8 @@ public static class BossTable
 		public string SkillDetail = "";
 		/// <summary>Excel「怪物ID配置」导出为 <c>summon_monster_ids</c>；BOSS 在迷雾中招怪时仅从该池中随机。</summary>
 		public List<int> SummonMonsterIds = [];
+		/// <summary>Excel「BOSS图片编号」→ 运行时加载 <c>res://Art/BOSS/{id}.png</c>；0 或未导出则不显示。</summary>
+		public int BossImageId;
 	}
 
 	static readonly Dictionary<int, Row> ById = [];
@@ -98,6 +100,7 @@ public static class BossTable
 				SkillEffect = LooseInt(d, "skill_effect", 0),
 				SkillDetail = GetStr(d, "skill_detail"),
 				SummonMonsterIds = ReadSummonMonsterIds(d),
+				BossImageId = LooseInt(d, "boss_image_id", 0),
 			};
 			if (row.GainPerTurn < 1)
 				row.GainPerTurn = 1;
