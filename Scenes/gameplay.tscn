@@ -12,15 +12,11 @@
 [ext_resource type="Texture2D" uid="uid://ccgckxgtqou2q" path="res://Art/UI/mainUI/H&MBorder1.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://d0q7pgchdj7c5" path="res://Art/UI/skillAcquire/Card_Normal.png" id="8_yl3i8"]
 [ext_resource type="Texture2D" uid="uid://c5yybbvry6l8e" path="res://Art/UI/mainUI/_ManaBar.png" id="9"]
-[ext_resource type="Script" uid="uid://6v3hpeg154ox" path="res://Scripts/guide/NewbieGuide.cs" id="9_p7y6y"]
 [ext_resource type="Texture2D" uid="uid://443b7wu7q42j" path="res://Art/UI/skillAcquire/SkillIcon.png" id="9_solsi"]
 [ext_resource type="Texture2D" uid="uid://cr67qlhnhfd7f" path="res://Art/UI/mainUI/ScreenEdgeWarning.png" id="9_v8xiy"]
-[ext_resource type="Script" uid="uid://brx7asiijab6u" path="res://Scripts/guide/GuideMask.cs" id="10_1jl1i"]
-[ext_resource type="Texture2D" uid="uid://dkd351lhpmlan" path="res://Art/Guide/guide2.png" id="10_q7oaa"]
 [ext_resource type="Texture2D" uid="uid://cbr0goakx7b1b" path="res://Art/UI/skillAcquire/Card_Glow.png" id="10_xrja5"]
 [ext_resource type="Texture2D" uid="uid://bd73swdiehk8w" path="res://Art/UI/skillAcquire/Card_Selected.png" id="11_cnqtm"]
 [ext_resource type="Texture2D" uid="uid://fkimbkef2qm1" path="res://Art/UI/mainUI/PortraitBorder.png" id="12"]
-[ext_resource type="Texture2D" uid="uid://8uutnt00pamg" path="res://Art/UI/mainUI/Cover.png" id="12_p7y6y"]
 [ext_resource type="Texture2D" uid="uid://n6h8haytxwtx" path="res://Art/UI/skillAcquire/SkipButton_Normal.png" id="12_v8xiy"]
 [ext_resource type="Texture2D" uid="uid://dljvslyyio6wo" path="res://Art/UI/skillAcquire/RefreshButton_Normal.png" id="13_27sjm"]
 [ext_resource type="Texture2D" uid="uid://cn3gcxi2iyvv3" path="res://Art/UI/mainUI/SkillBarBorder.png" id="14"]
@@ -45,7 +41,7 @@
 [ext_resource type="Script" uid="uid://bfbq16r3prllp" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
 [ext_resource type="Texture2D" uid="uid://cpcoy3iwrtvpt" path="res://Art/UI/monster/Physic.png" id="42_phys"]
 [ext_resource type="Texture2D" uid="uid://doenc6x8kb6fg" path="res://Art/UI/monster/Magic.png" id="43_mag"]
-[ext_resource type="Texture2D" uid="uid://cn0dler6wkqmg" path="res://Art/Guide/guide1.png" id="43_v8xiy"]
+[ext_resource type="Texture2D" uid="uid://8uutnt00pamg" path="res://Art/UI/mainUI/Cover.png" id="43_v8xiy"]
 [ext_resource type="FontFile" uid="uid://cqu3dgmkpbafk" path="res://思源黑体+SourceHanSansCN-Normal.otf" id="44_skill_tooltip_font"]
 [ext_resource type="Texture2D" uid="uid://cpx82f5vktvwt" path="res://Art/UI/mainUI/BOSSSkillicon.png" id="45_bossico1"]
 [ext_resource type="Texture2D" uid="uid://hsn3fq7pgglx" path="res://Art/UI/mainUI/BOSSSkillicon2.png" id="46_bossico2"]
@@ -128,73 +124,14 @@ z_as_relative = false
 
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
-[node name="GuideRoot" type="Control" parent="UICanvas" unique_id=561902371 node_paths=PackedStringArray("Skill1", "Skill2", "Boss1", "Boss2", "GuideMask", "GuideTipLabel", "GuideTipImg1", "GuideTipImg2")]
-z_index = 5
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("9_p7y6y")
-Skill1 = NodePath("../HUD/PassiveSkillSlot")
-Skill2 = NodePath("../HUD/ActiveSkillSlot")
-Boss1 = NodePath("../HUD/BossSkillArea")
-Boss2 = NodePath("../HUD/MistProgress")
-GuideMask = NodePath("GuideMask")
-GuideTipLabel = NodePath("GuideTipLabel")
-GuideTipImg1 = NodePath("GuideTipImg1")
-GuideTipImg2 = NodePath("GuideTipImg2")
-
-[node name="GuideTipLabel" type="Label" parent="UICanvas/GuideRoot" unique_id=1534559885]
-z_index = 5
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -134.5
-offset_top = -60.0
-offset_right = 134.5
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 35
-text = "00000000000000"
-
-[node name="GuideTipImg1" type="TextureRect" parent="UICanvas/GuideRoot" unique_id=1072648173]
-z_index = 5
-layout_mode = 0
-offset_right = 1920.0
-offset_bottom = 1080.0
-texture = ExtResource("10_q7oaa")
-
-[node name="GuideTipImg2" type="TextureRect" parent="UICanvas/GuideRoot" unique_id=1424248989]
-z_index = 5
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-texture = ExtResource("43_v8xiy")
-
-[node name="GuideMask" type="ColorRect" parent="UICanvas/GuideRoot" unique_id=1112179707]
-z_index = 4
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.6313726)
-script = ExtResource("10_1jl1i")
-
 [node name="Cover" type="Sprite2D" parent="UICanvas" unique_id=907191566]
-texture = ExtResource("12_p7y6y")
+texture = ExtResource("43_v8xiy")
 centered = false
 
 [node name="BossCornerSplash" type="TextureRect" parent="UICanvas" unique_id=1158288855]
 unique_name_in_owner = true
 visible = false
+layout_mode = 0
 offset_left = 1620.0
 offset_top = 580.0
 offset_right = 1920.0

@@ -1,113 +1,113 @@
-{
+﻿{
   "version": 3,
   "bosses": [
-	{
-	  "id": 1001,
-	  "name": "哥布林",
-	  "charge_meter": 5,
-	  "warn_meter": 2,
-	  "gain_per_turn": 1,
-	  "skill_target": 2,
-	  "skill_area": 5,
-	  "skill_effect": 0,
-	  "skill_detail": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
-	  "skill_description": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
-	  "ai_description": "AI：范围仅需包含玩家所在格即可。",
-	  "boss_image_id": 1,
-	  "summon_monster_ids": [
-		2001,
-		2002
-	  ]
-	},
-	{
-	  "id": 1002,
-	  "name": "哥布林国王",
-	  "charge_meter": 5,
-	  "warn_meter": 3,
-	  "gain_per_turn": 1,
-	  "skill_target": 1,
-	  "skill_area": 1,
-	  "skill_effect": 0,
-	  "skill_detail": "在1格圆形范围内生成迷雾，并在迷雾中随机刷新1个怪物",
-	  "skill_description": "在1格圆形范围内生成迷雾，并在迷雾中随机刷新1个怪物",
-	  "ai_description": "AI：中心锁定玩家所在格。",
-	  "boss_image_id": 2,
-	  "summon_monster_ids": [
-		2001,
-		2002
-	  ]
-	},
-	{
-	  "id": 1003,
-	  "name": "独角仙",
-	  "charge_meter": 7,
-	  "warn_meter": 1,
-	  "gain_per_turn": 1,
-	  "skill_target": 2,
-	  "skill_area": 3,
-	  "skill_effect": 0,
-	  "skill_detail": "在任意1条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-	  "skill_description": "在任意1条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-	  "ai_description": "AI：范围仅需包含玩家所在格即可。",
-	  "boss_image_id": 3,
-	  "summon_monster_ids": [
-		3001,
-		3002
-	  ]
-	},
-	{
-	  "id": 1004,
-	  "name": "独角仙国王",
-	  "charge_meter": 6,
-	  "warn_meter": 2,
-	  "gain_per_turn": 1,
-	  "skill_target": 2,
-	  "skill_area": 6,
-	  "skill_effect": 0,
-	  "skill_detail": "在任意2条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-	  "skill_description": "在任意2条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
-	  "ai_description": "AI：范围仅需包含玩家所在格即可。",
-	  "boss_image_id": 1,
-	  "summon_monster_ids": [
-		3001,
-		3002
-	  ]
-	},
-	{
-	  "id": 1005,
-	  "name": "巫妖",
-	  "charge_meter": 7,
-	  "warn_meter": 3,
-	  "gain_per_turn": 1,
-	  "skill_target": 3,
-	  "skill_area": 2,
-	  "skill_effect": 0,
-	  "skill_detail": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-	  "skill_description": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-	  "ai_description": "AI：可于全地图任意位置施放。",
-	  "boss_image_id": 2,
-	  "summon_monster_ids": [
-		4001,
-		4002
-	  ]
-	},
-	{
-	  "id": 1006,
-	  "name": "大巫妖",
-	  "charge_meter": 6,
-	  "warn_meter": 3,
-	  "gain_per_turn": 1,
-	  "skill_target": 3,
-	  "skill_area": 2,
-	  "skill_effect": 0,
-	  "skill_detail": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-	  "skill_description": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-	  "ai_description": "AI：可于全地图任意位置施放。",
-	  "boss_image_id": 3,
-	  "summon_monster_ids": [
-		4001,
-		4002
-	  ]
-	}
+    {
+      "id": 1001,
+      "name": "哥布林",
+      "charge_meter": 5,
+      "warn_meter": 2,
+      "gain_per_turn": 1,
+      "skill_target": 2,
+      "skill_area": 5,
+      "skill_effect": 0,
+      "skill_detail": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
+      "skill_description": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "boss_image_id": 1,
+      "summon_monster_ids": [
+        2001,
+        2002
+      ]
+    },
+    {
+      "id": 1002,
+      "name": "哥布林国王",
+      "charge_meter": 5,
+      "warn_meter": 3,
+      "gain_per_turn": 1,
+      "skill_target": 1,
+      "skill_area": 1,
+      "skill_effect": 0,
+      "skill_detail": "在1格圆形范围内生成迷雾，并在迷雾中随机刷新1个怪物",
+      "skill_description": "在1格圆形范围内生成迷雾，并在迷雾中随机刷新1个怪物",
+      "ai_description": "AI：中心锁定玩家所在格。",
+      "boss_image_id": 2,
+      "summon_monster_ids": [
+        2001,
+        2002
+      ]
+    },
+    {
+      "id": 1003,
+      "name": "独角仙",
+      "charge_meter": 7,
+      "warn_meter": 1,
+      "gain_per_turn": 1,
+      "skill_target": 2,
+      "skill_area": 3,
+      "skill_effect": 0,
+      "skill_detail": "在任意1条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
+      "skill_description": "在任意1条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "boss_image_id": 3,
+      "summon_monster_ids": [
+        3001,
+        3002
+      ]
+    },
+    {
+      "id": 1004,
+      "name": "独角仙国王",
+      "charge_meter": 6,
+      "warn_meter": 2,
+      "gain_per_turn": 1,
+      "skill_target": 2,
+      "skill_area": 6,
+      "skill_effect": 0,
+      "skill_detail": "在任意2条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
+      "skill_description": "在任意2条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "boss_image_id": 1,
+      "summon_monster_ids": [
+        3001,
+        3002
+      ]
+    },
+    {
+      "id": 1005,
+      "name": "巫妖",
+      "charge_meter": 7,
+      "warn_meter": 3,
+      "gain_per_turn": 1,
+      "skill_target": 3,
+      "skill_area": 2,
+      "skill_effect": 0,
+      "skill_detail": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
+      "skill_description": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
+      "ai_description": "AI：可于全地图任意位置施放。",
+      "boss_image_id": 2,
+      "summon_monster_ids": [
+        4001,
+        4002
+      ]
+    },
+    {
+      "id": 1006,
+      "name": "大巫妖",
+      "charge_meter": 6,
+      "warn_meter": 3,
+      "gain_per_turn": 1,
+      "skill_target": 3,
+      "skill_area": 2,
+      "skill_effect": 0,
+      "skill_detail": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
+      "skill_description": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
+      "ai_description": "AI：可于全地图任意位置施放。",
+      "boss_image_id": 3,
+      "summon_monster_ids": [
+        4001,
+        4002
+      ]
+    }
   ]
 }
