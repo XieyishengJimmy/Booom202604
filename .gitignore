@@ -7,3 +7,6 @@ obj/
 .vs/
 *.user
 *.suo
+
+# 本地拉取前备份（勿提交）
+_pull_merge_backup/

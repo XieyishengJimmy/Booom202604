@@ -7,6 +7,8 @@ public partial class Hud : Control
 {
 	const int FillBottomToTop = 3;
 
+	const int FillClockwise = 4;
+
 	const int FillCounterClockwise = 5;
 
 	TextureRect? _portrait;
@@ -54,6 +56,17 @@ public partial class Hud : Control
 
 		_mistRing = GetNodeOrNull<TextureProgressBar>("%MistRingFill");
 		_mistPctLabel = GetNodeOrNull<Label>("%MistPctLabel");
+
+		// 迷雾环：0°=12 点，角度顺时针递增。7 点=210°，5 点=150°。
+		// 满雾为「7→顺时针经 12→到 5」长弧 300°；雾减少时从 7 点侧沿顺时针收回至 5。
+		// TextureProgressBar 从起点沿 fill 方向铺 ratio×弧长；用 FILL_COUNTER_CLOCKWISE、起点 5 点、300°，
+		// 则 ratio 变小时弧从 7 点侧缩短（5 点端为弧起点固定侧）。见 Godot TextureProgressBar 径向填充。
+		if (_mistRing != null)
+		{
+			_mistRing.FillMode = FillCounterClockwise;
+			_mistRing.RadialInitialAngle = 150f;
+			_mistRing.RadialFillDegrees = 300f;
+		}
 	}
 
 	public void SetPortrait(Texture2D? tex)
@@ -155,9 +168,6 @@ public partial class Hud : Control
 			_mistRing.MinValue = 0f;
 			_mistRing.MaxValue = 100f;
 			_mistRing.Value = 100f * r;
-			_mistRing.SetDeferred(TextureProgressBar.PropertyName.FillMode, FillCounterClockwise);
-			_mistRing.SetDeferred(TextureProgressBar.PropertyName.RadialInitialAngle, Mathf.DegToRad(225f));
-			_mistRing.SetDeferred(TextureProgressBar.PropertyName.RadialFillDegrees, Mathf.DegToRad(285f));
 		}
 
 		if (_mistPctLabel != null)

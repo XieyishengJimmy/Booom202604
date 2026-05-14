@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cxqrjljyaiotf"]
 
-[ext_resource type="Script" uid="uid://o85nqrkljvnj" path="res://Scripts/game/Gameplay.cs" id="1"]
+[ext_resource type="Script" uid="uid://dvoj73id0m5r7" path="res://Scripts/game/Gameplay.cs" id="1"]
 [ext_resource type="Script" uid="uid://wqnlmp4cf2ed" path="res://Scripts/game/FogLayer.cs" id="2"]
 [ext_resource type="Script" uid="uid://b23orllakuxk2" path="res://Scripts/game/BlockLayer.cs" id="3"]
 [ext_resource type="Script" uid="uid://c6bci8d0bd8so" path="res://Scripts/ui/Hud.cs" id="4"]
@@ -36,17 +36,20 @@
 [ext_resource type="Texture2D" uid="uid://nis8w3avjsox" path="res://Art/UI/mainUI/map_progress bar_dark.png" id="28"]
 [ext_resource type="Texture2D" uid="uid://b6jinwyx15fg8" path="res://Art/UI/mainUI/map_progress bar_light.png" id="29"]
 [ext_resource type="Script" uid="uid://ikw7ji2x4ptf" path="res://Scripts/game/BossWarningLayer.cs" id="30"]
+[ext_resource type="Texture2D" uid="uid://dlmvop336m3ni" path="res://Art/UI/mainUI/cost.png" id="32_cnqtm"]
 [ext_resource type="Texture2D" uid="uid://gwbuxuxjp03c" path="res://Art/UI/skillAcquire/获得.png" id="39_fm0py"]
 [ext_resource type="Texture2D" uid="uid://bokicrbxqxe37" path="res://Art/UI/map/BG.png" id="40_mapbg"]
 [ext_resource type="Script" uid="uid://bfbq16r3prllp" path="res://Scripts/game/InteractionHintLayer.cs" id="41_inthint"]
 [ext_resource type="Texture2D" uid="uid://cpcoy3iwrtvpt" path="res://Art/UI/monster/Physic.png" id="42_phys"]
 [ext_resource type="Texture2D" uid="uid://doenc6x8kb6fg" path="res://Art/UI/monster/Magic.png" id="43_mag"]
+[ext_resource type="FontFile" uid="uid://cqu3dgmkpbafk" path="res://思源黑体+SourceHanSansCN-Normal.otf" id="44_skill_tooltip_font"]
 
 [node name="Gameplay" type="Node2D" unique_id=841708317]
 script = ExtResource("1")
 GameplayCameraZoomLimitClose = 0.2
 GameplayCameraZoomLimitFar = 1.0
 GameplayCameraFitDivisor = 15000.0
+metadata/_edit_horizontal_guides_ = [994.0]
 
 [node name="BackdropCanvas" type="CanvasLayer" parent="." unique_id=593041543]
 layer = -128
@@ -61,6 +64,31 @@ mouse_filter = 2
 texture = ExtResource("40_mapbg")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="TooltipCanvas" type="CanvasLayer" parent="." unique_id=524001000]
+layer = 128
+
+[node name="Tooltip" type="Panel" parent="TooltipCanvas" unique_id=524001001]
+visible = false
+offset_right = 400.0
+offset_bottom = 240.0
+
+[node name="MessageLabel" type="Label" parent="TooltipCanvas/Tooltip" unique_id=524001002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("44_skill_tooltip_font")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1287628607]
 zoom = Vector2(0.85, 0.85)
@@ -615,7 +643,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ActiveSkillSlot" type="Control" parent="UICanvas/HUD" unique_id=617858476]
-z_index = -1
+z_index = 2
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -665,11 +693,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1780095814]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -685,7 +712,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=335791861]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -710,7 +738,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=228421940]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -746,6 +774,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=1379572783]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -755,6 +784,44 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 22
 text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1" unique_id=711000101]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/Cost" unique_id=711000102]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/Cost" unique_id=711000103]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -768,11 +835,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1304789853]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -788,7 +854,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1120770816]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -813,7 +880,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1982234833]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -849,6 +916,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=1323189572]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -861,6 +929,44 @@ text = "12"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2" unique_id=711000201]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/Cost" unique_id=711000202]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/Cost" unique_id=711000203]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SingleSkill3" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=332522563]
 anchors_preset = 0
 offset_left = 293.0
@@ -870,11 +976,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=399821092]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -890,7 +995,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=672891347]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -915,7 +1021,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=1605410325]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -951,6 +1057,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=68484564]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -963,6 +1070,44 @@ text = "12"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3" unique_id=711000301]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/Cost" unique_id=711000302]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/Cost" unique_id=711000303]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SingleSkill4" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=1123475795]
 anchors_preset = 0
 offset_left = 440.0
@@ -972,11 +1117,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=342436499]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -992,7 +1136,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=526894494]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -1017,7 +1162,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=1889904470]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -1053,6 +1198,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=1754524395]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -1065,6 +1211,44 @@ text = "12"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4" unique_id=711000401]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/Cost" unique_id=711000402]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/Cost" unique_id=711000403]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SingleSkill5" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=70311259]
 anchors_preset = 0
 offset_left = 587.0
@@ -1074,11 +1258,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1732401059]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -1094,7 +1277,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=1612793369]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -1119,7 +1303,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=209786858]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -1155,6 +1339,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=775867]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -1167,6 +1352,44 @@ text = "12"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5" unique_id=711000501]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/Cost" unique_id=711000502]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/Cost" unique_id=711000503]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SingleSkill6" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea" unique_id=50361009]
 anchors_preset = 0
 offset_left = 734.0
@@ -1176,11 +1399,10 @@ offset_bottom = 204.0
 mouse_filter = 2
 
 [node name="SkillIcon" type="Button" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=752259050]
-z_index = 2
 layout_mode = 1
-offset_left = 19.5
+offset_left = 20.5
 offset_top = 21.5
-offset_right = 126.5
+offset_right = 127.5
 offset_bottom = 128.5
 flat = true
 
@@ -1196,7 +1418,8 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SkillCdCover" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1871681741]
-z_index = 3
+visible = false
+z_index = 2
 layout_mode = 1
 offset_left = 20.5
 offset_top = 21.5
@@ -1221,7 +1444,7 @@ stretch_mode = 5
 
 [node name="SkillHi" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=836897088]
 visible = false
-z_index = 4
+z_index = 1
 layout_mode = 1
 offset_left = -1.5
 offset_top = -1.5
@@ -1257,6 +1480,7 @@ horizontal_alignment = 1
 
 [node name="CdLabel" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=1616465967]
 visible = false
+z_index = 3
 layout_mode = 1
 offset_left = 26.5
 offset_top = 50.5
@@ -1266,6 +1490,44 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 22
 text = "12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Cost" type="Control" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6" unique_id=711000601]
+visible = false
+z_index = 5
+layout_mode = 1
+anchors_preset = 0
+offset_left = 90.5
+offset_top = 77.0
+offset_right = 170.5
+offset_bottom = 157.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/Cost" unique_id=711000602]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/Cost" unique_id=711000603]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -1299,7 +1561,7 @@ offset_left = 10.0
 offset_top = 50.0
 offset_right = 66.0
 offset_bottom = 106.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1311,7 +1573,7 @@ offset_left = 80.0
 offset_top = 50.0
 offset_right = 136.0
 offset_bottom = 106.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1323,7 +1585,7 @@ offset_left = 10.0
 offset_top = 120.0
 offset_right = 66.0
 offset_bottom = 176.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1335,7 +1597,7 @@ offset_left = 80.0
 offset_top = 120.0
 offset_right = 136.0
 offset_bottom = 176.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1347,7 +1609,7 @@ offset_left = 10.0
 offset_top = 190.0
 offset_right = 66.0
 offset_bottom = 246.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1359,7 +1621,7 @@ offset_left = 80.0
 offset_top = 190.0
 offset_right = 136.0
 offset_bottom = 246.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1371,7 +1633,7 @@ offset_left = 10.0
 offset_top = 260.0
 offset_right = 66.0
 offset_bottom = 316.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1383,7 +1645,7 @@ offset_left = 80.0
 offset_top = 260.0
 offset_right = 136.0
 offset_bottom = 316.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1395,7 +1657,7 @@ offset_left = 10.0
 offset_top = 330.0
 offset_right = 66.0
 offset_bottom = 386.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1407,7 +1669,7 @@ offset_left = 80.0
 offset_top = 330.0
 offset_right = 136.0
 offset_bottom = 386.0
-mouse_filter = 2
+mouse_filter = 0
 texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
@@ -1554,7 +1816,11 @@ offset_top = 26.975
 offset_right = 197.975
 offset_bottom = 202.975
 mouse_filter = 2
+step = 0.1
 value = 100.0
+fill_mode = 5
+radial_initial_angle = 150.0
+radial_fill_degrees = 300.0
 texture_progress = ExtResource("29")
 
 [node name="MistPctLabel" type="Label" parent="UICanvas/HUD/MistProgress" unique_id=1127760447]
@@ -1563,15 +1829,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 67.975
-offset_top = 93.975
-offset_right = 147.975
-offset_bottom = 125.975
+offset_left = -30.999977
+offset_top = -13.000008
+offset_right = 49.00003
+offset_bottom = 19.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 36
 text = "100%"
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://dfails_scrnbo"]
+[gd_scene load_steps=6 format=3 uid="uid://dfails_scrnbo"]
 
 [ext_resource type="Script" path="res://Scripts/ui/FailScreen.cs" id="1"]
 [ext_resource type="Texture2D" uid="uid://cmdkubra4pe4j" path="res://Art/UI/fail/SettlementBG.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://yb8xox1cnfyq" path="res://Art/UI/fail/LoseFlag.png" id="3"]
 [ext_resource type="Texture2D" uid="uid://bjim2ohf1yiny" path="res://Art/UI/fail/FailText.png" id="4"]
+[ext_resource type="Script" path="res://Scripts/ui/ReturnToMenuHintLabel.cs" id="5"]
 
 [node name="FailScreen" type="Control"]
 layout_mode = 3
@@ -87,3 +88,22 @@ mouse_filter = 2
 texture = ExtResource("4")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="ReturnHint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -96.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 36
+text = "点击任意位置返回主菜单"
+horizontal_alignment = 1
+vertical_alignment = 2
+script = ExtResource("5")

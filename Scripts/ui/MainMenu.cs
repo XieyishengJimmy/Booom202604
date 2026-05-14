@@ -78,7 +78,7 @@ public partial class MainMenu : Control
 
 		RunState.Instance.PrepareReturnToMainMenu();
 		RunState.Instance.PendingLevelPath = path;
-		RunState.Instance.DebugModeVerboseToasts = _debugModeChk?.ButtonPressed ?? true;
+		RunState.Instance.DebugModeVerboseToasts = _debugModeChk?.ButtonPressed ?? false;
 		GetTree().ChangeSceneToFile("res://Scenes/gameplay.tscn");
 	}
 

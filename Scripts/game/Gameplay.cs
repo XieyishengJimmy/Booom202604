@@ -40,6 +40,9 @@ public partial class Gameplay : Node2D
 	/// <summary>主动技能槽 <c>SingleSkillN/SkillIcon</c> 下用于等比缩放显示的技能图节点（与 <c>UI.tscn</c> 中槽位视觉一致）。</summary>
 	const string ActiveSkillIconTexRel = "/SkillIcon/IconTex";
 
+	/// <summary>主动槽法力角标根节点 <c>SingleSkillN/Cost</c>（内含 <c>CostBg</c>、<c>CostValue</c>）。</summary>
+	const string ActiveSkillCostRel = "/Cost";
+
 	TileMapLayer? _terrain;
 	FogLayer? _fog;
 	BossWarningLayer? _bossWarn;
@@ -47,6 +50,37 @@ public partial class Gameplay : Node2D
 	BlockLayer? _blocks;
 	Sprite2D? _playerSprite;
 	Hud? _hudUi;
+
+	const string HpFloatFontPath = "res://思源黑体+SourceHanSansCN-Normal.otf";
+
+	/// <summary>技能悬停 Tooltip（<c>TooltipCanvas/MessageLabel</c>）：相对场景原默认 16pt 放大约 50%。</summary>
+	const int SkillTooltipFontSize = 24;
+
+	const float HpFloatTipHoldSeconds = 1f;
+
+	const float HpFloatTipFadeSeconds = 0.55f;
+
+	const float HpFloatTipFadeLiftPixels = 76f;
+
+	const int HpFloatTipFontSize = 26;
+
+	static readonly Color HpFloatHealColor = new(0.22f, 0.82f, 0.38f, 1f);
+	static readonly Color HpFloatDamageColor = new(0.92f, 0.24f, 0.22f, 1f);
+
+	Font? _hpFloatFont;
+	bool _hpFloatFontWarned;
+	int? _lastHpForMapFloatTip;
+
+	sealed class HpFloatTipRun
+	{
+		public Label Lbl = null!;
+		public ulong SpawnTickMs;
+		public bool FadeStarted;
+		public ulong FadeStartTickMs;
+		public Color BaseModulate;
+	}
+
+	readonly List<HpFloatTipRun> _hpFloatTipRuns = new();
 
 	const float PlayerMoveTweenSeconds = 0.5f;
 	const float PlayerFightKnockbackSeconds = 0.3f;
@@ -463,6 +497,14 @@ public partial class Gameplay : Node2D
 		var portraitTex = GD.Load<Texture2D>("res://Art/Player/head.png");
 		if (portraitTex != null)
 			_hudUi.SetPortrait(portraitTex);
+
+		_hpFloatFont = ResourceLoader.Load<Font>(HpFloatFontPath);
+		if (_hpFloatFont == null && !_hpFloatFontWarned)
+		{
+			_hpFloatFontWarned = true;
+			GD.PrintErr($"[Gameplay] 未找到生命值飘字字体：{HpFloatFontPath}（请将思源黑体 OTF 放在项目根目录）");
+		}
+
 		_fog = GetNode<FogLayer>("World/FogRoot");
 		_bossWarn = GetNodeOrNull<BossWarningLayer>("World/BossWarningRoot");
 		_blocks = GetNode<BlockLayer>("World/BlockRoot");
@@ -486,7 +528,6 @@ public partial class Gameplay : Node2D
 		List<int> pconfigList = new List<int>();
 		List<int> acdList = new List<int>();
 		List<int> apowerList = new List<int>();
-		powerCheck();
 		foreach (var item in parray)
 		{
 			var pskilldict = item.AsGodotDictionary();
@@ -544,14 +585,15 @@ public partial class Gameplay : Node2D
 			apowerDict[id] = apowerList[i];
 		}
 
-		_tooltip = GetNode<Panel>("UICanvas/Tooltip");
-		_tooltipLabel = _tooltip.GetNode<Label>("MessageLabel");
+		_tooltip = GetNodeOrNull<Panel>("TooltipCanvas/Tooltip");
+		_tooltipLabel = _tooltip?.GetNodeOrNull<Label>("MessageLabel");
 
-		// 设置九宫格背景
-		SetupTooltipStyle();
-
-		// 默认隐藏
-		_tooltip.Visible = false;
+		if (_tooltip != null && _tooltipLabel != null)
+		{
+			// 设置九宫格背景
+			SetupTooltipStyle();
+			_tooltip.Visible = false;
+		}
 
 		skillList.Clear();
 		pskillList.Clear();
@@ -571,6 +613,7 @@ public partial class Gameplay : Node2D
 		RebuildLearnedSkillsHud();
 		SnapPlayer();
 		RefreshHud();
+		powerCheck();
 		FitCamera();
 		cardchoose = 0;
 		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } skillPickSureInit)
@@ -1183,6 +1226,22 @@ public partial class Gameplay : Node2D
 	bool TerrainCellMarkedBlocked(string ck) =>
 		_blockState.ContainsKey(ck) && _blockState[ck].AsBool();
 
+	/// <summary>技能 7「空间折跃」可落点：版图内、无迷雾、非障碍；若有事件则不得为祭坛或战斗怪。</summary>
+	bool IsSkill7TeleportDestination(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck))
+			return false;
+		if (CellHasFog(ck))
+			return false;
+		if (TerrainCellMarkedBlocked(ck))
+			return false;
+		if (!_events.ContainsKey(ck))
+			return true;
+		string t = GetString(_events[ck].AsGodotDictionary(), "type");
+		return t is not ("altar" or "monster_str" or "monster_mag");
+	}
+
 
 
 	void AttachRuntimeEvent(Vector2I cell, Godot.Collections.Dictionary ev)
@@ -1413,6 +1472,8 @@ public partial class Gameplay : Node2D
 		if (GetNodeOrNull<CanvasItem>("UICanvas/HUD/SkillChoose") is { Visible: true })
 			return false;
 		if (slot1To6 < 1 || slot1To6 > askillList.Count || slot1To6 > 6)
+			return false;
+		if (!CanUseActiveSkillSlot(slot1To6))
 			return false;
 
 		switch (slot1To6)
@@ -1775,6 +1836,27 @@ public partial class Gameplay : Node2D
 		RefreshHud();
 	}
 
+	void SetActiveSkillCostUi(int slot1To6, bool equipped, int skillId)
+	{
+		if (slot1To6 < 1 || slot1To6 > 6)
+			return;
+		string root = "UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + slot1To6;
+		if (GetNodeOrNull<CanvasItem>(root + ActiveSkillCostRel) is not { } costRoot)
+			return;
+		if (!equipped)
+		{
+			costRoot.Visible = false;
+			return;
+		}
+
+		costRoot.Visible = true;
+		if (costRoot.GetNodeOrNull<Label>("CostValue") is { } lab)
+		{
+			int p = apowerDict.ContainsKey(skillId) ? apowerDict[skillId].AsInt32() : 0;
+			lab.Text = p.ToString();
+		}
+	}
+
 	void RebuildLearnedSkillsHud()
 	{
 		for (int i = 1; i <= 10; i++)
@@ -1810,6 +1892,7 @@ public partial class Gameplay : Node2D
 				itex.Texture = null;
 			if (GetNodeOrNull<Button>(root + "/SkillIcon") is { } iconBtn)
 				iconBtn.Icon = null;
+			SetActiveSkillCostUi(j, false, 0);
 		}
 
 		for (int ai = 0; ai < askillList.Count && ai < 6; ai++)
@@ -1825,6 +1908,7 @@ public partial class Gameplay : Node2D
 				string targetAddress = askilldict["address"].AsString();
 				GetNode<TextureRect>(rootPath + ActiveSkillIconTexRel).Texture = GD.Load<Texture2D>(targetAddress);
 				GetNode<TextureRect>(rootPath + "/SkillHi").Visible = true;
+				SetActiveSkillCostUi(ai + 1, true, sid);
 				break;
 			}
 		}
@@ -1859,9 +1943,7 @@ public partial class Gameplay : Node2D
 
 
 
-			await ToastAsync("受阻", "该格是不可通行的障碍占位。");
-
-
+			SpawnPlayerHeadFloatTip("不可通过", Colors.White);
 
 			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
 
@@ -2063,6 +2145,7 @@ public partial class Gameplay : Node2D
 		base._Process(delta);
 		TickPlayerIdleLoop((float)delta);
 		SyncAdjacentInteractionHints();
+		UpdateHpFloatTipsFollowing();
 		if (_isWaitingForHighlightClick)
 		{
 			Vector2I currentHover = GetMouseHoverCell();
@@ -2499,90 +2582,7 @@ public partial class Gameplay : Node2D
 
 
 			case "corpse":
-				if (pskillList.Contains(204))
-				{
-					corpseCount++;
-					if(corpseCount >= pconfigDict[204].AsInt32())
-					{
-						Hud hud1 = _hudUi!;
-						int pick1 = await hud1.ModalThreeChoiceAsync("祭坛效果", "+1 力量", "+1 魔法", "+2 HP（不超上限）");
-
-
-						switch (pick1)
-
-
-						{
-
-
-							case 0:
-
-
-
-
-
-								RunState.Instance.PlayerStr += 1;
-
-
-
-								break;
-
-							case 1:
-
-								RunState.Instance.PlayerMagic += 1;
-
-								break;
-
-
-
-							default:
-
-								if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
-								{
-									for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
-									{
-										SpawnGrassInRandomFog();
-									}
-								}
-
-								RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
-
-								break;
-
-						}
-
-						corpseCount = 0;
-					}
-				}
-
-				if (GD.Randf() < 0.5f)
-				{
-					if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
-					{
-						for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
-						{
-							SpawnGrassInRandomFog();
-						}
-					}
-					RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
-					if (pskillList.Contains(201))
-					{
-						int extraHeal = Mathf.Max(1, pconfigDict[201].AsInt32());
-						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + extraHeal, RunState.Instance.PlayerHpMax);
-					}
-					await ToastAsync("尸体", "+1 生命（50%）。");
-				}
-				else
-				{
-					RunState.Instance.PlayerHp -= 1;
-					if (pskillList.Contains(202))
-					{
-						corpseHp = true;
-					}
-
-					await PlayPlayerInjuredVisualSequenceIfAvailableAsync();
-					await ToastAsync("尸体", "-1 生命（50%）。");
-				}
-
+				await ApplyCorpseEventEffectsAsync();
 				EraseEvent(cell);
 				break;
 
@@ -2726,6 +2726,9 @@ public partial class Gameplay : Node2D
 					break;
 				}
 			}
+
+			SetActiveSkillCostUi(askillList.Count, true, skillId);
+			powerCheck();
 		}
 
 	}
@@ -2744,7 +2747,67 @@ public partial class Gameplay : Node2D
 
 	}
 
+	/// <summary>与走入尸体格相同的效果（被动 201/202/204 与 50% ±生命）；不含 <see cref="EraseEvent"/>。</summary>
+	async Task ApplyCorpseEventEffectsAsync()
+	{
+		if (pskillList.Contains(204))
+		{
+			corpseCount++;
+			if (corpseCount >= pconfigDict[204].AsInt32())
+			{
+				Hud hud1 = _hudUi!;
+				int pick1 = await hud1.ModalThreeChoiceAsync("祭坛效果", "+1 力量", "+1 魔法", "+2 HP（不超上限）");
 
+				switch (pick1)
+				{
+					case 0:
+						RunState.Instance.PlayerStr += 1;
+						break;
+					case 1:
+						RunState.Instance.PlayerMagic += 1;
+						break;
+					default:
+						if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+						{
+							for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
+								SpawnGrassInRandomFog();
+						}
+
+						RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 2, RunState.Instance.PlayerHpMax);
+						break;
+				}
+
+				corpseCount = 0;
+			}
+		}
+
+		if (GD.Randf() < 0.5f)
+		{
+			if (RunState.Instance.PlayerHp + 2 > RunState.Instance.PlayerHpMax && pskillList.Contains(102))
+			{
+				for (int i = 0; i < pconfigDict[102].AsInt32(); i++)
+					SpawnGrassInRandomFog();
+			}
+
+			RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + 1, RunState.Instance.PlayerHpMax);
+			if (pskillList.Contains(201))
+			{
+				int extraHeal = Mathf.Max(1, pconfigDict[201].AsInt32());
+				RunState.Instance.PlayerHp = Mathf.Min(RunState.Instance.PlayerHp + extraHeal, RunState.Instance.PlayerHpMax);
+			}
+
+			await ToastAsync("尸体", "+1 生命（50%）。");
+		}
+		else
+		{
+			RunState.Instance.PlayerHp -= 1;
+			if (pskillList.Contains(202))
+				corpseHp = true;
+
+			await PlayPlayerInjuredVisualSequenceIfAvailableAsync();
+			await ToastAsync("尸体", "-1 生命（50%）。");
+		}
+	}
 
 
 
@@ -2779,14 +2842,7 @@ public partial class Gameplay : Node2D
 			}
 			EraseEvent(cell);
 			if (pskillList.Contains(203))
-			{
-				var corpseEvent = new Godot.Collections.Dictionary
-				{
-					{ "type", "corpse" }
-				};
-				_events[HexGridUtil.CellKey(cell)] = corpseEvent;
-				SpawnSingleEventIcon(cell, corpseEvent);
-			}
+				await ApplyCorpseEventEffectsAsync();
 
 			return;
 		}
@@ -3455,11 +3511,41 @@ public partial class Gameplay : Node2D
 	{
 
 
-		if (_hudUi == null)
+		if (_hudUi == null || RunState.Instance == null)
 
 
 			return;
 
+
+
+		int hpNow = RunState.Instance.PlayerHp;
+
+
+		if (!RunState.Instance.DebugModeVerboseToasts &&
+
+
+		    _lastHpForMapFloatTip is { } prevHp &&
+
+
+		    prevHp != hpNow)
+
+
+		{
+
+
+			int d = hpNow - prevHp;
+
+
+			if (d != 0)
+
+
+				SpawnMapHpFloatTip(Mathf.Abs(d), d > 0);
+
+
+		}
+
+
+		_lastHpForMapFloatTip = hpNow;
 
 
 
@@ -3561,6 +3647,135 @@ public partial class Gameplay : Node2D
 	}
 
 
+
+	static float HpFloatTipQuadEaseOut01(float t)
+	{
+		t = Mathf.Clamp(t, 0f, 1f);
+		return 1f - (1f - t) * (1f - t);
+	}
+
+	void UnregisterHpFloatTip(Label lbl)
+	{
+		for (int i = _hpFloatTipRuns.Count - 1; i >= 0; i--)
+		{
+			if (_hpFloatTipRuns[i].Lbl == lbl)
+				_hpFloatTipRuns.RemoveAt(i);
+		}
+	}
+
+	void TryLayoutHpFloatTipAtPlayer(Label lbl, in Color baseModulate, float lift, float alphaMul)
+	{
+		if (_playerSprite == null || !GodotObject.IsInstanceValid(_playerSprite))
+			return;
+
+		lbl.ResetSize();
+		Rect2 r = _playerSprite.GetRect();
+		Transform2D xf = _playerSprite.GetGlobalTransformWithCanvas();
+		Vector2 topCanvas = xf * new Vector2(0f, r.Position.Y);
+		Vector2 anchor = topCanvas - new Vector2(lbl.Size.X * 0.5f, lbl.Size.Y + 10f);
+		lbl.GlobalPosition = anchor + new Vector2(0f, lift);
+		Color c = baseModulate;
+		c.A = baseModulate.A * Mathf.Clamp(alphaMul, 0f, 1f);
+		lbl.Modulate = c;
+	}
+
+	void UpdateHpFloatTipsFollowing()
+	{
+		if (_hpFloatTipRuns.Count == 0)
+			return;
+
+		ulong now = Time.GetTicksMsec();
+
+		for (int i = _hpFloatTipRuns.Count - 1; i >= 0; i--)
+		{
+			HpFloatTipRun run = _hpFloatTipRuns[i];
+			Label lbl = run.Lbl;
+			if (lbl == null || !GodotObject.IsInstanceValid(lbl) || !lbl.IsInsideTree())
+			{
+				_hpFloatTipRuns.RemoveAt(i);
+				continue;
+			}
+
+			double ageSec = (now - run.SpawnTickMs) * 0.001;
+			if (!run.FadeStarted && ageSec >= HpFloatTipHoldSeconds)
+			{
+				run.FadeStarted = true;
+				run.FadeStartTickMs = now;
+			}
+
+			float lift = 0f;
+			float alphaMul = 1f;
+			if (run.FadeStarted)
+			{
+				double fadeAge = (now - run.FadeStartTickMs) * 0.001;
+				float fadeT = Mathf.Clamp((float)(fadeAge / HpFloatTipFadeSeconds), 0f, 1f);
+				float ease = HpFloatTipQuadEaseOut01(fadeT);
+				lift = -HpFloatTipFadeLiftPixels * ease;
+				alphaMul = 1f - ease;
+				if (fadeT >= 1f)
+				{
+					lbl.QueueFree();
+					continue;
+				}
+			}
+
+			TryLayoutHpFloatTipAtPlayer(lbl, run.BaseModulate, lift, alphaMul);
+		}
+	}
+
+	void SpawnPlayerHeadFloatTip(string text, Color fontColor)
+	{
+		if (_playerSprite == null)
+			return;
+
+		var uiLayer = GetNodeOrNull<CanvasLayer>("UICanvas");
+		if (uiLayer == null)
+			return;
+
+		var lbl = new Label
+		{
+			Text = text,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+			TopLevel = true,
+		};
+
+		if (_hpFloatFont != null)
+			lbl.AddThemeFontOverride("font", _hpFloatFont);
+
+		lbl.AddThemeFontSizeOverride("font_size", HpFloatTipFontSize);
+		lbl.AddThemeColorOverride("font_color", fontColor);
+		lbl.AddThemeColorOverride("font_outline_color", Colors.Black);
+		lbl.AddThemeConstantOverride("outline_size", 3);
+		lbl.ZAsRelative = false;
+		lbl.ZIndex = 200;
+
+		uiLayer.AddChild(lbl);
+
+		ulong tick = Time.GetTicksMsec();
+		var run = new HpFloatTipRun
+		{
+			Lbl = lbl,
+			SpawnTickMs = tick,
+			BaseModulate = lbl.Modulate,
+		};
+		_hpFloatTipRuns.Add(run);
+		lbl.TreeExited += () => UnregisterHpFloatTip(lbl);
+
+		Callable.From(() =>
+		{
+			if (!GodotObject.IsInstanceValid(lbl) || !GodotObject.IsInstanceValid(_playerSprite))
+				return;
+
+			TryLayoutHpFloatTipAtPlayer(lbl, run.BaseModulate, 0f, 1f);
+		}).CallDeferred();
+	}
+
+	void SpawnMapHpFloatTip(int magnitude, bool heal)
+	{
+		string body = heal ? $"生命值+{magnitude}" : $"生命值-{magnitude}";
+		SpawnPlayerHeadFloatTip(body, heal ? HpFloatHealColor : HpFloatDamageColor);
+	}
 
 
 
@@ -3761,6 +3976,19 @@ public partial class Gameplay : Node2D
 
 	}
 
+	/// <summary>主动槽是否可用：该槽有已装备技能、非冷却中、当前法力不低于消耗。</summary>
+	bool CanUseActiveSkillSlot(int slot1To6)
+	{
+		if (slot1To6 < 1 || slot1To6 > 6 || slot1To6 > askillList.Count)
+			return false;
+		string root = "UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill" + slot1To6;
+		if (GetNodeOrNull<Label>(root + "/CdLabel") is { Visible: true })
+			return false;
+		int sid = askillList[slot1To6 - 1];
+		int cost = apowerDict.ContainsKey(sid) ? apowerDict[sid].AsInt32() : 999_999;
+		return RunState.Instance.PlayerEnergy >= cost;
+	}
+
 	/// <summary>场景仍为 SingleSkill1/SkillIcon 连接 button_down；主动技能管线已注释。</summary>
 	public void powerCheck()
 	{
@@ -3820,6 +4048,8 @@ public partial class Gameplay : Node2D
 	/// <summary>异步 void 技能按钮入口：耗能必须与当前 <see cref="skillchoose"/> 槽位对应 <see cref="askillList"/> 技能一致。</summary>
 	async void click_active1()
 	{
+		if (!CanUseActiveSkillSlot(1))
+			return;
 		skillchoose = 1;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill1/SkillHi").Visible = false;
@@ -3844,6 +4074,8 @@ public partial class Gameplay : Node2D
 
 	async void click_active2()
 	{
+		if (!CanUseActiveSkillSlot(2))
+			return;
 		skillchoose = 2;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill2/SkillHi").Visible = false;
@@ -3867,6 +4099,8 @@ public partial class Gameplay : Node2D
 
 	async void click_active3()
 	{
+		if (!CanUseActiveSkillSlot(3))
+			return;
 		skillchoose = 3;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill3/SkillHi").Visible = false;
@@ -3890,6 +4124,8 @@ public partial class Gameplay : Node2D
 
 	async void click_active4()
 	{
+		if (!CanUseActiveSkillSlot(4))
+			return;
 		skillchoose = 4;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill4/SkillHi").Visible = false;
@@ -3913,6 +4149,8 @@ public partial class Gameplay : Node2D
 
 	async void click_active5()
 	{
+		if (!CanUseActiveSkillSlot(5))
+			return;
 		skillchoose = 5;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill5/SkillHi").Visible = false;
@@ -3936,6 +4174,8 @@ public partial class Gameplay : Node2D
 
 	async void click_active6()
 	{
+		if (!CanUseActiveSkillSlot(6))
+			return;
 		skillchoose = 6;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillCdCover").Visible = true;
 		GetNode<TextureRect>("UICanvas/HUD/ActiveSkillSlot/SkillArea/SingleSkill6/SkillHi").Visible = false;
@@ -3997,7 +4237,6 @@ public partial class Gameplay : Node2D
 			case 3:
 				SpawnGrassAtRandomVisibleCell();
 				SpawnCorpseAtRandomVisibleCell();
-				SpawnRuinsAtRandomVisibleCell();
 				ischose = true;
 				return;
 
@@ -4017,24 +4256,23 @@ public partial class Gameplay : Node2D
 				return;
 
 			case 7:
-				Vector2I mouseCell7 = GetMouseHoverCell();
-
+			{
 				Vector2I targetCell7 = await WaitForHighlightClick(null);
 				if (targetCell7.X == -999 && targetCell7.Y == -999)
 				{
 					ischose = false;
 					return;  // 取消技能，不继续执行
 				}
-				foreach (string cellKey in _highlightedCells)
-				{
-					Vector2I cell = HexGridUtil.ParseKey(cellKey);
-					_playerCell = cell;
-				}
 
+				_playerCell = targetCell7;
 				SnapPlayer();
+				string destKey = HexGridUtil.CellKey(targetCell7);
+				if (_events.ContainsKey(destKey))
+					await TryInteractAsync(targetCell7);
 				ischose = true;
 				_highlightedCells.Clear();
 				return;
+			}
 
 			case 8:
 				Vector2I mouseCell8 = GetMouseHoverCell();
@@ -4133,7 +4371,8 @@ public partial class Gameplay : Node2D
 						noFogCells7.Add(key.AsString());
 					}
 				}
-				if (_valid.ContainsKey(centerKey7) && noFogCells7.Contains(centerKey7))
+				if (_valid.ContainsKey(centerKey7) && noFogCells7.Contains(centerKey7)
+				    && IsSkill7TeleportDestination(HexGridUtil.ParseKey(centerKey7)))
 				{
 					cellsToHighlight.Add(centerKey7);
 				}
@@ -4442,25 +4681,16 @@ public partial class Gameplay : Node2D
 		RefreshEventIconsFogVisibility();
 	}
 
-	private void SpawnRuinsAtRandomVisibleCell()
-	{
-		List<Vector2I> visibleCells = GetAllVisibleCells();
-		visibleCells.RemoveAll(cell => HexGridUtil.IsSameCell(cell, _playerCell));
-		if (visibleCells.Count == 0) return;
-
-		int randomIndex = (int)(GD.Randi() % (uint)visibleCells.Count);
-		Vector2I targetCell = visibleCells[randomIndex];
-
-		AddRuinsAt(targetCell);
-	}
-
 	private void SetupTooltipStyle()
 	{
-		Texture2D texture = GD.Load<Texture2D>("res://art/ui/mainui/wavebar.png");
+		if (_tooltip == null)
+			return;
+
+		Texture2D texture = GD.Load<Texture2D>("res://Art/UI/mainUI/WaveBar.png");
 
 		if (texture == null)
 		{
-			GD.PrintErr("背景图加载失败！");
+			GD.PrintErr("背景图加载失败：res://Art/UI/mainUI/WaveBar.png");
 			return;
 		}
 
@@ -4486,6 +4716,13 @@ public partial class Gameplay : Node2D
 
 		// 应用
 		_tooltip.AddThemeStyleboxOverride("panel", styleBox);
+
+		if (_tooltipLabel != null)
+		{
+			if (_hpFloatFont != null)
+				_tooltipLabel.AddThemeFontOverride("font", _hpFloatFont);
+			_tooltipLabel.AddThemeFontSizeOverride("font_size", SkillTooltipFontSize);
+		}
 	}
 
 	private void OnSkillButtonMouseEnteredP1()

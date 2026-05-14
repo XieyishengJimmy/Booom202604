@@ -14,13 +14,6 @@
     "config": 1
   },
   {
-    "ID": 103,
-    "name": "草木感知",
-    "address": "res://Art/Icon/pskill103.png",
-    "describe": "在迷雾里标识草地的位置",
-    "config": ""
-  },
-  {
     "ID": 104,
     "name": "踏草留痕",
     "address": "res://Art/Icon/pskill104.png",
@@ -52,7 +45,7 @@
     "ID": 203,
     "name": "葬仪",
     "address": "res://Art/Icon/pskill203.png",
-    "describe": "战斗胜利后，将敌人变为尸体",
+    "describe": "战斗胜利后，触发1次尸体事件",
     "config": ""
   },
   {

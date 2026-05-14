@@ -20,7 +20,7 @@ public partial class RunState : Node
 	public string PendingLevelPath { get; set; } = "";
 
 	/// <summary>主菜单勾选「调试模式」。为 true 时显示能量吸收、草丛/废墟/战斗检定等吐司；false 仅保留关卡流程与操作阻断提示。</summary>
-	public bool DebugModeVerboseToasts { get; set; } = true;
+	public bool DebugModeVerboseToasts { get; set; } = false;
 
 	readonly List<int> _carrySkillDeck = [];
 	readonly List<int> _carryPassivesEquipped = [];

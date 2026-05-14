@@ -38,7 +38,7 @@ layout_mode = 2
 
 [node name="DebugModeChk" type="CheckBox" parent="VBox"]
 layout_mode = 2
-button_pressed = true
+button_pressed = false
 text = "调试模式（显示事件结算、吸收迷雾等吐司）"
 
 [node name="PlayBtn" type="Button" parent="VBox"]

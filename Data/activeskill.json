@@ -21,8 +21,8 @@
     "ID": 3,
     "name": "自然恩赐",
     "address": "res://Art/Icon/askill3.png",
-    "describe": "在随机明亮位置，生成草地/尸体/废墟各一个",
-    "power": 5,
+    "describe": "在随机明亮位置，生成草地/尸体各一个",
+    "power": 4,
     "config": "",
     "cd": 1
   },
