@@ -4254,6 +4254,9 @@ public partial class Gameplay : Node2D
 		if (GetNodeOrNull<Button>("UICanvas/HUD/SkillChoose/Sure") is { } sureBtnEnd)
 			sureBtnEnd.Disabled = true;
 		cardchoose = 0;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card1/CardSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card2/CardSelect").Visible = false;
+		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose/Card3/CardSelect").Visible = false;
 		GetNode<CanvasItem>("UICanvas/HUD/SkillChoose").Visible = false;
 	}
 

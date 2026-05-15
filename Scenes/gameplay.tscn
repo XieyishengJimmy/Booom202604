@@ -129,7 +129,6 @@ z_as_relative = false
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
 [node name="GuideRoot" type="Control" parent="UICanvas" unique_id=561902371 node_paths=PackedStringArray("Personal", "Skill1", "Skill2", "Boss1", "Boss2", "GuideMask", "GuideTipLabel", "GuideTipImg1", "GuideTipImg2")]
-visible = false
 z_index = 5
 layout_mode = 3
 anchors_preset = 15
