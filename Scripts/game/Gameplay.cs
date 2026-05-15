@@ -2725,6 +2725,7 @@ public partial class Gameplay : Node2D
 				cardnum = result;
 				for (int i = 0; i < 3; i++)
 				{
+					GetNode<Control>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Cost").Visible = false;
 					if (i >= result.Count)
 					{
 						break;
@@ -2753,6 +2754,8 @@ public partial class Gameplay : Node2D
 								GetNode<TextureRect>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Button/SkillIcon").Texture = GD.Load<Texture2D>(askilldict["address"].ToString());
 								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillName").Text = askilldict["name"].ToString();
 								ApplySkillPickDescribe(GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/SkillDescribe"), askilldict["describe"].AsString());
+								GetNode<Control>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Cost").Visible = true;
+								GetNode<Label>("UICanvas/HUD/SkillChoose/Card" + (i + 1) + "/Cost/CostValue").Text = askilldict["power"].AsInt32().ToString();
 								break;
 							}
 						}
@@ -3838,10 +3841,10 @@ public partial class Gameplay : Node2D
 		if (!RunState.Instance.DebugModeVerboseToasts &&
 
 
-		    _lastHpForMapFloatTip is { } prevHp &&
+			_lastHpForMapFloatTip is { } prevHp &&
 
 
-		    prevHp != hpNow)
+			prevHp != hpNow)
 
 
 		{
@@ -4241,6 +4244,7 @@ public partial class Gameplay : Node2D
 				{
 					if(skillList.Contains(i+1))
 					{
+						GD.Print("删除"+(i+1));
 						skillList.Remove(i + 1);
 					}
 				}
@@ -4758,7 +4762,7 @@ public partial class Gameplay : Node2D
 					}
 				}
 				if (_valid.ContainsKey(centerKey7) && noFogCells7.Contains(centerKey7)
-				    && IsSkill7TeleportDestination(HexGridUtil.ParseKey(centerKey7)))
+					&& IsSkill7TeleportDestination(HexGridUtil.ParseKey(centerKey7)))
 				{
 					cellsToHighlight.Add(centerKey7);
 				}
@@ -5293,6 +5297,120 @@ public partial class Gameplay : Node2D
 		{
 			var pskilldict = item.AsGodotDictionary();
 			if (pskilldict["ID"].AsInt32() == pskillList[9])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP11()
+	{
+		if (pskillList.Count < 11)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[10])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP12()
+	{
+		if (pskillList.Count < 12)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[11])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP13()
+	{
+		if (pskillList.Count < 13)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[12])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP14()
+	{
+		if (pskillList.Count < 14)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[13])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP15()
+	{
+		if (pskillList.Count < 15)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[14])
+			{
+				var skillname = pskilldict["name"].ToString();
+				var skilldescribe = pskilldict["describe"].ToString();
+				ShowTooltip(skillname + "\n" + skilldescribe);
+				break;
+			}
+		}
+	}
+
+	private void OnSkillButtonMouseEnteredP16()
+	{
+		if (pskillList.Count < 16)
+		{
+			return;
+		}
+		foreach (var item in parray)
+		{
+			var pskilldict = item.AsGodotDictionary();
+			if (pskilldict["ID"].AsInt32() == pskillList[15])
 			{
 				var skillname = pskilldict["name"].ToString();
 				var skilldescribe = pskilldict["describe"].ToString();

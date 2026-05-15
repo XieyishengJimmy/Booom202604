@@ -17,6 +17,7 @@ public partial class NewbieGuide : Node
 
 	private int _curStep;
 	private bool _guideEnd; // 结束标记，防止卡死
+	private static bool _guidePlayedThisGame = false;
 
 	private readonly string[] _stepTexts =
 	{
@@ -30,6 +31,12 @@ public partial class NewbieGuide : Node
 
 	public override void _Ready()
 	{
+		if (_guidePlayedThisGame)
+		{
+			HideAllUI();
+			ResetAllZ();
+			return;
+		}
 		_curStep = 0;
 		if (GuideTipLabel != null) GuideTipLabel.ZIndex = 200;
 		if (GuideTipImg1 != null) GuideTipImg1.ZIndex = 200;
@@ -55,6 +62,7 @@ public partial class NewbieGuide : Node
 		if (_curStep > 6)
 		{
 			_guideEnd = true;
+			_guidePlayedThisGame = true;
 			HideAllUI();
 			ResetAllZ();
 			return;

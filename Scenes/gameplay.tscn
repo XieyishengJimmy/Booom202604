@@ -129,6 +129,7 @@ z_as_relative = false
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
 [node name="GuideRoot" type="Control" parent="UICanvas" unique_id=561902371 node_paths=PackedStringArray("Personal", "Skill1", "Skill2", "Boss1", "Boss2", "GuideMask", "GuideTipLabel", "GuideTipImg1", "GuideTipImg2")]
+visible = false
 z_index = 5
 layout_mode = 3
 anchors_preset = 15
@@ -322,6 +323,43 @@ theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
 autowrap_mode = 3
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=1954169252]
+visible = false
+z_index = 5
+anchors_preset = 0
+offset_left = 218.0
+offset_top = 210.0
+offset_right = 298.0
+offset_bottom = 290.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card1/Cost" unique_id=1585090084]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/SkillChoose/Card1/Cost" unique_id=1213774989]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Card2" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=1369564049]
 anchors_preset = 0
 offset_left = 793.0
@@ -389,6 +427,43 @@ theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
 autowrap_mode = 3
 
+[node name="Cost" type="Control" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=1081635141]
+visible = false
+z_index = 5
+anchors_preset = 0
+offset_left = 203.0
+offset_top = 202.0
+offset_right = 283.0
+offset_bottom = 282.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card2/Cost" unique_id=716154819]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/SkillChoose/Card2/Cost" unique_id=1863349220]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Card3" type="Control" parent="UICanvas/HUD/SkillChoose" unique_id=351088451]
 anchors_preset = 0
 offset_left = 1180.0
@@ -455,6 +530,43 @@ offset_bottom = 488.0
 theme_override_colors/font_color = Color(0.5372549, 0.5058824, 0.4509804, 1)
 theme_override_font_sizes/font_size = 21
 autowrap_mode = 3
+
+[node name="Cost" type="Control" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1638313609]
+visible = false
+z_index = 5
+anchors_preset = 0
+offset_left = 210.0
+offset_top = 192.0
+offset_right = 290.0
+offset_bottom = 272.0
+mouse_filter = 2
+
+[node name="CostBg" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card3/Cost" unique_id=1084330413]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("32_cnqtm")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CostValue" type="Label" parent="UICanvas/HUD/SkillChoose/Card3/Cost" unique_id=1008601674]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Skip" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=718415223]
 visible = false
@@ -1767,6 +1879,78 @@ texture = ExtResource("21")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="P11" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1300302527]
+visible = false
+layout_mode = 0
+offset_left = 10.0
+offset_top = 400.0
+offset_right = 66.0
+offset_bottom = 456.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P12" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=876524312]
+visible = false
+layout_mode = 0
+offset_left = 80.0
+offset_top = 400.0
+offset_right = 136.0
+offset_bottom = 456.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P13" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1001247066]
+visible = false
+layout_mode = 0
+offset_left = 10.0
+offset_top = 470.0
+offset_right = 66.0
+offset_bottom = 526.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P14" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1937089255]
+visible = false
+layout_mode = 0
+offset_left = 80.0
+offset_top = 470.0
+offset_right = 136.0
+offset_bottom = 526.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P15" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=1243506544]
+visible = false
+layout_mode = 0
+offset_left = 10.0
+offset_top = 540.0
+offset_right = 66.0
+offset_bottom = 596.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="P16" type="TextureRect" parent="UICanvas/HUD/PassiveSkillSlot" unique_id=456204449]
+visible = false
+layout_mode = 0
+offset_left = 80.0
+offset_top = 540.0
+offset_right = 136.0
+offset_bottom = 596.0
+mouse_filter = 0
+texture = ExtResource("21")
+expand_mode = 1
+stretch_mode = 5
+
 [node name="BossSkillArea" type="Control" parent="UICanvas/HUD" unique_id=2052952221]
 layout_mode = 1
 anchor_left = 1.0
@@ -2002,5 +2186,17 @@ metadata/_edit_lock_ = true
 [connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P9" to="." method="OnSkillButtonMouseExited"]
 [connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P10" to="." method="OnSkillButtonMouseEnteredP10"]
 [connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P10" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P11" to="." method="OnSkillButtonMouseEnteredP11"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P11" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P12" to="." method="OnSkillButtonMouseEnteredP12"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P12" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P13" to="." method="OnSkillButtonMouseEnteredP13"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P13" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P14" to="." method="OnSkillButtonMouseEnteredP14"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P14" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P15" to="." method="OnSkillButtonMouseEnteredP15"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P15" to="." method="OnSkillButtonMouseExited"]
+[connection signal="mouse_entered" from="UICanvas/HUD/PassiveSkillSlot/P16" to="." method="OnSkillButtonMouseEnteredP16"]
+[connection signal="mouse_exited" from="UICanvas/HUD/PassiveSkillSlot/P16" to="." method="OnSkillButtonMouseExited"]
 [connection signal="mouse_entered" from="UICanvas/HUD/BossSkillArea/BossSkillIconsHitBox" to="." method="OnBossSkillIconsSlotMouseEntered"]
 [connection signal="mouse_exited" from="UICanvas/HUD/BossSkillArea/BossSkillIconsHitBox" to="." method="OnSkillButtonMouseExited"]
