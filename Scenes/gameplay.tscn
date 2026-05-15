@@ -244,7 +244,7 @@ stretch_mode = 5
 
 [node name="SkillChoose" type="Control" parent="UICanvas/HUD" unique_id=1691691944]
 visible = false
-z_index = 1
+z_index = 10
 anchors_preset = 0
 offset_right = 1927.0
 offset_bottom = 1070.0
@@ -278,6 +278,7 @@ offset_top = 78.0
 offset_right = 247.0
 offset_bottom = 245.0
 texture = ExtResource("9_solsi")
+expand_mode = 2
 
 [node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card1" unique_id=2029072183]
 layout_mode = 0
@@ -344,6 +345,7 @@ offset_top = 77.0
 offset_right = 246.0
 offset_bottom = 244.0
 texture = ExtResource("9_solsi")
+expand_mode = 2
 
 [node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card2" unique_id=865906563]
 layout_mode = 0
@@ -410,6 +412,7 @@ offset_top = 74.0
 offset_right = 246.0
 offset_bottom = 241.0
 texture = ExtResource("9_solsi")
+expand_mode = 2
 
 [node name="CardGlow" type="TextureRect" parent="UICanvas/HUD/SkillChoose/Card3" unique_id=1875640268]
 layout_mode = 0
@@ -454,6 +457,7 @@ theme_override_font_sizes/font_size = 21
 autowrap_mode = 3
 
 [node name="Skip" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=718415223]
+visible = false
 layout_mode = 0
 offset_left = 1610.0
 offset_top = 228.0
@@ -473,6 +477,7 @@ theme_override_font_sizes/font_size = 25
 text = "跳过"
 
 [node name="Refresh" type="Button" parent="UICanvas/HUD/SkillChoose" unique_id=1776393458]
+visible = false
 layout_mode = 0
 offset_left = 1611.0
 offset_top = 356.0
