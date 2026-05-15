@@ -128,7 +128,7 @@ z_as_relative = false
 
 [node name="UICanvas" type="CanvasLayer" parent="." unique_id=523399598]
 
-[node name="GuideRoot" type="Control" parent="UICanvas" unique_id=561902371 node_paths=PackedStringArray("Skill1", "Skill2", "Boss1", "Boss2", "GuideMask", "GuideTipLabel", "GuideTipImg1", "GuideTipImg2")]
+[node name="GuideRoot" type="Control" parent="UICanvas" unique_id=561902371 node_paths=PackedStringArray("Personal", "Skill1", "Skill2", "Boss1", "Boss2", "GuideMask", "GuideTipLabel", "GuideTipImg1", "GuideTipImg2")]
 z_index = 5
 layout_mode = 3
 anchors_preset = 15
@@ -137,6 +137,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("9_p7y6y")
+Personal = NodePath("../HUD/PlayerInfo")
 Skill1 = NodePath("../HUD/PassiveSkillSlot")
 Skill2 = NodePath("../HUD/ActiveSkillSlot")
 Boss1 = NodePath("../HUD/BossSkillArea")

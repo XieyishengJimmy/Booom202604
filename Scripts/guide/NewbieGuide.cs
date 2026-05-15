@@ -2,6 +2,8 @@ using Godot;
 
 public partial class NewbieGuide : Node
 {
+	[Export] public Control? Personal;
+
 	[Export] public Control? Skill1;
 	[Export] public Control? Skill2;
 
@@ -20,8 +22,9 @@ public partial class NewbieGuide : Node
 	{
 		"左键点击高亮格子可以移动角色，驱散迷雾获得能量",
 		"地图格上不同事件会产生不同效果",
-		"使用技能消耗能量",
-		"boss行动条满后释放技能",
+		"左下角显示了玩家当前的属性状态",
+		"使用技能消耗能量，悬停可查看技能情况",
+		"移动/触发事件会使boss行动条增长1格，行动条满后boss释放技能",
 		"驱散场上所有迷雾击败boss获得胜利"
 	};
 
@@ -49,7 +52,7 @@ public partial class NewbieGuide : Node
 
 		_curStep++;
 
-		if (_curStep > 5)
+		if (_curStep > 6)
 		{
 			_guideEnd = true;
 			HideAllUI();
@@ -82,14 +85,17 @@ public partial class NewbieGuide : Node
 				GuideTipImg2?.Show();
 				break;
 			case 3:
+				SetZ(Personal, 100);
+				break;
+			case 4:
 				SetZ(Skill1, 100);
 				SetZ(Skill2, 100);
 				break;
-			case 4:
+			case 5:
 				SetZ(Boss1, 100);
 				SetZ(Boss2, 100);
 				break;
-			case 5:
+			case 6:
 				// 最后一步：只隐藏遮罩，不卡死
 				if (GuideMask != null) GuideMask.Visible = false;
 				break;
@@ -106,6 +112,7 @@ public partial class NewbieGuide : Node
 
 	private void ResetAllZ()
 	{
+		SetZ(Personal, 0);
 		SetZ(Skill1, 0);
 		SetZ(Skill2, 0);
 		SetZ(Boss1, 0);
