@@ -1,8 +1,8 @@
 {
 	"boss": {
-		"boss_id": 1004
+		"boss_id": 1006
 	},
-	"campaign_order": 4,
+	"campaign_order": 6,
 	"cells": [
 		{
 			"block": false,
@@ -15,20 +15,6 @@
 			"block": false,
 			"fog": false,
 			"present": true,
-			"x": 1,
-			"y": 0
-		},
-		{
-			"block": false,
-			"fog": false,
-			"present": true,
-			"x": 0,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": false,
-			"present": true,
 			"x": -1,
 			"y": 1
 		},
@@ -38,13 +24,6 @@
 			"present": true,
 			"x": -1,
 			"y": 0
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -1,
-			"y": -1
 		},
 		{
 			"block": false,
@@ -62,191 +41,30 @@
 		},
 		{
 			"block": false,
-			"fog": true,
+			"fog": false,
 			"present": true,
-			"x": -2,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -2,
+			"x": 1,
 			"y": 0
 		},
 		{
 			"block": false,
-			"fog": true,
+			"fog": false,
 			"present": true,
-			"x": -3,
+			"x": 0,
 			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -3,
-			"y": 2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -2,
-			"y": 2
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
 			"x": -1,
-			"y": 2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 0,
-			"y": 2
+			"y": 3
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
 			"x": 1,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": 0
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 0,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -1,
-			"y": -2
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": -2,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -3,
-			"y": 0
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 0,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": 2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
 			"y": 2
 		},
 		{
@@ -267,6 +85,90 @@
 			"block": false,
 			"fog": true,
 			"present": true,
+			"x": -3,
+			"y": 3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 3,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 4,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 4,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": 4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": 4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -4,
+			"y": 4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
 			"x": -4,
 			"y": 2
 		},
@@ -274,76 +176,6 @@
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": -4,
-			"y": 1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -3,
-			"y": 3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -1,
-			"y": 3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -1,
-			"y": -3
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": -2,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -3,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
 			"x": 0,
 			"y": -4
 		},
@@ -352,20 +184,6 @@
 			"fog": true,
 			"present": true,
 			"x": 2,
-			"y": -5
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -5
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": 3,
 			"y": -4
 		},
 		{
@@ -373,231 +191,28 @@
 			"fog": true,
 			"present": true,
 			"x": 2,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -5
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -5
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
 			"y": -3
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 6,
-			"y": -5
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -5
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
+			"x": 4,
 			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -6
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
 			"x": 2,
-			"y": -6
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
-			"x": -2,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -1,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -5
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -4
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 5,
-			"y": 0
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
 			"y": 1
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 6,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 7,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 1,
-			"y": -7
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -4,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": -3,
-			"y": -2
+			"x": 3,
+			"y": 0
 		},
 		{
 			"block": false,
@@ -611,7 +226,98 @@
 			"fog": true,
 			"present": true,
 			"x": 0,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
 			"y": -6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": -6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -6,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -6,
+			"y": 6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": 6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 2
 		},
 		{
 			"block": false,
@@ -619,195 +325,377 @@
 			"present": true,
 			"x": 3,
 			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 3,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -1,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -1,
+			"y": -4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -4,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 3,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 4,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 4,
+			"y": 1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 3,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": 3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": 4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -1,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -4,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -7,
+			"y": 7
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": 7
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 7,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 7,
+			"y": -7
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": -7
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -7,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 0,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": 0
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -6,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": 6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -1,
+			"y": 6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": 5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": 1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 5,
+			"y": -6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": -6
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -1,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -5,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -6,
+			"y": 1
 		}
 	],
 	"events": [
 		{
-			"description": "BBBB",
-			"icon": "res://Art/monsterIcon/3002.png",
-			"monster_id": 3002,
-			"name": "魔法3",
-			"type": "monster_mag",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 1,
-			"y": -5
-		},
-		{
-			"description": "BBBB",
-			"icon": "res://Art/monsterIcon/3002.png",
-			"monster_id": 3002,
-			"name": "魔法3",
-			"type": "monster_mag",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 4,
-			"y": -3
-		},
-		{
-			"description": "BBBB",
-			"icon": "res://Art/monsterIcon/3002.png",
-			"monster_id": 3002,
-			"name": "魔法3",
-			"type": "monster_mag",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": -3,
-			"y": 0
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
+			"description": "CCCC",
+			"icon": "res://Art/monsterIcon/4001.png",
+			"monster_id": 4001,
+			"name": "力量4",
 			"type": "monster_str",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 4,
-			"y": -6
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": -1,
-			"y": -2
-		},
-		{
-			"icon": "res://Art/Icon/TreasureChest.png",
-			"type": "treasure",
-			"x": 4,
-			"y": -4
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 3,
-			"y": -3
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch1.png",
-			"type": "grass",
-			"x": -1,
-			"y": -4
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": 3,
-			"y": -7
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": 7,
-			"y": -7
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": -2,
-			"y": 2
-		},
-		{
-			"altar_used": false,
-			"icon": "res://Art/Icon/Altar_Useful.png",
-			"type": "altar",
-			"x": 1,
-			"y": -7
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": -3,
-			"y": -1
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 7,
-			"y": -6
-		},
-		{
-			"icon": "res://Art/Icon/TreasureChest.png",
-			"type": "treasure",
-			"x": 5,
-			"y": 0
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch1.png",
-			"type": "grass",
-			"x": 7,
-			"y": -2
-		},
-		{
-			"description": "BBBB",
-			"icon": "res://Art/monsterIcon/3002.png",
-			"monster_id": 3002,
-			"name": "魔法3",
-			"type": "monster_mag",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
-			"x": 7,
-			"y": -3
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch2.png",
-			"type": "grass",
-			"x": 3,
-			"y": 1
-		},
-		{
-			"description": "DDDD",
-			"icon": "res://Art/monsterIcon/4002.png",
-			"monster_id": 4002,
-			"name": "魔法4",
-			"type": "monster_mag",
 			"value": 4,
 			"value_mag": 4,
 			"value_str": 4,
-			"x": 4,
-			"y": 1
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"value_mag": 3,
-			"value_str": 3,
 			"x": 0,
-			"y": 2
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": 1,
-			"y": -4
+			"y": -5
 		},
 		{
 			"description": "CCCC",
@@ -818,21 +706,135 @@
 			"value": 4,
 			"value_mag": 4,
 			"value_str": 4,
-			"x": 1,
-			"y": -6
+			"x": 5,
+			"y": 0
 		},
 		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
+			"description": "CCCC",
+			"icon": "res://Art/monsterIcon/4001.png",
+			"monster_id": 4001,
+			"name": "力量4",
+			"type": "monster_str",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": -5,
+			"y": 5
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
 			"x": 0,
-			"y": -6
+			"y": 5
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": -5,
+			"y": 0
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": 5,
+			"y": -5
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": 0,
+			"y": -3
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": 3,
+			"y": 0
+		},
+		{
+			"description": "DDDD",
+			"icon": "res://Art/monsterIcon/4002.png",
+			"monster_id": 4002,
+			"name": "魔法4",
+			"type": "monster_mag",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": -3,
+			"y": 3
+		},
+		{
+			"description": "CCCC",
+			"icon": "res://Art/monsterIcon/4001.png",
+			"monster_id": 4001,
+			"name": "力量4",
+			"type": "monster_str",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": -3,
+			"y": 0
+		},
+		{
+			"description": "CCCC",
+			"icon": "res://Art/monsterIcon/4001.png",
+			"monster_id": 4001,
+			"name": "力量4",
+			"type": "monster_str",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": 3,
+			"y": -3
+		},
+		{
+			"description": "CCCC",
+			"icon": "res://Art/monsterIcon/4001.png",
+			"monster_id": 4001,
+			"name": "力量4",
+			"type": "monster_str",
+			"value": 4,
+			"value_mag": 4,
+			"value_str": 4,
+			"x": 0,
+			"y": 3
 		}
 	],
-	"level_name": "第四关",
+	"level_name": "第六关",
 	"player_start": {
 		"x": 0,
 		"y": 0
 	},
-	"terrain_variant": 2,
+	"terrain_variant": 1,
 	"version": 1
 }

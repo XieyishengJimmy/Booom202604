@@ -30,6 +30,10 @@ public partial class Hud : Control
 
 	TextureRect? _bossSkillIcon;
 	TextureRect? _bossSkillIcon2;
+	Texture2D? _defaultBossSkillIcon2Texture;
+	Vector2 _bossSkillIcon2SlotSize;
+	Vector2 _bossSkillIcon2SlotPosition;
+	bool _bossSkillIcon2LayoutCached;
 
 	CanvasItem? _screenEdgeWarning;
 	Tween? _screenEdgeBreatheTween;
@@ -73,6 +77,90 @@ public partial class Hud : Control
 		}
 
 		ApplyBossMeterNativePixelSizes();
+		Callable.From(DeferredBossSkillIconsSlotLayout).CallDeferred();
+	}
+
+	void DeferredBossSkillIconsSlotLayout()
+	{
+		EnsureBossSkillIcon2LayoutCache();
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon);
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon2);
+	}
+
+	void EnsureBossSkillIcon2LayoutCache()
+	{
+		if (_bossSkillIcon2LayoutCached || _bossSkillIcon2 == null)
+			return;
+
+		_defaultBossSkillIcon2Texture = _bossSkillIcon2.Texture as Texture2D;
+		_bossSkillIcon2SlotPosition = _bossSkillIcon2.Position;
+		// 槽位固定为场景 BossSkillIcon2 设计尺寸；勿用 KeepSize（会按 256 等贴图最小边撑开控件）。
+		_bossSkillIcon2SlotSize = new Vector2(97f, 98f);
+
+		_bossSkillIcon2LayoutCached = true;
+	}
+
+	/// <summary>
+	/// BOSS 双技能槽位以 <c>BossSkillIcon2</c> 在场景中的矩形为准：贴图等比缩放进槽，尺寸与位置与 Icon2 一致。
+	/// </summary>
+	void EnforceBossSkillIconTextureSlot(TextureRect? slot)
+	{
+		if (slot == null || !_bossSkillIcon2LayoutCached)
+			return;
+
+		// IgnoreSize：控件可小于贴图；KeepAspectCentered：大图缩放进 97×98 槽内。
+		slot.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+		slot.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+		slot.CustomMinimumSize = _bossSkillIcon2SlotSize;
+		slot.Size = _bossSkillIcon2SlotSize;
+		slot.Position = _bossSkillIcon2SlotPosition;
+	}
+
+	/// <summary>按表 <c>skill_icon</c> 切换第二个 BOSS 技能图标；槽位像素尺寸与场景默认一致。</summary>
+	public void ApplyBossSkillIcon2FromTablePath(string? resPath)
+	{
+		EnsureBossSkillIcon2LayoutCache();
+		if (_bossSkillIcon2 == null || !_bossSkillIcon2LayoutCached)
+			return;
+
+		if (string.IsNullOrWhiteSpace(resPath))
+		{
+			RestoreBossSkillIcon2DefaultTexture();
+			return;
+		}
+
+		string p = resPath.Trim();
+		if (!ResourceLoader.Exists(p))
+		{
+			GD.PushWarning($"[Hud] BOSS 技能图标资源不存在：{p}");
+			RestoreBossSkillIcon2DefaultTexture();
+			return;
+		}
+
+		Texture2D? tex = GD.Load<Texture2D>(p);
+		if (tex == null)
+		{
+			RestoreBossSkillIcon2DefaultTexture();
+			return;
+		}
+
+		_bossSkillIcon2.Texture = tex;
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon2);
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon);
+	}
+
+	public void ClearBossSkillIcon2ToDefault() =>
+		RestoreBossSkillIcon2DefaultTexture();
+
+	void RestoreBossSkillIcon2DefaultTexture()
+	{
+		EnsureBossSkillIcon2LayoutCache();
+		if (_bossSkillIcon2 == null || !_bossSkillIcon2LayoutCached)
+			return;
+
+		_bossSkillIcon2.Texture = _defaultBossSkillIcon2Texture;
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon2);
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon);
 	}
 
 	/// <summary>BOSS 外框与填充条按贴图像素 1:1（与 UI 场景一致），不拉伸变形。</summary>
@@ -88,12 +176,17 @@ public partial class Hud : Control
 			_bossActionBarButton.Size = s;
 		}
 
-		if (_bossVerticalFill?.TextureProgress != null)
+		// Boss 竖条 BossActionBarFill：矩形以 gameplay.tscn 为准；勿强制为贴图像素宽高，否则会与槽错位并透出下层外框线。
+
+		// 未填充区域默认透明，会透出下层 WaveBarBorder_dark 的内侧描边（易被看成黄/金线框）。
+		// 用与槽内深色接近的纯色 under 铺满进度条矩形，避免透出。
+		if (_bossVerticalFill != null)
 		{
-			Texture2D tp = _bossVerticalFill.TextureProgress;
-			Vector2 s = new(tp.GetWidth(), tp.GetHeight());
-			_bossVerticalFill.CustomMinimumSize = s;
-			_bossVerticalFill.Size = s;
+			using var underImg = Image.CreateEmpty(2, 2, false, Image.Format.Rgba8);
+			underImg.Fill(new Color(0.11f, 0.09f, 0.08f, 1f));
+			var underTex = ImageTexture.CreateFromImage(underImg);
+			_bossVerticalFill.TextureUnder = underTex;
+			_bossVerticalFill.TintUnder = Colors.White;
 		}
 	}
 
@@ -174,17 +267,28 @@ public partial class Hud : Control
 	/// <summary>按资源切换 BOSS 行动条顶部双图标（场景默认已绑图时可不传）。</summary>
 	public void SetBossSkillIcons(Texture2D? primary, Texture2D? secondary)
 	{
+		EnsureBossSkillIcon2LayoutCache();
 		if (_bossSkillIcon != null && primary != null)
+		{
 			_bossSkillIcon.Texture = primary;
+			EnforceBossSkillIconTextureSlot(_bossSkillIcon);
+		}
+
 		if (_bossSkillIcon2 != null && secondary != null)
+		{
 			_bossSkillIcon2.Texture = secondary;
+			EnforceBossSkillIconTextureSlot(_bossSkillIcon2);
+		}
 	}
 
 	/// <summary>兼容旧调用：仅更新第一个 BOSS 技能图标。</summary>
 	public void SetBossSkillIcon(Texture2D? tex)
 	{
-		if (_bossSkillIcon != null)
-			_bossSkillIcon.Texture = tex;
+		if (_bossSkillIcon == null)
+			return;
+		EnsureBossSkillIcon2LayoutCache();
+		_bossSkillIcon.Texture = tex;
+		EnforceBossSkillIconTextureSlot(_bossSkillIcon);
 	}
 
 	public void SetBossPhaseMeters(float chargeCur, float chargeMax, float warnCur, float warnMax)

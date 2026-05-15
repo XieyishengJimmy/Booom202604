@@ -2,6 +2,7 @@
 	"boss": {
 		"boss_id": 1001
 	},
+	"campaign_order": 999,
 	"cells": [
 		{
 			"block": false,
@@ -170,71 +171,164 @@
 			"present": true,
 			"x": 2,
 			"y": -2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -3,
+			"y": 1
 		}
 	],
 	"events": [
 		{
-			"description": "穴居杂兵靠蛮力扑咬。",
-			"icon": "res://Art/monsterIcon/2001.png",
-			"monster_id": 2001,
-			"name": "力量2",
-			"type": "monster_str",
-			"value": 2,
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
 			"x": 2,
 			"y": 0
 		},
 		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": -1,
+			"y": 1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 1,
+			"y": 1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 0,
+			"y": 1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 1,
+			"y": 0
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 2,
+			"y": 1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 0,
+			"y": 2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 1,
+			"y": 2
+		},
+		{
+			"icon": "res://Art/Icon/TreasureChest.png",
 			"type": "treasure",
-			"value": 0.0,
-			"x": -1,
+			"x": -2,
+			"y": 2
+		},
+		{
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": -2,
 			"y": 1
 		},
 		{
-			"altar_used": false,
-			"type": "altar",
-			"value": 0.0,
-			"x": 1,
-			"y": 1
-		},
-		{
-			"type": "grass",
-			"value": 0.0,
-			"x": 0,
-			"y": 1
-		},
-		{
-			"type": "corpse",
-			"value": 0.0,
-			"x": 1,
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": -2,
 			"y": 0
 		},
 		{
-			"type": "ruins",
-			"value": 0.0,
-			"x": 2,
-			"y": 1
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch2.png",
+			"icon": "res://Art/Icon/GrassPatch1.png",
 			"type": "grass",
 			"x": -1,
-			"y": 2
+			"y": 0
 		},
 		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": -1,
+			"y": -1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
 			"x": 0,
-			"y": 2
+			"y": -1
 		},
 		{
-			"icon": "res://Art/Icon/AbandonedChurch.png",
-			"type": "ruins",
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": 0,
+			"y": -2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
 			"x": 1,
-			"y": 2
+			"y": -2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 1,
+			"y": -1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 2,
+			"y": -1
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 2,
+			"y": -2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 3,
+			"y": -2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 3,
+			"y": -1
+		},
+		{
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": 3,
+			"y": 0
 		}
 	],
 	"level_name": "示例关卡",
-	"campaign_order": 999,
 	"player_start": {
 		"x": 0,
 		"y": 0

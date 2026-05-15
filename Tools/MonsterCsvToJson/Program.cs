@@ -33,11 +33,13 @@ static System.Text.Json.JsonSerializerOptions CreateIndentedJsonWriteOptions() =
 	TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver(),
 };
 
-/// <summary>首行标题 → 列号（从 1 开始）。兼容 BOM、空格。</summary>
+/// <summary>首行标题 → 列号（从 1 开始）。兼容 BOM、空格；扫描到该行最后一个有内容的列（上限 512），避免列多时被截断。</summary>
 static Dictionary<string, int> ReadHeaderColumnMap(IXLRow headerRow)
 {
 	var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-	for (int c = 1; c <= 64; c++)
+	int last = headerRow.LastCellUsed()?.Address.ColumnNumber ?? 0;
+	int maxCol = Math.Clamp(Math.Max(last, 64), 1, 512);
+	for (int c = 1; c <= maxCol; c++)
 	{
 		string raw = headerRow.Cell(c).GetString()?.Trim() ?? "";
 		if (string.IsNullOrEmpty(raw))
@@ -64,13 +66,20 @@ static string GetCellTrim(IXLWorksheet ws, int rowNum, Dictionary<string, int> m
 	return cell.Value.ToString(CultureInfo.InvariantCulture)?.Trim() ?? "";
 }
 
-/// <summary>策划表列名可能为「BOSS图片配置」或「BOSS图片编号」，统一映射到「BOSS图片编号」列索引。</summary>
+/// <summary>策划表列名：「BOSS图片编号」「BOSS图片配置」「BOSS图片」等统一映射到「BOSS图片编号」列索引。</summary>
 static void NormalizeBossImageColumn(Dictionary<string, int> cmap)
 {
 	if (cmap.ContainsKey("BOSS图片编号"))
 		return;
-	if (cmap.TryGetValue("BOSS图片配置", out int col))
-		cmap["BOSS图片编号"] = col;
+	string[] aliases = ["BOSS图片配置", "BOSS图片", "BOSS立绘编号", "立绘编号"];
+	foreach (string a in aliases)
+	{
+		if (cmap.TryGetValue(a, out int col))
+		{
+			cmap["BOSS图片编号"] = col;
+			return;
+		}
+	}
 }
 
 /// <summary>长表头（单元格内含换行的说明文字）时用首行作为主键别名，便于 Required 校验与读取。</summary>
@@ -464,6 +473,9 @@ static int RunBosses(string rootDir)
 		if (cmap.ContainsKey("BOSS图片编号"))
 			bossImageId = GetBossEnumIntCell(ws, r, cmap, "BOSS图片编号");
 
+		const string skillIconCol = "技能图标";
+		string skillIconPath = cmap.ContainsKey(skillIconCol) ? GetCellTrim(ws, r, cmap, skillIconCol) : "";
+
 		var o = new JsonObject
 		{
 			["id"] = idNum,
@@ -478,6 +490,7 @@ static int RunBosses(string rootDir)
 			["skill_description"] = skillDesc,
 			["ai_description"] = aiDesc,
 			["boss_image_id"] = bossImageId,
+			["skill_icon"] = skillIconPath,
 		};
 
 		if (bossSummonMonsterIds.Count > 0)
@@ -673,6 +686,8 @@ static int EnsureStarterXlsx(string rootDir, bool forceOverwrite)
 		ws.Cell(2, 8).Value = 1;
 		ws.Cell(1, 9).Value = "BOSS图片编号";
 		ws.Cell(2, 9).Value = 1;
+		ws.Cell(1, 10).Value = "技能图标";
+		ws.Cell(2, 10).Value = "res://Art/UI/mainUI/BOSSSkillicon2.png";
 		wb.SaveAs(bx);
 		Console.WriteLine(forceOverwrite ? $"已覆盖 BOSS 表模板：{bx}" : $"已生成模板：{bx}");
 	}

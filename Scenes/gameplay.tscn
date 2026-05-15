@@ -1795,9 +1795,9 @@ texture = ExtResource("22")
 unique_name_in_owner = true
 z_index = 1
 layout_mode = 1
-offset_left = 70.5
+offset_left = 66.5
 offset_top = 11.5
-offset_right = 107.5
+offset_right = 111.5
 offset_bottom = 594.5
 mouse_filter = 2
 fill_mode = 3
@@ -1807,12 +1807,14 @@ texture_progress = ExtResource("23")
 unique_name_in_owner = true
 z_index = 2
 layout_mode = 1
-offset_left = 47.0
-offset_top = -50.0
-offset_right = 131.0
-offset_bottom = 34.0
+offset_left = 40.5
+offset_top = -57.0
+offset_right = 137.5
+offset_bottom = 41.0
 mouse_filter = 2
 texture = ExtResource("45_bossico1")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="BossSkillIcon2" type="TextureRect" parent="UICanvas/HUD/BossSkillArea" unique_id=69739709]
 unique_name_in_owner = true
@@ -1824,6 +1826,8 @@ offset_right = 137.5
 offset_bottom = 41.0
 mouse_filter = 2
 texture = ExtResource("46_bossico2")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="BossSkillIconsHitBox" type="Control" parent="UICanvas/HUD/BossSkillArea" unique_id=2089431096]
 unique_name_in_owner = true

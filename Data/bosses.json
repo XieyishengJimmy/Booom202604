@@ -13,7 +13,8 @@
       "skill_detail": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
       "skill_description": "在3格范围内生成迷雾，并在迷雾中随机刷新1个怪物",
       "ai_description": "AI：范围仅需包含玩家所在格即可。",
-      "boss_image_id": 1,
+      "boss_image_id": 3,
+      "skill_icon": "res://Art/Icon/301.png",
       "summon_monster_ids": [
         2001,
         2002
@@ -32,6 +33,7 @@
       "skill_description": "在1格圆形范围内生成迷雾，并在迷雾中随机刷新1个怪物",
       "ai_description": "AI：中心锁定玩家所在格。",
       "boss_image_id": 2,
+      "skill_icon": "res://Art/Icon/302.png",
       "summon_monster_ids": [
         2001,
         2002
@@ -50,6 +52,7 @@
       "skill_description": "在任意1条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "ai_description": "AI：范围仅需包含玩家所在格即可。",
       "boss_image_id": 3,
+      "skill_icon": "res://Art/Icon/303.png",
       "summon_monster_ids": [
         3001,
         3002
@@ -68,6 +71,7 @@
       "skill_description": "在任意2条直线范围内生成迷雾，并在迷雾中随机刷新2个怪物",
       "ai_description": "AI：范围仅需包含玩家所在格即可。",
       "boss_image_id": 1,
+      "skill_icon": "res://Art/Icon/304.png",
       "summon_monster_ids": [
         3001,
         3002
@@ -79,13 +83,14 @@
       "charge_meter": 7,
       "warn_meter": 3,
       "gain_per_turn": 1,
-      "skill_target": 3,
+      "skill_target": 2,
       "skill_area": 2,
       "skill_effect": 0,
       "skill_detail": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
       "skill_description": "在2格圆形范围内随机10个格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-      "ai_description": "AI：可于全地图任意位置施放。",
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
       "boss_image_id": 2,
+      "skill_icon": "res://Art/Icon/305.png",
       "summon_monster_ids": [
         4001,
         4002
@@ -97,13 +102,14 @@
       "charge_meter": 6,
       "warn_meter": 3,
       "gain_per_turn": 1,
-      "skill_target": 3,
+      "skill_target": 2,
       "skill_area": 2,
       "skill_effect": 0,
       "skill_detail": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
       "skill_description": "在2格圆形范围内所有格子上生成迷雾，并在迷雾中随机位置生成3个怪物",
-      "ai_description": "AI：可于全地图任意位置施放。",
-      "boss_image_id": 3,
+      "ai_description": "AI：范围仅需包含玩家所在格即可。",
+      "boss_image_id": 1,
+      "skill_icon": "res://Art/Icon/306.png",
       "summon_monster_ids": [
         4001,
         4002

@@ -107,20 +107,6 @@
 			"fog": true,
 			"present": true,
 			"x": 2,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 2,
 			"y": 0
 		},
 		{
@@ -226,20 +212,6 @@
 			"fog": true,
 			"present": true,
 			"x": 3,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -1
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
 			"y": 0
 		},
 		{
@@ -260,20 +232,6 @@
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 4,
-			"y": -2
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 3,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
 			"x": 2,
 			"y": -3
 		},
@@ -281,13 +239,6 @@
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 4,
-			"y": -4
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
 			"x": 5,
 			"y": -4
 		},
@@ -296,13 +247,6 @@
 			"fog": true,
 			"present": true,
 			"x": 5,
-			"y": -3
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 4,
 			"y": -3
 		},
 		{
@@ -351,29 +295,8 @@
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 7,
-			"y": -6
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -5
-		},
-		{
-			"block": true,
-			"fog": true,
-			"present": true,
 			"x": 5,
 			"y": -5
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -4
 		},
 		{
 			"block": false,
@@ -400,8 +323,57 @@
 			"block": false,
 			"fog": true,
 			"present": true,
+			"x": 4,
+			"y": -5
+		},
+		{
+			"block": true,
+			"fog": true,
+			"present": true,
+			"x": 3,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": -1
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
+			"y": -2
+		},
+		{
+			"block": true,
+			"fog": true,
+			"present": true,
+			"x": 4,
+			"y": -4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": -4
+		},
+		{
+			"block": true,
+			"fog": true,
+			"present": true,
+			"x": 6,
+			"y": -5
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
 			"x": 7,
-			"y": -3
+			"y": -5
 		},
 		{
 			"block": false,
@@ -415,65 +387,68 @@
 			"fog": true,
 			"present": true,
 			"x": 7,
-			"y": -5
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 7,
+			"y": -2
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
 			"x": 4,
-			"y": -5
-		},
-		{
-			"block": false,
-			"fog": true,
-			"present": true,
-			"x": 6,
-			"y": -6
+			"y": 1
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
 			"x": 3,
+			"y": 2
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 1,
+			"y": -4
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": 2,
 			"y": -5
 		},
 		{
 			"block": false,
 			"fog": true,
 			"present": true,
-			"x": 5,
-			"y": -6
+			"x": -1,
+			"y": -3
+		},
+		{
+			"block": false,
+			"fog": true,
+			"present": true,
+			"x": -2,
+			"y": -2
 		}
 	],
 	"events": [
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"x": 3,
-			"y": -3
-		},
-		{
-			"description": "AAAA",
-			"icon": "res://Art/monsterIcon/3001.png",
-			"monster_id": 3001,
-			"name": "力量3",
-			"type": "monster_str",
-			"value": 3,
-			"x": 4,
-			"y": -1
-		},
 		{
 			"description": "BBBB",
 			"icon": "res://Art/monsterIcon/3002.png",
 			"monster_id": 3002,
 			"name": "魔法3",
-			"type": "monster_str",
+			"type": "monster_mag",
 			"value": 3,
+			"value_mag": 3,
+			"value_str": 3,
 			"x": -2,
 			"y": 2
 		},
@@ -495,20 +470,12 @@
 			"icon": "res://Art/monsterIcon/3002.png",
 			"monster_id": 3002,
 			"name": "魔法3",
-			"type": "monster_str",
+			"type": "monster_mag",
 			"value": 3,
+			"value_mag": 3,
+			"value_str": 3,
 			"x": -1,
 			"y": -2
-		},
-		{
-			"description": "BBBB",
-			"icon": "res://Art/monsterIcon/3002.png",
-			"monster_id": 3002,
-			"name": "魔法3",
-			"type": "monster_str",
-			"value": 3,
-			"x": 6,
-			"y": -5
 		},
 		{
 			"description": "AAAA",
@@ -517,26 +484,10 @@
 			"name": "力量3",
 			"type": "monster_str",
 			"value": 3,
+			"value_mag": 3,
+			"value_str": 3,
 			"x": 6,
 			"y": -3
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch1.png",
-			"type": "grass",
-			"x": 4,
-			"y": -2
-		},
-		{
-			"icon": "res://Art/Icon/GrassPatch2.png",
-			"type": "grass",
-			"x": 3,
-			"y": -5
-		},
-		{
-			"icon": "res://Art/Icon/Grave.png",
-			"type": "corpse",
-			"x": -3,
-			"y": 0
 		},
 		{
 			"icon": "res://Art/Icon/Grave.png",
@@ -549,6 +500,55 @@
 			"type": "corpse",
 			"x": 0,
 			"y": 2
+		},
+		{
+			"altar_used": false,
+			"icon": "res://Art/Icon/Altar_Useful.png",
+			"type": "altar",
+			"x": 7,
+			"y": -4
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 4,
+			"y": -5
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch1.png",
+			"type": "grass",
+			"x": 4,
+			"y": 1
+		},
+		{
+			"icon": "res://Art/Icon/TreasureChest.png",
+			"type": "treasure",
+			"x": -1,
+			"y": -3
+		},
+		{
+			"icon": "res://Art/Icon/Grave.png",
+			"type": "corpse",
+			"x": -2,
+			"y": -2
+		},
+		{
+			"icon": "res://Art/Icon/GrassPatch2.png",
+			"type": "grass",
+			"x": -3,
+			"y": 2
+		},
+		{
+			"description": "AAAA",
+			"icon": "res://Art/monsterIcon/3001.png",
+			"monster_id": 3001,
+			"name": "力量3",
+			"type": "monster_str",
+			"value": 3,
+			"value_mag": 3,
+			"value_str": 3,
+			"x": 4,
+			"y": 0
 		}
 	],
 	"level_name": "第三关",
@@ -556,6 +556,6 @@
 		"x": 0,
 		"y": 0
 	},
-	"terrain_variant": 1,
+	"terrain_variant": 2,
 	"version": 1
 }

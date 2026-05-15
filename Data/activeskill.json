@@ -21,7 +21,7 @@
     "ID": 3,
     "name": "自然恩赐",
     "address": "res://Art/Icon/askill3.png",
-    "describe": "在随机明亮位置，生成草地/尸体各一个",
+    "describe": "在随机明亮位置，生成草从/墓地各一个",
     "power": 4,
     "config": "",
     "cd": 1
@@ -31,7 +31,7 @@
     "name": "战前誓师",
     "address": "res://Art/Icon/askill4.png",
     "describe": "下次战斗前提升3点力量",
-    "power": 4,
+    "power": 3,
     "config": 3,
     "cd": 1
   },
@@ -40,7 +40,7 @@
     "name": "冥想预演",
     "address": "res://Art/Icon/askill5.png",
     "describe": "下次战斗前提升3点魔法",
-    "power": 4,
+    "power": 3,
     "config": 3,
     "cd": 1
   },
@@ -49,7 +49,7 @@
     "name": "疾风步",
     "address": "res://Art/Icon/askill6.png",
     "describe": "下2次基础行动变为快速行动",
-    "power": 5,
+    "power": 4,
     "config": 2,
     "cd": 1
   },
@@ -58,7 +58,7 @@
     "name": "空间折跃",
     "address": "res://Art/Icon/askill7.png",
     "describe": "传送至指定位置",
-    "power": 7,
+    "power": 6,
     "config": "",
     "cd": 1
   },
@@ -78,6 +78,24 @@
     "describe": "选择1个方向，驱散该方向直线2格迷雾",
     "power": 3,
     "config": 2,
+    "cd": 1
+  },
+  {
+    "ID": 10,
+    "name": "艹艹艹",
+    "address": "res://Art/Icon/askill10.png",
+    "describe": "选择1个怪物，将其变为草丛",
+    "power": 5,
+    "config": "",
+    "cd": 1
+  },
+  {
+    "ID": 11,
+    "name": "听天由命",
+    "address": "res://Art/Icon/askill11.png",
+    "describe": "传送至地图上的随机位置，并驱散相邻的迷雾",
+    "power": 4,
+    "config": "",
     "cd": 1
   }
 ]

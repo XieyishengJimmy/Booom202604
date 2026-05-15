@@ -91,6 +91,21 @@ public static class BossSkillPlanner
 			return CellsHexDisk(terrain, validCells, blockedState, playerCell, radius);
 		}
 
+		// 独角仙国王（1004）：任意 2 条穿过玩家的六角轴向直线之并集（与单条「标号 6=长度 6」区分）。
+		if (skillTarget == 2 && rawCode == 6 && bossTableId == 1004)
+		{
+			debugRepresentativeCell = playerCell;
+			return CollectUnionOfTwoAxialLinesThroughPlayer(terrain, validCells, blockedState, playerCell);
+		}
+
+		// 巫妖 / 大巫妖（1005/1006）：skill_target 改为 2 后，按「含玩家的六角圆盘」选随机圆心（skill_area= 半径）。
+		if (skillTarget == 2 && rawCode == 2 && bossTableId is 1005 or 1006)
+		{
+			HashSet<Vector2I> disk = CellsHexDiskRandomCenterCoveringPlayer(terrain, validCells, blockedState,
+				playerCell, 2, out debugRepresentativeCell);
+			return disk;
+		}
+
 		if (skillTarget == 2 && rawCode == SkillAreaFullAxialLineThroughPlayer)
 		{
 			debugRepresentativeCell = playerCell;
@@ -205,6 +220,55 @@ public static class BossSkillPlanner
 		}
 
 		return set;
+	}
+
+	/// <summary>在 3 条轴向直线中随机选 2 条，取并集（独角仙国王 1004）。</summary>
+	static HashSet<Vector2I> CollectUnionOfTwoAxialLinesThroughPlayer(TileMapLayer terrain,
+		Godot.Collections.Dictionary validCells, Godot.Collections.Dictionary blockedState, Vector2I playerCell)
+	{
+		var union = new HashSet<Vector2I>();
+		if (!IsWalkable(validCells, blockedState, playerCell))
+			return union;
+
+		var axes = new List<int> { 0, 1, 2 };
+		for (int i = 2; i > 0; i--)
+		{
+			int j = (int)(GD.Randi() % (i + 1));
+			(axes[i], axes[j]) = (axes[j], axes[i]);
+		}
+
+		foreach (Vector2I cell in BuildOneAxialDiameterLine(terrain, validCells, blockedState, playerCell,
+			         NeighborOrder[axes[0]]))
+			union.Add(cell);
+		foreach (Vector2I cell in BuildOneAxialDiameterLine(terrain, validCells, blockedState, playerCell,
+			         NeighborOrder[axes[1]]))
+			union.Add(cell);
+
+		return union;
+	}
+
+	/// <summary>随机选圆心使六角圆盘（半径 <paramref name="radius"/>）含玩家格；用于巫妖/大巫妖 target=2。</summary>
+	static HashSet<Vector2I> CellsHexDiskRandomCenterCoveringPlayer(TileMapLayer terrain,
+		Godot.Collections.Dictionary validCells, Godot.Collections.Dictionary blockedState, Vector2I playerCell,
+		int radius, out Vector2I debugCenter)
+	{
+		debugCenter = playerCell;
+		var candidates = new List<Vector2I>();
+		foreach (Variant vk in validCells.Keys)
+		{
+			Vector2I c = HexGridUtil.ParseKey(vk.AsString());
+			if (!IsWalkable(validCells, blockedState, c))
+				continue;
+			HashSet<Vector2I> disk = CellsHexDisk(terrain, validCells, blockedState, c, radius);
+			if (disk.Contains(playerCell))
+				candidates.Add(c);
+		}
+
+		if (candidates.Count == 0)
+			return CellsHexDisk(terrain, validCells, blockedState, playerCell, Mathf.Max(1, radius));
+
+		debugCenter = candidates[(int)(GD.Randi() % candidates.Count)];
+		return CellsHexDisk(terrain, validCells, blockedState, debugCenter, radius);
 	}
 
 	static bool TryBuildAxialRay(TileMapLayer terrain, Godot.Collections.Dictionary validCells,

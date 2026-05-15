@@ -419,20 +419,20 @@ public partial class Gameplay : Node2D
 		}
 	}
 
-	/// <summary>仅技能等显式驱散：绕过吸收锁，清除该格迷雾并从所有怪物邻居锁名单中剔除该格。</summary>
+	/// <summary>仅技能等显式驱散：优先解除怪物邻格吸收锁，再清除该格迷雾（技能驱散优先于锁定）。</summary>
 	public void DispelFogBySkill(Vector2I cell)
 	{
 		string ck = HexGridUtil.CellKey(cell);
 		if (!_valid.ContainsKey(ck))
 			return;
 
+		// 必须先于「是否有雾」判断：否则落脚格雾已被其它逻辑清掉但锁引用仍在时，无法解除锁定。
+		StripAllMonsterNeighborAssociationsForFogKey(ck);
+		if (_terrain != null)
+			_fog?.SetAbsorptionLockedVisual(cell, false);
+
 		if (!(_fogState.ContainsKey(ck) && _fogState[ck].AsBool()))
 			return;
-
-		StripAllMonsterNeighborAssociationsForFogKey(ck);
-
-		if (_terrain != null)
-			_fog!.SetAbsorptionLockedVisual(cell, false);
 
 		_fogState[ck] = false;
 		_fog!.SetCell(cell, false);
@@ -479,6 +479,9 @@ public partial class Gameplay : Node2D
 
 	public bool strBuff = false;
 	public bool magicBuff = false;
+	int _strBuffFightBonusAmt;
+	int _magBuffFightBonusAmt;
+	int _passive108GrassTriggers;
 	public int fastRun = 0;
 
 	private Panel? _tooltip;
@@ -892,7 +895,7 @@ public partial class Gameplay : Node2D
 		if (_bossCornerSplash == null)
 			return;
 
-		int imageId = br?.BossImageId ?? 0;
+		int imageId = br == null ? 0 : BossTable.ResolveCornerSplashPngNumericId(br);
 		if (imageId <= 0)
 		{
 			_bossCornerSplash.Texture = null;
@@ -903,7 +906,7 @@ public partial class Gameplay : Node2D
 		string resPath = $"res://Art/BOSS/{imageId}.png";
 		if (!ResourceLoader.Exists(resPath))
 		{
-			GD.PushWarning($"[Gameplay] BOSS 立绘不存在：{resPath}（boss_image_id={imageId}）");
+			GD.PushWarning($"[Gameplay] BOSS 立绘不存在：{resPath}（解析编号={imageId}，表 boss_image_id={br?.BossImageId ?? 0}）");
 			_bossCornerSplash.Texture = null;
 			_bossCornerSplash.Visible = false;
 			return;
@@ -1128,7 +1131,11 @@ public partial class Gameplay : Node2D
 				return true;
 
 			if (_blockState.ContainsKey(nk) && _blockState[nk].AsBool())
+			{
+				if (pskillList.Contains(107))
+					return true;
 				continue;
+			}
 
 			return true;
 		}
@@ -1153,7 +1160,7 @@ public partial class Gameplay : Node2D
 		return false;
 	}
 
-	/// <summary>与 <see cref="PlayerHasAdjacentMoveOrInteract"/> 对单邻格判定一致。</summary>
+	/// <summary>与 <see cref="PlayerHasAdjacentMoveOrInteract"/> 对单邻格判定一致（含被动 107：邻格障碍可走/可撞）。</summary>
 	bool NeighborCellIsInteractableFromPlayer(Vector2I n)
 	{
 		if (_terrain == null)
@@ -1170,7 +1177,7 @@ public partial class Gameplay : Node2D
 			return true;
 
 		if (_blockState.ContainsKey(nk) && _blockState[nk].AsBool())
-			return false;
+			return pskillList.Contains(107);
 
 		return true;
 	}
@@ -1250,7 +1257,7 @@ public partial class Gameplay : Node2D
 		return false;
 	}
 
-	/// <summary>本回合左键目标是否可达（相邻事件交互，或相邻/被动208二格空移）。</summary>
+	/// <summary>本回合左键目标是否可达（相邻事件交互，或相邻/被动208二格空移；被动107相邻障碍格可走并撞毁）。</summary>
 	bool CanPlayerActOnCellThisTurn(Vector2I cell)
 	{
 		if (_terrain == null)
@@ -1264,7 +1271,7 @@ public partial class Gameplay : Node2D
 			return HexCellsAreAdjacent(_playerCell, cell) && NeighborCellIsInteractableFromPlayer(cell);
 
 		if (_blockState.ContainsKey(ck) && _blockState[ck].AsBool())
-			return false;
+			return pskillList.Contains(107) && HexCellsAreAdjacent(_playerCell, cell);
 
 		if (HexCellsAreAdjacent(_playerCell, cell))
 			return true;
@@ -2115,23 +2122,18 @@ public partial class Gameplay : Node2D
 
 
 		if (_blockState.ContainsKey(dk) && _blockState[dk].AsBool())
-
-
 		{
+			if (!pskillList.Contains(107))
+			{
+				SpawnPlayerHeadFloatTip("不可通过", Colors.White);
 
+				await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
 
+				return;
+			}
 
-
-
-			SpawnPlayerHeadFloatTip("不可通过", Colors.White);
-
-			await MaybeTransitionToFailScreenForFogManaDeadlockAsync();
-
-
-			return;
-
-
-
+			_blockState[dk] = false;
+			_blocks?.SetBlocks(_blockState);
 		}
 
 
@@ -2596,6 +2598,20 @@ public partial class Gameplay : Node2D
 			powerCheck();
 		}
 
+		if (pskillList.Contains(108))
+		{
+			int need = pconfigDict.ContainsKey(108) && pconfigDict[108].AsInt32() > 0
+				? pconfigDict[108].AsInt32()
+				: 6;
+			_passive108GrassTriggers++;
+			if (_passive108GrassTriggers >= need)
+			{
+				_passive108GrassTriggers = 0;
+				RunState.Instance.PlayerMagic += 1;
+				powerCheck();
+			}
+		}
+
 		EraseEvent(cell);
 	}
 
@@ -2652,12 +2668,8 @@ public partial class Gameplay : Node2D
 			{ 
 				bool hadStrBuff = strBuff;
 				bool hadMagicBuff = magicBuff;
-				int strBonus = 0;
-				int magBonus = 0;
-				if (hadStrBuff && aconfigDict.TryGetValue(4, out Variant strCfgV))
-					strBonus = strCfgV.AsInt32();
-				if (hadMagicBuff && aconfigDict.TryGetValue(5, out Variant magCfgV))
-					magBonus = magCfgV.AsInt32();
+				int strBonus = hadStrBuff ? _strBuffFightBonusAmt : 0;
+				int magBonus = hadMagicBuff ? _magBuffFightBonusAmt : 0;
 				if (strBonus != 0)
 					RunState.Instance.PlayerStr += strBonus;
 				if (magBonus != 0)
@@ -2670,9 +2682,16 @@ public partial class Gameplay : Node2D
 				if (magBonus != 0)
 					RunState.Instance.PlayerMagic -= magBonus;
 				if (hadStrBuff)
+				{
 					strBuff = false;
+					_strBuffFightBonusAmt = 0;
+				}
+
 				if (hadMagicBuff)
+				{
 					magicBuff = false;
+					_magBuffFightBonusAmt = 0;
+				}
 			}
 
 				RunState.Instance.ClampHp();
@@ -3120,9 +3139,51 @@ public partial class Gameplay : Node2D
 
 	}
 
+	void ReplaceMonsterCellWithGrass(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!TryMonsterEventAtKey(ck, out _))
+			return;
 
+		ReleaseMonsterNeighborFogLocks(ck);
+		Node2D icons = GetNode<Node2D>("World/EventIcons");
+		DestroyEventIconsForCellKey(icons, ck);
+		var grassEv = new Godot.Collections.Dictionary { ["type"] = "grass" };
+		_events[ck] = grassEv;
+		SpawnSingleEventIcon(cell, grassEv);
+		RefreshEventIconsFogVisibility();
+	}
 
+	/// <summary>技能 11「听天由命」可落点：版图内、非障碍；不得为祭坛、战斗怪或闯关传送门（允许迷雾格；落脚后 <c>DispelFogBySkill(dst)</c> 驱散脚下雾）。</summary>
+	bool IsSkill11TeleportDestination(Vector2I cell)
+	{
+		string ck = HexGridUtil.CellKey(cell);
+		if (!_valid.ContainsKey(ck))
+			return false;
+		if (TerrainCellMarkedBlocked(ck))
+			return false;
+		if (!_events.ContainsKey(ck))
+			return true;
+		string t = GetString(_events[ck].AsGodotDictionary(), "type");
+		if (t == CampaignPortalEventTypeName)
+			return false;
+		return t is not ("altar" or "monster_str" or "monster_mag");
+	}
 
+	Vector2I? PickRandomSkill11TeleportDestination()
+	{
+		var list = new List<Vector2I>();
+		foreach (Variant vk in _valid.Keys)
+		{
+			Vector2I c = HexGridUtil.ParseKey(vk.AsString());
+			if (IsSkill11TeleportDestination(c))
+				list.Add(c);
+		}
+
+		if (list.Count == 0)
+			return null;
+		return list[(int)(GD.Randi() % (uint)list.Count)];
+	}
 
 	void PurgeAllMonsterEncounterEventsFromMap()
 	{
@@ -3879,6 +3940,11 @@ public partial class Gameplay : Node2D
 
 		_hudUi.SetBossPhaseMeters(chargeCur, Mathf.Max(_bossChargeMax, 1e-3f), warnCur, Mathf.Max(_bossWarnMax, 1e-3f));
 
+		if (_bossUsesTableSkill && BossTable.TryGet(_bossTableId, out BossTable.Row? bossRow) && bossRow != null)
+			_hudUi.ApplyBossSkillIcon2FromTablePath(bossRow.SkillIcon);
+		else
+			_hudUi.ClearBossSkillIcon2ToDefault();
+
 
 
 		float left = RemainingFog();
@@ -4494,19 +4560,30 @@ public partial class Gameplay : Node2D
 				return;
 
 			case 4:
+			{
+				int sid4 = askillList[skillchoose - 1];
+				_strBuffFightBonusAmt = aconfigDict.ContainsKey(sid4) ? Mathf.Max(0, aconfigDict[sid4].AsInt32()) : 3;
 				strBuff = true;
 				ischose = true;
 				return;
+			}
 
 			case 5:
+			{
+				int sid5 = askillList[skillchoose - 1];
+				_magBuffFightBonusAmt = aconfigDict.ContainsKey(sid5) ? Mathf.Max(0, aconfigDict[sid5].AsInt32()) : 3;
 				magicBuff = true;
 				ischose = true;
 				return;
+			}
 
 			case 6:
-				fastRun = aconfigDict[6].AsInt32();
+			{
+				int sid6 = askillList[skillchoose - 1];
+				fastRun = aconfigDict.ContainsKey(sid6) ? Mathf.Max(1, aconfigDict[sid6].AsInt32()) : 2;
 				ischose = true;
 				return;
+			}
 
 			case 7:
 			{
@@ -4562,6 +4639,62 @@ public partial class Gameplay : Node2D
 				ischose = true;
 				_highlightedCells.Clear();
 				return;
+
+			case 10:
+			{
+				Vector2I targetCell10 = await WaitForHighlightClick(null);
+				if (targetCell10.X == -999 && targetCell10.Y == -999)
+				{
+					ischose = false;
+					return;
+				}
+
+				string ck10 = HexGridUtil.CellKey(targetCell10);
+				if (!_highlightedCells.Contains(ck10) || !TryMonsterEventAtKey(ck10, out _))
+				{
+					ischose = false;
+					return;
+				}
+
+				ReplaceMonsterCellWithGrass(targetCell10);
+				ischose = true;
+				_highlightedCells.Clear();
+				return;
+			}
+
+			case 11:
+			{
+				Vector2I? rnd = PickRandomSkill11TeleportDestination();
+				if (rnd == null)
+				{
+					ischose = false;
+					return;
+				}
+
+				Vector2I dst = rnd.Value;
+				string destKey = HexGridUtil.CellKey(dst);
+
+				_playerCell = dst;
+				SetPlayerIdleVisual();
+				SnapPlayer();
+				if (_events.ContainsKey(destKey))
+					await TryInteractAsync(dst);
+				if (_terrain != null)
+				{
+					foreach (Vector2I n in HexGridUtil.Neighbors(_terrain, dst))
+					{
+						if (HexGridUtil.IsSameCell(n, dst))
+							continue;
+						DispelFogBySkill(n);
+					}
+				}
+
+				// 驱散落脚格迷雾（含怪物吸收锁：DispelFogBySkill 内已优先拆锁）；TryInteract 等若临时清雾也可统一收尾。
+				DispelFogBySkill(dst);
+
+				ischose = true;
+				return;
+			}
 
 		}
 
@@ -4631,6 +4764,7 @@ public partial class Gameplay : Node2D
 				}
 				break;
 			case 8:
+			case 10:
 				string centerKey8 = HexGridUtil.CellKey(centerCell);
 				HashSet<string> noFogCells8 = new HashSet<string>();
 
@@ -5295,11 +5429,10 @@ public partial class Gameplay : Node2D
 
 	private void OnBossSkillIconsSlotMouseEntered()
 	{
-		string line2 = string.IsNullOrWhiteSpace(_bossSkillText) ? "（无简短说明）" : _bossSkillText;
-		string body = !string.IsNullOrWhiteSpace(_bossSkillDetail)
-			? _bossSkillDetail
-			: (!string.IsNullOrWhiteSpace(_bossAiDescription) ? _bossAiDescription : "（无详情）");
-		ShowTooltip($"{_bossName}\n{line2}\n\n技能详情\n{body}");
+		string text = !string.IsNullOrWhiteSpace(_bossSkillDetail)
+			? _bossSkillDetail.Trim()
+			: (!string.IsNullOrWhiteSpace(_bossSkillText) ? _bossSkillText.Trim() : "（无详情）");
+		ShowTooltip(text);
 	}
 
 	private async void ShowTooltip(string text)

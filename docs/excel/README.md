@@ -32,8 +32,9 @@
 8. **技能具体效果** — 若整格为 **纯数字** `1～99`，导出为枚举字段 **`skill_effect`**；否则整段文字导出为 **`skill_detail`**，`skill_effect` 为 `0`（可与列 6～7 的枚举组合描述技能）。  
 9. **BOSS图片编号**（可选，整数 `≥ 0`）— 导出为 **`boss_image_id`**；`> 0` 时运行时在 **`res://Art/BOSS/{编号}.png`** 按原像素显示在画面右下角。表头也可写作 **BOSS图片配置**（与「BOSS图片编号」同列）。  
 10. **怪物ID配置**（可选）— BOSS 召唤池，导出 **`summon_monster_ids`**。  
+11. **技能图标**（可选，字符串）— 导出为 **`skill_icon`**（如 `res://Art/.../foo.png`）；空则游戏中 **BossSkillIcon2** 保持场景默认图；非空时按该路径加载并保持与默认相同的槽位像素尺寸。
 
-导出的 **`Data/bosses.json`** 中每条 BOSS 另含：**`skill_target`**、**`skill_area`**、**`skill_effect`**、**`skill_detail`**（无文案时为空串）。兼容旧逻辑的 **`skill_description`**、**`ai_description`** 仍会被填充（分别来自自由文案或枚举摘要、以及定位列生成的简短 AI 提示）。顶层 **`version`** 为 **3**。
+导出的 **`Data/bosses.json`** 中每条 BOSS 另含：**`skill_target`**、**`skill_area`**、**`skill_effect`**、**`skill_detail`**（无文案时为空串）、**`skill_icon`**（可为空串）。兼容旧逻辑的 **`skill_description`**、**`ai_description`** 仍会被填充（分别来自自由文案或枚举摘要、以及定位列生成的简短 AI 提示）。顶层 **`version`** 为 **3**。
 
 若表头格子内写有长说明（多行文本），导出工具会为 **第一行标题** 建立别名；列校验以短标题关键字为准。
 

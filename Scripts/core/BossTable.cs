@@ -26,6 +26,8 @@ public static class BossTable
 		public List<int> SummonMonsterIds = [];
 		/// <summary>Excel「BOSS图片编号」→ 运行时加载 <c>res://Art/BOSS/{id}.png</c>；0 或未导出则不显示。</summary>
 		public int BossImageId;
+		/// <summary>Excel「技能图标」→ <c>res://...</c>，用于 HUD <c>BossSkillIcon2</c>；空则使用场景默认贴图。</summary>
+		public string SkillIcon = "";
 	}
 
 	static readonly Dictionary<int, Row> ById = [];
@@ -34,6 +36,31 @@ public static class BossTable
 		Mathf.Max(0, row.WarnMeter) + Mathf.Max(0, row.ChargeMeter);
 
 	public static bool TryGet(int id, out Row? row) => ById.TryGetValue(id, out row);
+
+	/// <summary>
+	/// 右下角 BOSS 立绘文件名 <c>{n}.png</c> 中的 <c>n</c>。优先 <see cref="Row.BossImageId"/>；
+	/// 未填 0 时：若存在 <c>res://Art/BOSS/{Id%1000}.png</c> 则用；否则对表内常见段 1001–1999 用 1/2/3 轮换（兼容未导「BOSS图片编号」的旧数据）。
+	/// </summary>
+	public static int ResolveCornerSplashPngNumericId(Row row)
+	{
+		if (row.BossImageId > 0)
+			return row.BossImageId;
+		if (row.Id <= 0)
+			return 0;
+
+		int mod1000 = row.Id % 1000;
+		if (mod1000 > 0)
+		{
+			string p = $"res://Art/BOSS/{mod1000}.png";
+			if (ResourceLoader.Exists(p))
+				return mod1000;
+		}
+
+		if (row.Id is >= 1001 and < 2000)
+			return ((row.Id - 1001) % 3) + 1;
+
+		return 0;
+	}
 
 	public static IEnumerable<Row> EnumerateSorted()
 	{
@@ -101,6 +128,7 @@ public static class BossTable
 				SkillDetail = GetStr(d, "skill_detail"),
 				SummonMonsterIds = ReadSummonMonsterIds(d),
 				BossImageId = LooseInt(d, "boss_image_id", 0),
+				SkillIcon = GetStr(d, "skill_icon"),
 			};
 			if (row.GainPerTurn < 1)
 				row.GainPerTurn = 1;

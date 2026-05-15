@@ -3,7 +3,7 @@
     "ID": 101,
     "name": "草上飞行",
     "address": "res://Art/Icon/pskill101.png",
-    "describe": "进入草地变为快速行动",
+    "describe": "进入草丛变为快速行动",
     "config": ""
   },
   {
@@ -17,14 +17,14 @@
     "ID": 103,
     "name": "食尸鬼",
     "address": "res://Art/Icon/pskill103.png",
-    "describe": "进入尸体变为快速行动",
+    "describe": "进入墓地变为快速行动",
     "config": ""
   },
   {
     "ID": 104,
     "name": "踏草留痕",
     "address": "res://Art/Icon/pskill104.png",
-    "describe": "每进入2次草地，下一次探索变为快速行动",
+    "describe": "每次进入草丛后，下一次探索变为快速行动",
     "config": 2
   },
   {
@@ -42,38 +42,52 @@
     "config": ""
   },
   {
+    "ID": 107,
+    "name": "滚石",
+    "address": "res://Art/Icon/pskill107.png",
+    "describe": "你的移动可以无视并摧毁障碍",
+    "config": ""
+  },
+  {
+    "ID": 108,
+    "name": "魔力药草",
+    "address": "res://Art/Icon/pskill108.png",
+    "describe": "你每触发6次草丛，提升1点魔法",
+    "config": ""
+  },
+  {
     "ID": 201,
     "name": "亡者余温",
     "address": "res://Art/Icon/pskill201.png",
-    "describe": "尸体触发恢复生命值时，额外恢复1点",
+    "describe": "墓地触发恢复生命值时，额外恢复1点",
     "config": 1
   },
   {
     "ID": 202,
     "name": "因果轮回",
     "address": "res://Art/Icon/pskill202.png",
-    "describe": "你因尸体而失去生命时，下一次战斗获胜后恢复1点生命",
+    "describe": "你因墓地而失去生命时，下一次战斗获胜后恢复1点生命",
     "config": 1
   },
   {
     "ID": 203,
     "name": "葬仪",
     "address": "res://Art/Icon/pskill203.png",
-    "describe": "战斗胜利后，触发1次尸体事件",
+    "describe": "每2次战斗胜利后，触发1次墓地事件",
     "config": ""
   },
   {
     "ID": 204,
     "name": "祭品积累",
     "address": "res://Art/Icon/pskill204.png",
-    "describe": "你每消耗5具尸体，获得1次祭坛奖励",
+    "describe": "你每触发6次墓地，提升1点力量",
     "config": 5
   },
   {
     "ID": 205,
     "name": "尸横遍野",
     "address": "res://Art/Icon/pskill205.png",
-    "describe": "每次BOSS使用技能后，在范围内留下2具尸体",
+    "describe": "每次BOSS使用技能后，在范围内留下1具墓地",
     "config": 2
   },
   {
@@ -87,7 +101,7 @@
     "ID": 207,
     "name": "摘取",
     "address": "res://Art/Icon/pskill207.png",
-    "describe": "移动到与草地相邻的位置时，自动触发该草地的效果",
+    "describe": "移动到与草丛相邻的位置时，自动触发该草丛的效果",
     "config": ""
   },
   {
